@@ -1,0 +1,4 @@
+[mysqld]
+disabled_storage_engines="MyISAM,BLACKHOLE,FEDERATED,ARCHIVE,MEMORY"
+performance_schema=ON
+transaction_isolation=READ-COMMITTED
