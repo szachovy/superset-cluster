@@ -1,1 +1,0 @@
-docker run -p 6379:6379 --network mysql-network --name redis -d redis

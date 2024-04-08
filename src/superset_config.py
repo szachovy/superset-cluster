@@ -1,14 +1,15 @@
 import base64
 import secrets
 import os
+from flask_caching.backends.rediscache import RedisCache
 
 SECRET_KEY = 'secret' #base64.b64encode(secrets.token_bytes(42)).decode()
 
 username = "root"
 password = "mysql"
-host = "172.18.0.5"
+host = "172.18.0.2"
 port = "6446"
-database = "test"
+database = "superset"
 SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://{username}:{password}@{host}:{port}/{database}"
 os.environ['SQLALCHEMY_DATABASE_URI'] = SQLALCHEMY_DATABASE_URI
 
@@ -29,7 +30,6 @@ class CeleryConfig(object):
 
 CELERY_CONFIG = CeleryConfig
 
-from flask_caching.backends.rediscache import RedisCache
 RESULTS_BACKEND = RedisCache(
     host='172.18.0.6', port=6379, key_prefix='superset_results')
 
