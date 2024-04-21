@@ -26,7 +26,7 @@ RUN \
 
 USER superset
 
-COPY --chown=superset src/superset_config.py /app/
+COPY --chown=superset services/superset/superset_config.py /app/
 ENV SUPERSET_CONFIG_PATH /app/superset_config.py
 
 RUN \
