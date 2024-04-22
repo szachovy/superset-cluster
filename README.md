@@ -1,15 +1,19 @@
-# `superset-cluster`
+# superset-cluster
 
 Apache Superset against MySQL InnoDB cluster.
+[That's how it works](docs/ARCHITECTURE.md).
 
 ## Requirements
+
+### Database hosts specification
+
+* MySQL Docker images maintained by the MySQL team are built specifically for Linux platforms. 
 
 ### Installed software
 
 The following software needs to be installed on both the user's host and external nodes. The setup has been manually tested on the following versions:
 
 * [`docker v26.0.2, build 3c863ff`](https://www.docker.com/)
-
 
 ## Installation & Usage
 
@@ -37,7 +41,7 @@ Explore [docs](docs/) for further information about the setup, or visit [additio
 
 If you notice anything missing, spot a bug, or have an enhancement proposal, feel free to open an issue with the appropriate label. Pull requests are welcome. Please ensure that the tests are updated as necessary.
 
-This is a private project and is not affiliated with SUSE. 
+This is a private project and is not affiliated with [SUSE](https://github.com/SUSE). 
 
 ## Additional resources
 

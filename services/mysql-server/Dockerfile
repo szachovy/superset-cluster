@@ -1,1 +1,9 @@
-FROM mysql/mysql-server:latest
+FROM mysql:8.3
+
+ARG MYSQL_ROOT_PASSWORD
+ARG MYSQL_DATABASE
+
+ENV MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}"
+ENV MYSQL_DATABASE="${MYSQL_DATABASE}"
+
+COPY mysql_config.cnf /etc/mysql/conf.d/mysql_config.cnf

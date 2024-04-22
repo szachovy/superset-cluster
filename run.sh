@@ -10,9 +10,8 @@ spawn_environment() {
     mysql-network
 
   docker build \
-    --file services/mysql-mgmt/Dockerfile \
     --tag mysql-mgmt \
-    .
+    ./services/mysql-mgmt
 
   docker run \
     --detach \
@@ -23,17 +22,15 @@ spawn_environment() {
 
   for ((replica = 0; replica < $MYSQL_REPLICAS; replica++)); do
     docker build \
-    --file services/mysql-server/Dockerfile \
+    --build-arg MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
+    --build-arg MYSQL_DATABASE=superset \
     --tag mysql-server \
-    .
+    ./services/mysql-server
 
     docker run \
       --detach \
       --name mysql-$replica \
       --ip 172.18.0.$((3 + $replica)) \
-      --env MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
-      --env MYSQL_DATABASE=superset \
-      --volume ./services/mysql-server/mysql_config.cnf:/etc/mysql/conf.d/mysql_config.cnf \
       --network mysql-network \
       mysql-server
     
@@ -51,9 +48,8 @@ spawn_environment() {
   done
 
   docker build \
-    --file services/redis/Dockerfile \
     --tag redis \
-    .
+    ./services/redis
 
   docker run \
     --detach \
@@ -63,9 +59,8 @@ spawn_environment() {
     redis
 
   docker build \
-    --file services/superset/Dockerfile \
     --tag superset \
-    .
+    ./services/superset
 
   docker run \
     --detach \
@@ -74,6 +69,7 @@ spawn_environment() {
     --network mysql-network \
     superset
 
+  sleep 5
   docker exec superset superset fab create-admin --username admin --firstname admin --lastname admin --email admin@admin.com --password admin
   docker exec superset superset db upgrade
   docker exec superset superset load_examples
