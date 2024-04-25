@@ -18,6 +18,10 @@ RUN \
       libkeyutils1 \
       wget \
       xz-utils
+  # && \
+  # python3 -m pip \
+  #   install \
+  #     mysqlx-connector-python
 
 RUN \
   wget \

@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 USER root
 
+COPY entrypoint.sh /opt/
+
 RUN \
   apt \
     update \
@@ -54,4 +56,5 @@ RUN \
   apt \
     clean
 
-ENTRYPOINT ["sh", "-c", "service ssh start && tail -f /dev/null"]
+ENTRYPOINT [ "/opt/entrypoint.sh" ]
+# ENTRYPOINT ["sh", "-c", "service ssh start && tail -f /dev/null"]

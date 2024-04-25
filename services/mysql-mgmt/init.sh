@@ -1,13 +1,25 @@
+#!/bin/bash
+
+MYSQL_ROOT_PASSWORD=mysql
+
 docker build \
   --tag mysql-mgmt \
   /opt/mysql-mgmt
 
 docker run \
   --detach \
+  --restart always \
   --name mysql-mgmt \
   --hostname "${HOSTNAME}" \
+  --network host \
   --publish 6446:6446 \
   mysql-mgmt
+
+for ip in "$@"; do
+  docker exec mysql-mgmt mysqlsh --execute "dba.configureInstance('${ip}:3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false});"
+done
+
+# docker exec mysql-mgmt mysqlsh --uri root:mysql@172.18.0.3:3306 --sql --execute="SELECT @@hostname;"
 
 # mysql_nodes=172.18.0.3,172.18.0.4,172.18.0.5
 
