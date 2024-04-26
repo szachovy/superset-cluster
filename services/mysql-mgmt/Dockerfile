@@ -1,4 +1,4 @@
-FROM debian
+FROM debian:stable-slim
 
 ARG MYSQL_SHELL_VERSION=mysql-shell-8.3.0-linux-glibc2.28-x86-64bit
 ARG MYSQL_ROUTER_VERSION=mysql-router-8.3.0-linux-glibc2.28-x86_64
@@ -18,10 +18,6 @@ RUN \
       libkeyutils1 \
       wget \
       xz-utils
-  # && \
-  # python3 -m pip \
-  #   install \
-  #     mysqlx-connector-python
 
 RUN \
   wget \

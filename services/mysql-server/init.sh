@@ -1,3 +1,5 @@
+#!/bin/bash
+
 MYSQL_ROOT_PASSWORD=mysql
 
 docker build \
@@ -13,5 +15,4 @@ docker run \
   --hostname "${HOSTNAME}" \
   --network host \
   --publish 3306:3306 \
-  --publish 33060:33060 \
   mysql-server

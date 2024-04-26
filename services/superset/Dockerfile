@@ -13,4 +13,4 @@ RUN \
       redis \
       mysql-connector-python
 
-ENTRYPOINT [ "bash", "-c", "celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4 & /usr/bin/run-server.sh" ]
+ENTRYPOINT [ "/usr/bin/run-server.sh" ]
