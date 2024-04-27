@@ -14,5 +14,4 @@ docker run \
   --name mysql \
   --hostname "${HOSTNAME}" \
   --network host \
-  --publish 3306:3306 \
   mysql-server

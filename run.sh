@@ -1,79 +1,59 @@
 #!/bin/bash
 
-MYSQL_ROOT_PASSWORD=mysql
-MYSQL_REPLICAS=3
+# currently using virtual environment
+cd tests
+./setup/setup.sh 4
+cd ..
+# -----------------------------
 
-spawn_environment() {
-  docker network create \
-    --subnet=172.18.0.0/16 \
-    --gateway=172.18.0.1 \
-    mysql-network
+# to be removed after cmd parsing
+mgmt_nodes=(172.18.0.2)
+mysql_nodes=(172.18.0.3 172.18.0.4 172.18.0.5)
+tmp_args=""
+# -----------------------------
 
-  docker build \
-    --tag mysql-mgmt \
-    ./services/mysql-mgmt
-
-  docker run \
-    --detach \
-    --name mysql-mgmt \
-    --ip 172.18.0.2 \
-    --network mysql-network \
-    mysql-mgmt
-
-  for ((replica = 0; replica < $MYSQL_REPLICAS; replica++)); do
-    docker build \
-    --build-arg MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
-    --build-arg MYSQL_DATABASE=superset \
-    --tag mysql-server \
-    ./services/mysql-server
-
-    docker run \
-      --detach \
-      --name mysql-$replica \
-      --ip 172.18.0.$((3 + $replica)) \
-      --network mysql-network \
-      mysql-server
-    
-    sleep 30
-    docker exec mysql-mgmt mysqlsh --execute "dba.configureInstance('root@172.18.0.$((3 + $replica)):3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false});"
-    docker restart mysql-$replica
-    sleep 5
-    if [ "$replica" -eq 0 ]; then
-      docker exec mysql-mgmt mysqlsh --uri root:$MYSQL_ROOT_PASSWORD@172.18.0.3:3306 --execute "dba.createCluster('mycluster');"
-      docker exec mysql-mgmt mysqlrouter --user=root --bootstrap root:$MYSQL_ROOT_PASSWORD@172.18.0.3:3306 --directory /tmp/myrouter --conf-use-sockets --account routerfriend --account-create always
-      docker exec mysql-mgmt mysqlrouter -c /tmp/myrouter/mysqlrouter.conf &
-    else
-      docker exec mysql-mgmt mysqlsh --uri root:$MYSQL_ROOT_PASSWORD@172.18.0.3:3306 --execute "dba.getCluster('mycluster').addInstance('root@172.18.0.$((3 + $replica)):3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false,recoveryMethod:'incremental'});"
-    fi
+initialize_nodes() {
+  for mysql_node in "${mysql_nodes[@]}"; do
+    scp -r services/mysql-server "root@${mysql_node}:/opt"
+    ssh root@${mysql_node} "/opt/mysql-server/init.sh"
+    tmp_args+="$mysql_node "
   done
-
-  docker build \
-    --tag redis \
-    ./services/redis
-
-  docker run \
-    --detach \
-    --name redis \
-    --ip 172.18.0.$((3 + $MYSQL_REPLICAS)) \
-    --network mysql-network \
-    redis
-
-  docker build \
-    --tag superset \
-    ./services/superset
-
-  docker run \
-    --detach \
-    --name superset \
-    --publish 8088:8088 \
-    --network mysql-network \
-    superset
-
-  sleep 5
-  docker exec superset superset fab create-admin --username admin --firstname admin --lastname admin --email admin@admin.com --password admin
-  docker exec superset superset db upgrade
-  docker exec superset superset load_examples
-  docker exec superset superset init
+  for mgmt_node in "${mgmt_nodes[@]}"; do
+    scp -r services/mysql-mgmt "root@${mgmt_node}:/opt"
+    ssh root@${mgmt_node} "/opt/mysql-mgmt/init.sh ${tmp_args}"
+  done
 }
 
-spawn_environment
+restart_nodes() {
+  # reboot for standalone nodes
+  # for mysql_node in "${mysql_nodes[@]}"; do
+  #   ssh root@${mysql_node} "reboot"
+  # done
+  docker restart node-1
+  sleep 5
+  nohup ssh root@172.18.0.3 "dockerd"  > /dev/null 2>&1 &
+
+  docker restart node-2
+  sleep 5
+  nohup ssh root@172.18.0.4 "dockerd" > /dev/null 2>&1 &
+
+  docker restart node-3
+  sleep 5
+  nohup ssh root@172.18.0.5 "dockerd" > /dev/null 2>&1 &
+}
+
+clusterize_nodes() {
+  ssh root@${mgmt_nodes[0]} "/opt/mysql-mgmt/clusterize.sh ${tmp_args}"
+  # ssh root@${mgmt_nodes[1]} ...
+}
+
+start_superset() {
+  docker network create superset-network
+  ./services/redis/init.sh
+  ./services/superset/init.sh
+}
+
+initialize_nodes
+restart_nodes
+clusterize_nodes
+start_superset

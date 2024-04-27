@@ -2,8 +2,6 @@ FROM ubuntu:22.04
 
 USER root
 
-COPY entrypoint.sh /opt/
-
 RUN \
   apt \
     update \
@@ -11,9 +9,8 @@ RUN \
   apt \ 
     install \
       --yes \
-      openssh-server \
-      ca-certificates \
-      curl \
+      ca-certificates=20230311ubuntu0.22.04.1 \
+      curl=7.81.0-1ubuntu1.16 \
   && \
   install \
     --mode \
@@ -32,29 +29,28 @@ RUN \
       /etc/apt/keyrings/docker.asc \
   && \
   echo \
-      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
-      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+    "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
+    https://download.docker.com/linux/ubuntu \
+    $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
       tee /etc/apt/sources.list.d/docker.list > /dev/null \
   && \
+  mkdir \
+    ${HOME}/.ssh
+
+RUN \
   apt \
     update \
   && \
   apt \
     install \
       --yes \
-      docker-ce \
-      docker-ce-cli \
-      containerd.io \
-      docker-buildx-plugin \
-  # && \
-  # usermod \
-  #   --append \
-  #   --groups \
-  #     docker \
-  #       ${USER} \
+      containerd.io=1.6.31-1 \
+      docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy \
+      docker-ce=5:26.1.0-1~ubuntu.22.04~jammy \
+      docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy \
+      openssh-server=1:8.9p1-3ubuntu0.7 \
   && \
   apt \
     clean
 
-ENTRYPOINT [ "/opt/entrypoint.sh" ]
-# ENTRYPOINT ["sh", "-c", "service ssh start && tail -f /dev/null"]
+ENTRYPOINT [ "bash", "-c", "service ssh start && service docker start && tail --follow /dev/null" ]

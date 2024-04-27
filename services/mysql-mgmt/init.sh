@@ -12,7 +12,6 @@ docker run \
   --name mysql-mgmt \
   --hostname "${HOSTNAME}" \
   --network host \
-  --publish 6446:6446 \
   mysql-mgmt
 
 for ip in "$@"; do

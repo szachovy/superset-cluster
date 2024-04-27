@@ -2,11 +2,10 @@
 
 docker build \
   --tag redis \
-  /opt/redis
+  $(pwd)/services/redis
 
 docker run \
   --detach \
-  --restart always \
   --name redis \
   --hostname redis \
   --network superset-network \
