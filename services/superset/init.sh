@@ -6,7 +6,6 @@ docker build \
 
 docker run \
   --detach \
-  --ulimit nofile=65535 \
   --name superset \
   --publish 8088:8088 \
   --network superset-network \
