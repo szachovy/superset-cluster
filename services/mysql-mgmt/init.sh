@@ -16,4 +16,5 @@ docker run \
 
 for ip in "$@"; do
   docker exec mysql-mgmt mysqlsh --execute "dba.configureInstance('${ip}:3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false});"
+  sleep 5
 done

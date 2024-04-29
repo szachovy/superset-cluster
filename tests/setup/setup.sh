@@ -40,6 +40,9 @@ set_nodes() {
         --name "node-${node}" \
         --hostname "node-${node}" \
         --publish "$((2222+${node})):22" \
+        --publish "$((2378+${node})):2377" \
+        --publish "$((7947+${node})):7946" \
+        --publish "$((4790+${node})):4789" \
         --ip 172.18.0.$((2 + $node)) \
         --network mysql-network \
         node

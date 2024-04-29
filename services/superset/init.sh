@@ -11,7 +11,7 @@ docker run \
   --network superset-network \
   superset
 
-sleep 5
+sleep 25
 docker exec superset superset fab create-admin --username admin --firstname admin --lastname admin --email admin@admin.com --password admin
 docker exec superset superset db upgrade
 docker exec superset superset load_examples
