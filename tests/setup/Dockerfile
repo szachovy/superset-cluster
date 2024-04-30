@@ -25,7 +25,7 @@ RUN \
       /etc/apt/keyrings/docker.asc \
   && \
   chmod \
-    a+r \
+    644 \
       /etc/apt/keyrings/docker.asc \
   && \
   echo \
@@ -35,7 +35,11 @@ RUN \
       tee /etc/apt/sources.list.d/docker.list > /dev/null \
   && \
   mkdir \
-    ${HOME}/.ssh
+    ${HOME}/.ssh \
+  && \
+  chmod \
+    700 \
+      ${HOME}/.ssh
 
 RUN \
   apt \
