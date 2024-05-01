@@ -52,6 +52,7 @@ RUN \
       docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy \
       docker-ce=5:26.1.0-1~ubuntu.22.04~jammy \
       docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy \
+      net-tools=1.60+git20181103.0eebece-1ubuntu5 \
       openssh-server=1:8.9p1-3ubuntu0.7 \
   && \
   apt \

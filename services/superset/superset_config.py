@@ -1,9 +1,10 @@
 from flask_caching.backends.rediscache import RedisCache
+import os
 
 SECRET_KEY = "secret" #base64.b64encode(secrets.token_bytes(42)).decode()
 MYSQL_ROOT_PASSWORD="mysql"
 redis_ip="redis"
-mysql_ip="10.145.211.152"
+mysql_ip=os.environ.get('MYSQL_IP')
 
 SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://root:{MYSQL_ROOT_PASSWORD}@{mysql_ip}:6446/superset"
 

@@ -1,5 +1,23 @@
 #!/bin/bash
 
+mgmt_nodes=("172.18.0.2")
+mysql_nodes=("172.18.0.3" "172.18.0.4" "172.18.0.5")
+superset_node="172.18.0.6"
+
+initialize_nodes() {
+  for mysql_node in "${mysql_nodes[@]}"; do
+    scp -r ../services/mysql-server "root@${mysql_node}:/opt"
+    ssh root@${mysql_node} "/opt/mysql-server/init.sh"
+  done
+  for mgmt_node in "${mgmt_nodes[@]}"; do
+    scp -r ../services/mysql-mgmt "root@${mgmt_node}:/opt"
+    
+    tmp_args="10.145.211.153 10.145.211.154 10.145.211.156"
+    ssh root@${mgmt_node} "/opt/mysql-mgmt/init.sh ${tmp_args}"
+  done
+  scp -r ../services "root@${superset_node}:/opt"
+}
+
 copy_content() {
   scp -r ../services/mysql-mgmt "root@172.18.0.2:/opt"
   scp -r ../services/mysql-server "root@172.18.0.3:/opt"

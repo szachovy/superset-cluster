@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MYSQL_IP="${1}"
+
 docker build \
   --tag superset \
   $(pwd)/services/superset
@@ -9,6 +11,7 @@ docker run \
   --name superset \
   --publish 8088:8088 \
   --network superset-network \
+  --env "MYSQL_IP=${MYSQL_IP}" \
   superset
 
 sleep 25
