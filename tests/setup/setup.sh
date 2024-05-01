@@ -13,7 +13,7 @@ set_ssh_keys() {
   ssh-keygen -t rsa -b 2048 -f id_rsa -N ""
   chmod 600 id_rsa.pub
   ssh-add id_rsa
-  # echo "StrictHostKeyChecking no" | sudo tee --append "/etc/ssh/ssh_config"
+  echo "StrictHostKeyChecking no" | sudo tee --append "/etc/ssh/ssh_config"
 }
 
 set_hostname_resolution() {
@@ -43,7 +43,6 @@ set_nodes() {
       --name "node-${node}" \
       --hostname "node-${node}" \
       --ip "172.18.0.$((2 + ${node}))" \
-      --publish "$((8088 + ${node})):8088" \
       --network "mysql-network" \
       node
 

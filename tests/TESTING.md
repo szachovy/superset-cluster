@@ -1,5 +1,5 @@
 # Testing
 
 ```bash
-./run.sh 5
+./run.sh
 ```
