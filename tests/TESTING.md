@@ -1,5 +1,1 @@
 # Testing
-
-```bash
-./run.sh
-```

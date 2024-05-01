@@ -5,15 +5,27 @@ Apache Superset against MySQL InnoDB cluster.
 
 ## Requirements
 
-### Database hosts specification
+### Hosts specification
 
-* MySQL Docker images maintained by the MySQL team are built specifically for Linux platforms. 
+* Images are built specifically for `x86_64` or `arm64` Linux platforms.
+* Both `ssh` and `docker` services on the nodes must be enabled by default.
+_[See how to do it with `systemctl`](https://documentation.suse.com/smart/systems-management/html/reference-systemctl-enable-disable-services/index.html#id-1.4)._
+* Nodes must be able to resolve DNS names between each other.
+* The user's host must be able to `ssh` to each of the nodes passwordlessly.
+* For production setups follow [SECURITY.md](docs/SECURITY.md).
 
 ### Installed software
 
-The following software needs to be installed on both the user's host and external nodes. The setup has been manually tested on the following versions:
+The following software needs to be installed on both the user's host and external nodes. The setup has been tested on [`ubuntu:22.04`](tests/setup/Dockerfile) with the following versions:
 
-* [`docker v26.0.2, build 3c863ff`](https://www.docker.com/)
+* `ca-certificates v20230311ubuntu0.22.04.1`
+* `containerd.io v1.6.31-1`
+* `curl v7.81.0-1ubuntu1.16`
+* `docker-buildx-plugin v0.14.0-1~ubuntu.22.04~jammy`
+* `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
+* `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
+* `net-tools v1.60+git20181103.0eebece-1ubuntu5`
+* `openssh-server v1:8.9p1-3ubuntu0.7`
 
 ## Installation & Usage
 
@@ -25,11 +37,32 @@ With the [Requirements](#requirements) satisfied, you can build and run the enti
 
 Explore [docs](docs/) for further information about the setup, or visit [additional resources](#additional-resources) to learn more about Superset and MySQL components as a whole.
 
-## Examples
+### Example
+
+Having the `tun0` network interface on the localhost that enables connections to the hosts available for the management nodes with the following addresses:
+* `10.145.211.151`
+* `10.145.211.152`
+
+With hosts available for the MySQL InnoDB cluster having the following addresses:
+* `10.145.211.153`
+* `10.145.211.154`
+* `10.145.211.156`
+
+The exemplary command for execution is as follows:
+
+```bash
+./run.sh \
+  --network-interface=tun0 \
+  --mgmt-nodes=10.145.211.151,10.145.211.152 \
+  --mysql-nodes=10.145.211.153,10.145.211.154,10.145.211.156
+```
 
 ### Development
 
+For development purposes, you can set up and run end-to-end tests from the test suite locally. Please refer to [the testing guide](tests/TESTING.md) for more information.
+
 ```bash
+cd tests
 ./run.sh
 ```
 
