@@ -1,0 +1,29 @@
+#!/bin/bash
+
+source services/common.sh
+
+mgmt_nodes=("10.145.211.152")
+mysql_nodes=("10.145.211.153" "10.145.211.154" "10.145.211.156")
+
+path_to_services="services"
+network_interface="tun0"
+
+restart_nodes() {
+  for mysql_node in "${mysql_nodes[@]}"; do
+    ssh root@${mysql_node} "reboot"
+  done
+  sleep 200
+}
+
+start_superset() {
+  docker network create --driver overlay --attachable superset-network
+  ./services/redis/init.sh
+  ./services/superset/init.sh ${mgmt_nodes[0]}
+}
+
+initialize_nodes
+restart_nodes
+superset_node_address=$(get_superset_node_ip ${network_interface})
+docker_swarm_token=$(init_and_get_docker_swarm_token ${superset_node_address})
+clusterize_nodes
+start_superset
