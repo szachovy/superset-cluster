@@ -6,14 +6,13 @@ set_network() {
   docker network create \
     --subnet=172.18.0.0/16 \
     --gateway=172.18.0.1 \
-    mysql-network
+    nodes-network
 }
 
 set_ssh_keys() {
   ssh-keygen -t rsa -b 2048 -f id_rsa -N ""
   chmod 600 id_rsa.pub
   ssh-add id_rsa
-  echo "StrictHostKeyChecking no" | sudo tee --append "/etc/ssh/ssh_config"
 }
 
 set_hostname_resolution() {
@@ -33,7 +32,7 @@ set_hostname_resolution() {
 set_nodes() {
   docker build \
     --tag "node" \
-    ./setup
+    .
 
   for ((node = 0; node < ${nodes}; node++)); do
     docker run \
@@ -43,16 +42,17 @@ set_nodes() {
       --name "node-${node}" \
       --hostname "node-${node}" \
       --ip "172.18.0.$((2 + ${node}))" \
-      --network "mysql-network" \
+      --network "nodes-network" \
       node
 
-    docker exec \
-      --interactive \
-      --user "root" \
-      "node-${node}" \
-        sh -c "cat > /root/.ssh/authorized_keys" < id_rsa.pub
+    # docker exec \
+    #   --interactive \
+    #   --user "root" \
+    #   "node-${node}" \
+    #     sh -c "cat > /root/.ssh/authorized_keys" < id_rsa.pub
 
-    set_hostname_resolution "${node}"
+    echo -e "Host node-${node}\n Hostname 172.18.0.$((2 + ${node}))\n StrictHostKeyChecking no" >> ${HOME}/.ssh/config
+    # set_hostname_resolution "${node}"
   done
 }
 

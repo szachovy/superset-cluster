@@ -1,4 +1,4 @@
 #!/bin/bash
 
-./setup/setup.sh
+# ./setup/setup.sh
 ./testsuite/end-to-end.sh

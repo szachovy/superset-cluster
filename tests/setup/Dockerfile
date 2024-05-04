@@ -35,11 +35,11 @@ RUN \
       tee /etc/apt/sources.list.d/docker.list > /dev/null \
   && \
   mkdir \
-    ${HOME}/.ssh \
+    "/root/.ssh" \
   && \
   chmod \
     700 \
-      ${HOME}/.ssh
+      "/root/.ssh"
 
 RUN \
   apt \
@@ -57,5 +57,7 @@ RUN \
   && \
   apt \
     clean
+
+COPY --chown=root "id_rsa.pub" "/root/.ssh/authorized_keys"
 
 ENTRYPOINT [ "bash", "-c", "service ssh start && service docker start && tail --follow /dev/null" ]
