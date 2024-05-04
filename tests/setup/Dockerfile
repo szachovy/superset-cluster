@@ -39,9 +39,8 @@ RUN \
   && \
   chmod \
     700 \
-      "/root/.ssh"
-
-RUN \
+      "/root/.ssh" \
+  && \
   apt \
     update \
   && \
