@@ -45,9 +45,6 @@ resource "docker_image" "node_image" {
   build {
     context = "."
   }
-  triggers = {
-    file_sha1 = filesha1("Dockerfile")
-  }
   depends_on = [
     null_resource.manage_ssh
   ]
@@ -60,12 +57,16 @@ resource "docker_container" "nodes" {
   hostname = "node-${count.index}"
   image = docker_image.node_image.name
   privileged = true
-  network_mode = docker_network.nodes_network.name
 
   ulimit {
     name = "nofile"
     soft = 1024
     hard = 65535
+  }
+
+  networks_advanced {
+    name = docker_network.nodes_network.name
+    ipv4_address = "172.18.0.${2 + count.index}"
   }
 
   provisioner "local-exec" {
@@ -74,6 +75,7 @@ resource "docker_container" "nodes" {
       echo "  Hostname $IP_ADDRESS" >> $HOME/.ssh/config
       echo "  StrictHostKeyChecking no" >> $HOME/.ssh/config
       echo "  IdentityFile $(pwd)/id_rsa" >> $HOME/.ssh/config
+      echo "  IdentitiesOnly yes" >> $HOME/.ssh/config
     EOT
     environment = {
       HOSTNAME = "node-${count.index}"
@@ -96,41 +98,3 @@ resource "null_resource" "finish_configuration" {
   }
   depends_on = [ docker_container.nodes ]
 }
-
-#sed --in-place --expression "/Host $HOSTNAME/{N;N;N;d}" $HOME/.ssh/config
-# resource "null_resource" "manage_ssh_config" {
-#   provisioner "local-exec" {
-#     command = "cat  >> b.props"
-#   }
-#   provisioner "local-exec" {
-#     when = destroy
-#     command = "rm id_rsa id_rsa.pub"
-#   }
-# }
-
-      # sed "/Host $HOSTNAME/!p" $HOME/.ssh/config
-      # sed "/  Hostname $IP_ADDRESS/!p" $HOME/.ssh/config
-      # sed "/  StrictHostKeyChecking no/!p" $HOME/.ssh/config
-
-      #  ex -sc "g/Host $HOSTNAME/d" -cx $HOME/.ssh/config
-      # ex -sc "g/  Hostname $IP_ADDRESS/d" -cx $HOME/.ssh/config
-      # ex -sc "g/  StrictHostKeyChecking no/d" -cx $HOME/.ssh/config     
-# resource "null_resource" "copy_ssh_keys" {
-#   count = count
-
-#   provisioner "remote-exec" {
-#     connection {
-#       type     = "ssh"
-#       user     = "root"
-#       host     = docker_container.nodes[count.index].network_settings.0.ip_address
-#       password = "your_ssh_password" # Replace with your SSH password
-#       port     = 22 + count.index
-#     }
-
-#     inline = [
-#       "echo '${tls_private_key.ssh_key.public_key_openssh}' >> /root/.ssh/authorized_keys"
-#     ]
-#   }
-
-#   depends_on = [null_resource.manage_ssh]
-# }
