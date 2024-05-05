@@ -1,4 +1,8 @@
 #!/bin/bash
 
-# ./setup/setup.sh
+cd setup
+terraform init
+terraform apply --auto-approve
+cd ..
+
 ./testsuite/end-to-end.sh
