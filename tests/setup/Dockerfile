@@ -59,4 +59,8 @@ RUN \
 
 COPY --chown=root "id_rsa.pub" "/root/.ssh/authorized_keys"
 
-ENTRYPOINT [ "bash", "-c", "service ssh start && service docker start && tail --follow /dev/null" ]
+ENTRYPOINT [ "bash", "-c", "service ssh start \
+  && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf \
+  && echo 'nameserver 8.8.4.4' >> /etc/resolv.conf \
+  && service docker start \
+  && tail --follow /dev/null" ]
