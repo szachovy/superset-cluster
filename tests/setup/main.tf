@@ -79,6 +79,10 @@ resource "docker_container" "nodes" {
   image = "${docker_image.node_image.name}"
   privileged = true
 
+  ports {
+    internal = 8088
+    external = "${8088 + count.index}"
+  }
   ulimit {
     name = "nofile"
     soft = 1024

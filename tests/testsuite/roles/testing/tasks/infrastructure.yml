@@ -1,1 +1,82 @@
 ---
+- name: Get infos on network
+  community.docker.docker_network_info:
+    name: node-network
+    timeout: 10
+  register: result
+  failed_when:
+    - "result.exists == false"
+    # do more
+
+# - name: Run
+#   community.docker.docker_container_exec:
+#     container: "{{ container.value['Name'] }}"
+#     command: "hostname"
+#   register: container_hostname
+#   loop: "{{ result.network.Containers | dict2items }}"
+#   loop_control:
+#     loop_var: container
+#   failed_when: container.value['Name'] != container_hostname.stdout
+
+- name: Get infos on container
+  community.docker.docker_container_info:
+    name: "{{ container.value['Name'] }}"
+  register: node
+  loop: "{{ result.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: container
+  failed_when:
+    - container.value['Name'] != node.container.Config.Hostname
+    - node.container.State.Running == false
+    # do more
+
+- name: Get services running in Docker container
+  community.docker.docker_container_exec:
+    container: "{{ container.value['Name'] }}"
+    command: "/bin/bash -c 'service ssh status && service docker status && ifconfig tun0'" # true / false + multiline
+      - "for $node in {{ nodes }} nslookup {{ node_prefix }}-$node"
+  loop: "{{ result.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: container
+  register: service_status
+
+- name: check passwordless ssh
+  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} ..."
+  loop: "{{ result.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: container
+  register: command_result
+  error_when: command_result.rc != 0
+
+# - name: Get service facts for all hosts in play
+#   service_facts:
+#   delegate_to: "172.18.0.2"
+# - name: Print network interfaces
+#   debug:
+#     var: ansible_interfaces
+
+# - name: collect facts about system services
+#   service_facts:
+#   register: services_state
+
+# - name: Get infos on container
+#   community.docker.docker_container_info:
+#     name: node-0
+#   register: result
+
+# - name: Run
+#   community.docker.docker_container_exec:
+#     container: "{{ item.value['Name'] }}"
+#     command: /bin/bash -c "hostname"
+#   register: res
+#   failed_when: "{{ item.value['Name'] }} != res.stdout"
+#   loop: "{{ result.network.Containers | dict2items }}"
+
+# - name: check passwordless connection with hostname
+#   debug:
+#     msg: "Value: {{ item.value['Name'] }}"
+#   loop: "{{ result.network.Containers | dict2items }}"
+
+# - name: Get info on docker host
+#   community.docker.docker_host_info:
+#   register: result

@@ -14,4 +14,3 @@
     start_superset
   args:
     executable: /bin/bash
-  register: output

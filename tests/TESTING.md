@@ -6,9 +6,14 @@ Testing consist of two modules:
 
 ## Testing objectives and procedures
 
-* [System](testsuite/roles/end-to-end/tasks/system.yml) tests
+* [Infrastructure](testsuite/roles/testing/tasks/infrastructure.yml) tests
+  * ...conditional checks if the [requirements](../README.md#requirements) of generated infrastructure are meet.
+* [System](testsuite/roles/testing/tasks/system.yml) tests
+  * ...trying to mimic the same deployment process, but against terraform generated infrastructure instead of user provided hosts
+* [Functional](testsuite/roles/testing/tasks/functional.yml) tests
   * ...
-* Integration tests ...
+* [Performance](testsuite/roles/testing/tasks/performance.yml) tests
+  * ...
 
 ## Running tests
 
