@@ -59,7 +59,7 @@ The exemplary command for execution is as follows:
 
 ### Development
 
-For development purposes, you can set up and run end-to-end tests from the test suite locally. Please refer to [the testing guide](tests/TESTING.md) for more information.
+For development purposes, you can set up and run end-to-end tests from the test suite locally. Testing infrastructure remains preserved. Please refer to [the testing guide](tests/TESTING.md) for more information.
 
 ```bash
 cd tests

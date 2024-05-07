@@ -5,4 +5,5 @@ terraform init
 terraform apply --auto-approve
 cd ..
 
-./testsuite/end-to-end.sh
+cd testsuite
+ansible-playbook --inventory inventory.yml deploy.yml

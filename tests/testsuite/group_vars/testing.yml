@@ -1,0 +1,4 @@
+---
+nodes: 5
+node_prefix: "node"
+network_interface: "eth0"
