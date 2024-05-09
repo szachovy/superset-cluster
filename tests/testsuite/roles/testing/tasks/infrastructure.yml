@@ -30,23 +30,72 @@
     - node.container.State.Running == false
     # do more
 
-- name: Get services running in Docker container
+- name: introspect docker containers
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "/bin/bash -c 'service ssh status && service docker status && ifconfig tun0'" # true / false + multiline
-      - "for $node in {{ nodes }} nslookup {{ node_prefix }}-$node"
+    command: |
+      /bin/bash -c '
+      ls
+      | grep -q -v "is running" && { echo "SSH service is not running" >&2; exit 1; };
+      service docker status | grep -q -v "is running" && { echo "Docker service is not running" >&2; exit 1; };
+      if [[ "{{ container.value['Name'] }}" == "{{ node_prefix }}-$(({{ nodes }} - 1))" ]]; then \
+        ifconfig "{{ network_interface }}" | head -n 1 | grep -q -v "*RUNNING*" && { echo "{{ network_interface }} interface is not running" >&2; exit 1; };
+      fi
+      python3 -c "{{ script_content }}"
+      '
+    vars:
+      script_content: |
+        import socket
+        [
+          print(socket.gethostbyname("{{ node_prefix }}-" + str(node)))
+          for node in range({{ nodes }})
+        ]
   loop: "{{ result.network.Containers | dict2items }}"
   loop_control:
     loop_var: container
   register: service_status
 
-- name: check passwordless ssh
-  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} ..."
-  loop: "{{ result.network.Containers | dict2items }}"
-  loop_control:
-    loop_var: container
-  register: command_result
-  error_when: command_result.rc != 0
+### This one work
+# - name: check passwordless ssh
+#   ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+#   loop: "{{ result.network.Containers | dict2items }}"
+#   loop_control:
+#     loop_var: container
+#   register: ssh_result
+#   failed_when: ssh_result.rc != 0
+
+### This one work
+      # /bin/bash -c '
+      # service ssh status | grep -q -v "is running" && { echo "SSH service is not running" >&2; exit 1; };
+      # service docker status | grep -q -v "is running" && { echo "Docker service is not running" >&2; exit 1; };
+      # if [[ "{{ container.value['Name'] }}" == "{{ node_prefix }}-$(({{ nodes }} - 1))" ]]; then \
+      #   ifconfig "{{ network_interface }}" | head -n 1 | grep -q -v "*RUNNING*" && { echo "{{ network_interface }} interface is not running" >&2; exit 1; };
+      # fi
+
+      ### This one work
+      # python3 -c '
+      # import socket
+      # [
+      #   print(socket.gethostbyname("{{ node_prefix }}-" + str(node)))
+      #   for node in range({{ nodes }})
+      # ]
+      # '
+
+      # python3 -c ' \
+      # import socket
+      # [
+      #   print(socket.gethostbyname("{{ node_prefix }}-" + str(node)))
+      #   for node in range({{ nodes }})
+      # ]
+      # ' && \
+  #"python3 -c 'import socket; [ print(socket.gethostbyname(\"{{ node_prefix }}-\" + str(node))) for node in range({{ nodes }}) ]'"
+  # command: | 
+  #     - "python3"
+  #     - "-c"
+  #     - "import socket; [print(socket.gethostbyname({{ node-prefix }}-{node})) for node in {{ nodes }}]"
+#"/bin/bash -c 'service ssh status && service docker status && ifconfig tun0'" # true / false + multiline
+# - "for $node in {{ nodes }} nslookup {{ node_prefix }}-$node"
+#       - "python -c 'import socket; socket.gethostbyname(\"{{ node_prefix }}-$node")'"
 
 # - name: Get service facts for all hosts in play
 #   service_facts:
