@@ -30,26 +30,33 @@
     - node.container.State.Running == false
     # do more
 
+- name: copy
+  community.docker.docker_container_copy_into:
+    container: "{{ container.value['Name'] }}"
+    path: "{{ item }}"
+    container_path: "/root/"
+  with_fileglob:
+    - "{{ role_path }}/../../../../src/*"
+  loop: "{{ result.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: container
+  register: service_status
+
+# - name: Copy files into Docker container
+#   community.docker.docker_container_copy:
+#     container: "{{ container.value['Name'] }}"
+#     src: "{{ item }}"
+#     dest: "/root/{{ item | basename }}"
+#   with_fileglob:
+#     - "{{ role_path }}/../../../../src/*"
+#   loop_control:
+#     loop_var: item
+#   register: copy_result
+
 - name: introspect docker containers
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: |
-      /bin/bash -c '
-      ls
-      | grep -q -v "is running" && { echo "SSH service is not running" >&2; exit 1; };
-      service docker status | grep -q -v "is running" && { echo "Docker service is not running" >&2; exit 1; };
-      if [[ "{{ container.value['Name'] }}" == "{{ node_prefix }}-$(({{ nodes }} - 1))" ]]; then \
-        ifconfig "{{ network_interface }}" | head -n 1 | grep -q -v "*RUNNING*" && { echo "{{ network_interface }} interface is not running" >&2; exit 1; };
-      fi
-      python3 -c "{{ script_content }}"
-      '
-    vars:
-      script_content: |
-        import socket
-        [
-          print(socket.gethostbyname("{{ node_prefix }}-" + str(node)))
-          for node in range({{ nodes }})
-        ]
+    command: "python3 {{ role_path }}/files/introspect.py"
   loop: "{{ result.network.Containers | dict2items }}"
   loop_control:
     loop_var: container

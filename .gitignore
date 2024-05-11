@@ -3,3 +3,6 @@
 *.tfstate
 *.tfstate.*
 *.lock.hcl
+
+# Python
+__pycache__/
