@@ -31,7 +31,3 @@ def network_interfaces(network_interface: str) -> str | StopIteration:
                 clib.freeifaddrs(network_interfaces)
                 raise StopIteration(f'Provided network interface {network_interface} not found.')
             current_interface = current_interface.next_network_interface.contents
-
-
-if __name__ == '__main__':
-    print(network_interfaces(network_interface='tun0'))

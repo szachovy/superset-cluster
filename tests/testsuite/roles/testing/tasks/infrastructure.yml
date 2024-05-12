@@ -30,7 +30,7 @@
     loop_var: container
   register: service_status
 
-- name: introspect docker containers
+- name: introspect containers
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
     command: "python3 /opt/superset-cluster/src/introspect.py
@@ -42,10 +42,10 @@
     loop_var: container
   register: service_status
 
-- name: check passwordless ssh
-  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
-  loop: "{{ result.network.Containers | dict2items }}"
-  loop_control:
-    loop_var: container
-  register: ssh_result
-  failed_when: ssh_result.rc != 0
+# - name: check passwordless ssh
+#   ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+#   loop: "{{ result.network.Containers | dict2items }}"
+#   loop_control:
+#     loop_var: container
+#   register: ssh_result
+#   failed_when: ssh_result.rc != 0

@@ -13,7 +13,7 @@ _[See how to do it with `systemctl`](https://documentation.suse.com/smart/system
 * Nodes must be able to resolve DNS names between each other.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
 * There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
-* Ability to read / write to `/opt` catalog in the nodes.
+* Ability to read/write to the `/opt` directory on the nodes.
 * For production setups follow [SECURITY.md](docs/SECURITY.md).
 
 ### Installed software
@@ -26,7 +26,6 @@ The following software needs to be installed on both the user's host and externa
 * `docker-buildx-plugin v0.14.0-1~ubuntu.22.04~jammy`
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
-* `net-tools v1.60+git20181103.0eebece-1ubuntu5`
 * `openssh-server v1:8.9p1-3ubuntu0.7`
 
 ## Installation & Usage
