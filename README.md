@@ -7,12 +7,13 @@ Apache Superset against MySQL InnoDB cluster.
 
 ### Hosts specification
 
-* Images are built specifically for `x86_64` or `arm64` Linux platforms.
+* Images are built specifically for `x86_64` or `arm64` Linux platforms shipped with Python 3.
 * Both `ssh` and `docker` services on the nodes must be enabled by default.
 _[See how to do it with `systemctl`](https://documentation.suse.com/smart/systems-management/html/reference-systemctl-enable-disable-services/index.html#id-1.4)._
 * Nodes must be able to resolve DNS names between each other.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
 * There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
+* Ability to read / write to `/opt` catalog in the nodes.
 * For production setups follow [SECURITY.md](docs/SECURITY.md).
 
 ### Installed software

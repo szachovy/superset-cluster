@@ -41,6 +41,9 @@ RUN \
     700 \
       "/root/.ssh" \
   && \
+  mkdir \
+    "/opt/superset-cluster" \
+  && \
   apt \
     update \
   && \

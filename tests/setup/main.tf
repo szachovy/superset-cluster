@@ -101,6 +101,7 @@ resource "docker_container" "nodes" {
 
   provisioner "local-exec" {
     command = <<-EOT
+      docker cp ../../src $HOSTNAME:/opt/superset-cluster/src
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no
