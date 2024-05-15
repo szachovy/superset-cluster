@@ -4,7 +4,7 @@ MYSQL_ROOT_PASSWORD=mysql
 
 docker build \
   --tag mysql-mgmt \
-  /opt/mysql-mgmt
+  /opt/superset-cluster/mysql-mgmt
 
 docker run \
   --detach \

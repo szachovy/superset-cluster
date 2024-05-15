@@ -1,6 +1,6 @@
 ---
 - name: end-to-end run
-  shell: |
+  ansible.builtin.shell: |
     set -euxo pipefail
     source {{ role_path }}/files/system.sh \
       {{ node_prefix }} \

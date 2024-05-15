@@ -6,7 +6,7 @@ docker build \
   --build-arg MYSQL_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD}" \
   --build-arg MYSQL_DATABASE=superset \
   --tag mysql-server \
-  /opt/mysql-server
+  /opt/superset-cluster/mysql-server
 
 docker run \
   --detach \

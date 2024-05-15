@@ -3,7 +3,8 @@
 node_prefix="${1}"
 nodes="${2}"
 network_interface="${3}"
-path_to_services="../../services"
+
+_path_to_root_catalog="../.."
 
 for ((node=0; node < ${nodes}; node++)); do
   if [ ${node} -eq 0 ]; then
@@ -15,7 +16,7 @@ for ((node=0; node < ${nodes}; node++)); do
   fi
 done
 
-source "${path_to_services}/common.sh"
+source "${_path_to_root_catalog}/src/common.sh"
 
 restart_nodes() {
   for mysql_node in "${mysql_nodes[@]}"; do
@@ -26,7 +27,7 @@ restart_nodes() {
 }
 
 superset_node_address() {
-  ssh root@"${superset_node}" "$(typeset -f get_superset_node_ip); get_superset_node_ip ${network_interface}"
+  ssh root@"${superset_node}" "cd /opt/superset-cluster; $(typeset -f get_superset_node_ip); get_superset_node_ip ${network_interface}"
 }
 
 docker_swarm_token() {
@@ -36,7 +37,7 @@ docker_swarm_token() {
 
 start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
-  scp -r ${path_to_services} "root@${superset_node}:/opt"
-  ssh root@${superset_node} "cd /opt && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]})"
+  scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]})"
 }

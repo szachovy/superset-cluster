@@ -1,51 +1,57 @@
 ---
-- name: Get infos on network
+- name: "check out nodes network"
   community.docker.docker_network_info:
-    name: node-network
+    name: "{{ node_prefix }}-network"
     timeout: 10
-  register: result
-  failed_when:
-    - "result.exists == false"
-    # do more
+  register: "network"
+  failed_when: |
+    (network.exists == false) or
+    (network.network.Internal == true) or
+    (network.network.Scope != 'local')
 
-- name: Get infos on container
+- name: "check out nodes infrastructure"
   community.docker.docker_container_info:
     name: "{{ container.value['Name'] }}"
-  register: node
-  loop: "{{ result.network.Containers | dict2items }}"
+    timeout: 10
+  loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
-    loop_var: container
-  failed_when:
-    - container.value['Name'] != node.container.Config.Hostname
-    - node.container.State.Running == false
-    # do more
+    loop_var: "container"
+  register: "node"
+  failed_when: |
+    (node.container.State.Running == false) or
+    (container.value['Name'] != node.container.Config.Hostname) or
+    (node.container.HostConfig.MemorySwap != 0) or
+    (node.container.HostConfig.NetworkMode != 'bridge')
 
-- name: copy
+# (node.container.HostConfig.Privileged == true) or
+# (node.container.Config.ExposedPorts | length != 0) or
+# (node.container.Config.User == 'root')
+
+- name: "check passwordless ssh to the nodes"
+  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+  loop: "{{ network.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: "container"
+
+- name: "copy introspection source to the containers"
   community.docker.docker_container_copy_into:
     container: "{{ container.value['Name'] }}"
     path: "{{ role_path }}/files/introspect.py"
     container_path: "/opt/superset-cluster/src/introspect.py"
-  loop: "{{ result.network.Containers | dict2items }}"
+    timeout: 10
+  loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
-    loop_var: container
-  register: service_status
+    loop_var: "container"  
 
-- name: introspect containers
+- name: "introspect running containers"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "python3 /opt/superset-cluster/src/introspect.py
+    command: "python3 introspect.py
       --nodes {{ nodes }}
       --node-prefix {{ node_prefix }}
       --network-interface {{ network_interface }}"
-  loop: "{{ result.network.Containers | dict2items }}"
+    chdir: "/opt/superset-cluster/src"
+    timeout: 15
+  loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
-    loop_var: container
-  register: service_status
-
-# - name: check passwordless ssh
-#   ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
-#   loop: "{{ result.network.Containers | dict2items }}"
-#   loop_control:
-#     loop_var: container
-#   register: ssh_result
-#   failed_when: ssh_result.rc != 0
+    loop_var: "container"
