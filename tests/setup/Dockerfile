@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 USER root
 
+ENV PYTHONPATH /opt/superset-cluster:${PYTHONPATH}
+
 RUN \
   apt \
     update \
