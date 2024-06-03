@@ -3,6 +3,8 @@
 *.tfstate
 *.tfstate.*
 *.lock.hcl
+id_rsa
+id_rsa.pub
 
 # Python
 __pycache__/
