@@ -19,10 +19,3 @@
 #   any_errors_fatal: yes
 #   tasks:
 #     - ansible.builtin.include_role: { name: "testing", tasks_from: "functional" }
-
-# - name: "performance testing"
-#   connection: "local"
-#   hosts: "testing"
-#   any_errors_fatal: yes
-#   tasks:
-#     - ansible.builtin.include_role: { name: "testing", tasks_from: "performance" }

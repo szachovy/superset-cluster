@@ -1,14 +1,16 @@
+
 import json
 import re
 
 import ast
 import typing
-import redis
 import docker
 import requests
+import functools
+
 
 MYSQL_USER='root'
-MYSQL_ROOT_PASSWORD='mysql'
+MYSQL_PASSWORD='mysql'
 NODE_PREFIX='node'
 NODES=5
 
@@ -20,50 +22,24 @@ CELERY_BROKER=f"redis://{REDIS_HOSTNAME}:{REDIS_PORT}/0"
 
 SUPERSET_PASSWORD='admin'
 SUPERSET_NODE='node-4'
-MGMT_NODE='node-0'
+MGMT_PRIMARY_NODE='node-0'
+MYSQL_PRIMARY_NODE='node-1'
+MYSQL_SECONDARY_NODES=['node-2', 'node-3']
 SUPERSET_HOSTNAME='superset'
 DATABASE_NAME='superset'
 
-class MyConnectionError(ConnectionError):
-    """Exception raised for errors in the connection process.
 
-    Attributes:
-        message -- explanation of the error
-        code -- optional error code
-    """
+class BaseNodeConnection:
+    def __init__(self, node: str | None = None) -> None:
+        self.client: docker.client.DockerClient = docker.from_env()
+        self.node: str = node
 
-    def __init__(self, message="There was a problem with the connection", code=None):
-        self.message = message
-        self.code = code
-        super().__init__(self.message)
+    def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
+        request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command)
+        if request.exit_code != 0:
+            raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
+        return request.output
 
-    def __str__(self):
-        if self.code:
-            return f"[{self.code}] {self.message}"
-        return self.message
-
-from functools import wraps
-
-def run_once(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if not wrapper.has_run:
-            wrapper.tokens = f(*args, **kwargs)
-            wrapper.has_run = True
-        return wrapper.tokens
-    wrapper.has_run = False
-    return wrapper
-
-class BaseContainerConnection:
-    def __init__(self) -> None:
-        self.client = docker.from_env()
-
-    def run_command_on_the_container(self, command: str) -> bytes:
-        # if self.client.containers.get(self.node).exec_run(command).exit_code == 0:
-        # else raise Exceptioon...
-        return self.client.containers.get(self.node).exec_run(command).output
-
-    @staticmethod
     def stop_node(self, node: str) -> None:
         self.client.containers.get(node).stop()
 
@@ -84,15 +60,24 @@ class BaseContainerConnection:
         # except ValueError:
         #     return json.loads(command.decode('utf-8'))
 
-class HealthCheck(type):
-    def __call__(cls, *args, **kwargs) -> "cls":
-        instance = super(HealthCheck, cls).__call__(*args, **kwargs)
-        for attr_name in dir(instance):
-            if 'status' in attr_name and callable(getattr(instance, attr_name)):
-                getattr(instance, attr_name)()
-        return instance
+class Utils:
+    def singleton_function(function_reference: typing.Callable) -> typing.Callable:
+        @functools.wraps(function_reference)
+        def wrapper(*args, **kwargs) -> str | dict[str, str]:
+            if not wrapper.object_created:
+                wrapper.tokens = function_reference(*args, **kwargs)
+                wrapper.object_created = True
+            return wrapper.tokens
+        wrapper.object_created = False
+        return wrapper
 
-class Redis(BaseContainerConnection, metaclass=HealthCheck):
+    def post_init_hook(self):
+        for name in dir(self):
+            attr = getattr(self, name)
+            if callable(attr) and getattr(attr, '_is_post_init_hook', False):
+                attr()
+
+class Redis(BaseNodeConnection):
     def connection_status(self) -> None | AssertionError:
         test_connection: bytes = self.run_command_on_the_container(f"docker exec {REDIS_HOSTNAME} python3 -c 'import redis; print(redis.StrictRedis(host=\"{REDIS_HOSTNAME}\", port={REDIS_PORT}).ping())'")
         assert self.find_in_the_output(test_connection, b'True'), f'The Redis container {REDIS_HOSTNAME} on {SUPERSET_NODE} is not responding or not working properly'
@@ -101,7 +86,8 @@ class Redis(BaseContainerConnection, metaclass=HealthCheck):
         query_result: bytes = self.run_command_on_the_container(f"docker exec {REDIS_HOSTNAME} python3 -c 'import redis; print(redis.StrictRedis(host=\"{REDIS_HOSTNAME}\", port={REDIS_PORT}).get(\"{results_key}\"))'")
         assert self.find_in_the_output(query_result, b"None"), f'Query results given key {results_key} not found in Redis'
 
-class Celery(BaseContainerConnection, metaclass=HealthCheck):
+
+class Celery(BaseNodeConnection):
     def connection_status(self) -> None | AssertionError: 
         test_connection: bytes = self.run_command_on_the_container(f"docker exec {SUPERSET_HOSTNAME} python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{CELERY_BROKER}\").control.inspect().ping())'")
         assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {SUPERSET_HOSTNAME} container on {SUPERSET_NODE} is not responding or not working properly'
@@ -120,33 +106,35 @@ class Celery(BaseContainerConnection, metaclass=HealthCheck):
         celery_worker_id: str = next(iter(celery_workers_stats))
         assert celery_workers_stats[celery_worker_id]['total'][CELERY_SQL_LAB_TASK_ANNOTATIONS] > 0, f'Executed SQL Lab queries are not processed or registered by Celery on {SUPERSET_NODE}, check the Celery worker process on {SUPERSET_HOSTNAME}'
 
-class SupersetNodeFunctionalTests(BaseContainerConnection):
-    def __init__(self, node: str) -> None:
-        super().__init__()
-        self.node: str = node
+
+class SupersetNodeFunctionalTests(BaseNodeConnection):
+    def __init__(self) -> None:
+        super().__init__(node=SUPERSET_NODE)
         self.api_default_url: str = "http://localhost:8088/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
         self.api_csrf_header: str = f"X-CSRFToken: {self.login_to_superset()['csrf_token']}"
         self.api_session_header: str = f"Cookie: session={self.login_to_superset()['session_token']}"
         self.celery = Celery()
         self.redis = Redis()
+        print(type(self.celery))
+        print(type(self.redis))
 
-    @run_once
+    @Utils.singleton_function
     def login_to_superset_api(self) -> str | AssertionError:
         headers: str = "Content-Type: application/json"
         payload: str = f'{{"username": "admin", "password": "{SUPERSET_PASSWORD}", "provider": "db", "refresh": true}}'
         api_login_output: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/security/login --header '{headers}' --data '{payload}'")
-        assert self.find_in_the_output(api_login_output, b'"message"'), f'Could not log in to the Superset API {api_login_output}'
+        assert not self.find_in_the_output(api_login_output, b'"message"'), f'Could not log in to the Superset API {api_login_output}'
         return self.decode_command_output(api_login_output).get("access_token")
 
-    @run_once
+    @Utils.singleton_function
     def login_to_superset(self) -> dict[str, str] | AssertionError:
         csrf_login_request: bytes = self.run_command_on_the_container(f"curl --include --url {self.api_default_url}/security/csrf_token/ --header '{self.api_authorization_header}'")
-        assert self.find_in_the_output(csrf_login_request, b'"msg"'), f'Could not pass login request {csrf_login_request}'
+        assert not self.find_in_the_output(csrf_login_request, b'"msg"'), f'Could not pass login request {csrf_login_request}'
         session_request_cookie: str = self.extract_session_cookie(csrf_login_request)
         csrf_token: str = json.loads(csrf_login_request.decode('utf-8').split('\r\n\r\n')[1]).get("result")
         superset_login_request: bytes = self.run_command_on_the_container(f"curl --include --url 'http://localhost:8088/login/' --header 'Cookie: session={session_request_cookie}' --data 'csrf_token={csrf_token}'")
-        assert self.find_in_the_output(superset_login_request, b'Redirecting...'), f'Invalid login request to Superset. Could not get a response from the server. Check if it is possible to log in to the server manually.'
+        assert not self.find_in_the_output(superset_login_request, b'Redirecting...'), f'Invalid login request to Superset. Could not get a response from the server. Check if it is possible to log in to the server manually.'
         superset_login_session_cookie: str = self.extract_session_cookie(superset_login_request)
         return {
             "csrf_token": csrf_token,
@@ -154,16 +142,16 @@ class SupersetNodeFunctionalTests(BaseContainerConnection):
         }
 
     def database_status(self) -> None | AssertionError:
-        payload: str = f'{{"database_name": {DATABASE_NAME}, "sqlalchemy_uri": "mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_ROOT_PASSWORD}@{MGMT_NODE}:6446/{DATABASE_NAME}", "impersonate_user": false}}'
+        payload: str = f'{{"database_name": {DATABASE_NAME}, "sqlalchemy_uri": "mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{MGMT_PRIMARY_NODE}:6446/{DATABASE_NAME}", "impersonate_user": false}}'
         test_database_connection: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/test_connection/ --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --header 'Content-Type: application/json' --data '{payload}'")
-        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {DATABASE_NAME} on {MGMT_NODE} port 6446, the database is either down or not configured according to the given MySQL Alchemy URI'
+        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {DATABASE_NAME} on {MGMT_PRIMARY_NODE} port 6446, the database is either down or not configured according to the given MySQL Alchemy URI'
 
     def dashboards_status(self) -> None | AssertionError:
         # self.run_command_on_the_container(f"docker exec {self.get_container_name()} superset load_examples")
         dashboard_charts: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1 --header '{self.api_authorization_header}'")
         dashboard_datasets: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1/datasets --header '{self.api_authorization_header}'")
-        assert self.find_in_the_output(dashboard_charts, b'{"message":"Not found"}'), f'No dashboards found in the Superset\'s {DATABASE_NAME} database'
-        assert self.find_in_the_output(dashboard_datasets, b'{"message":"Not found"}'), f'No datasets found in the Superset\'s {DATABASE_NAME} database'
+        assert not self.find_in_the_output(dashboard_charts, b'{"message":"Not found"}'), f'No dashboards found in the Superset\'s {DATABASE_NAME} database'
+        assert not self.find_in_the_output(dashboard_datasets, b'{"message":"Not found"}'), f'No datasets found in the Superset\'s {DATABASE_NAME} database'
         assert self.decode_command_output(dashboard_charts).get("result")["charts"] != [], f'Loaded dashboards to the Superset\'s {DATABASE_NAME} have no charts'
         assert self.decode_command_output(dashboard_datasets).get("result") != [], f'Loaded datasets to the Superset\'s {DATABASE_NAME} are empty'
 
@@ -193,54 +181,38 @@ class SupersetNodeFunctionalTests(BaseContainerConnection):
             assert self.celery.find_processed_queries(), 'qwe'
 
 
-class MgmtNodeFunctionalTests(BaseContainerConnection):
-    def __init__(self, node: str) -> None:
-        super().__init__()
-        self.node: str = node
-
-    def check_mysql_hostname(self):
-        pass
+class MgmtNodeFunctionalTests(BaseNodeConnection):
+    def __init__(self) -> None:
+        super().__init__(node=MGMT_PRIMARY_NODE)
 
     def routers_status(self):
-        self.run_command_on_the_container(f"docker exec {self.get_container_name()} mysqlsh --interactive --uri root:{MYSQL_ROOT_PASSWORD}@{self.node}:6446 --execute \"dba.getCluster(\'cluster\').listRouters();\"")
+        # find asserts
+        self.run_command_on_the_container(f"docker exec {MGMT_PRIMARY_NODE} mysqlsh --interactive --uri {MYSQL_USER}:{MYSQL_PASSWORD}@{MGMT_PRIMARY_NODE}:6446 --execute \"dba.getCluster(\'cluster\').listRouters();\"")
 
     def cluster_status(self):
-        cluster_status_output: bytes = self.run_command_on_the_container(f"docker exec {self.get_container_name()} mysqlsh --interactive --uri root:{MYSQL_ROOT_PASSWORD}@{self.node}:6446 --execute \"dba.getCluster(\'cluster\').status();\"")
+        cluster_status_output: bytes = self.run_command_on_the_container(f"docker exec {MGMT_PRIMARY_NODE} mysqlsh --interactive --uri root:{MYSQL_PASSWORD}@{MGMT_PRIMARY_NODE}:6446 --execute \"dba.getCluster(\'cluster\').status();\"")
         assert self.find_in_the_output(cluster_status_output, b'"status": "OK"'), 'edw'
         assert self.find_in_the_output(cluster_status_output, b'"topologyMode": "Single-Primary"'), 'rte'
-    
+
     def swarm_status(self):
         swarm_status_output: bytes = self.run_command_on_the_container("docker info")
         assert self.find_in_the_output(swarm_status_output, b'Swarm: active'), 'edw'
         assert self.find_in_the_output(swarm_status_output, b'Is Manager: false'), 'rew'
 
-def pipeline():
-    pass
+    def check_mysql_after_disaster(self):
+        # SELECT @@hostname; == ...
+        # self.stop_node(MYSQL_PRIMARY_NODE)
+        # SELECT @@hostname; == ...
+        pass
 
-s = SupersetNodeFunctionalTests(f"{NODE_PREFIX}-{NODES-1}")
-s.dashboards_status()
-# s.database_status()
-# dttm = s.run_query()
-# s.get_query_results(dttm)
+    def check_router_after_disaster(self):
+        # self.stop_node(MGMT_PRIMARY_NODE)
+        pass
 
-# m = MgmtNodeFunctionalTests(f"{NODE_PREFIX}-0")
-# m.cluster_status()
-# m.routers_available()
-
-# curl -X POST "http://localhost:8092/api/v1/security/login" -H "Content-Type: application/json" -d f'{"username": "admin", "password": "{SUPERSET_PASSWORD}", "provider": "db", "refresh": true}'
-# curl -H "Authorization: Bearer YOUR_ACCESS_TOKEN" "http://YOUR_SUPERSET_INSTANCE/api/v1/dashboard/"
-# print(s.connect_to_container('node-0').exec_run('env'))
-# print(s.cluster_status())
-# client = docker.from_env()
-# containers = client.containers.get("node-0").exec_run("docker ps --latest --format {{.Names}}").output.decode('utf-8').replace('\n', '')
-# print(containers)
-# primary_node_ip: str = 'node-0'
-# a = client.containers.get("node-0").exec_run("docker exec mysql-mgmt mysqlsh --interactive --uri root:mysql@node-0:6446 --execute \"dba.getCluster(\'cluster\').status();\"").output
-# print(a)
-# print(type(a))
-# docker exec mysql-mgmt mysqlsh --json --interactive --uri root:mysql@node-0:6446 --execute "dba.getCluster('cluster').status();"
 
 if __name__ == '__main__':
-    pipeline()
-    BaseContainerConnection.stop_node('node-1')
-    pipeline()
+    s = SupersetNodeFunctionalTests()
+    # s.dashboards_status()
+    # s.database_status()
+    # dttm = s.run_query()
+    # s.get_query_results(dttm)
