@@ -19,4 +19,4 @@ docker exec superset superset fab create-admin --username admin --firstname admi
 docker exec superset superset db upgrade
 # docker exec superset superset load_examples
 docker exec superset superset init
-# nohup docker exec superset celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4 > /dev/null 2>&1 &
+nohup docker exec superset celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4 > /dev/null 2>&1 &
