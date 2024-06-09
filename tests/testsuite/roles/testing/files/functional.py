@@ -1,13 +1,14 @@
 
+import ast
+import functools
 import json
 import re
+import threading
 import time
-
-import ast
 import typing
+
 import docker
 import requests
-import functools
 
 
 MYSQL_USER='root'
@@ -31,8 +32,8 @@ SUPERSET_HOSTNAME='superset'
 DATABASE_NAME='superset'
 
 
-MYSQL_NODE_DISASTER_DELAY=10
-MGMT_NODE_DISASTER_DELAY=10
+_MYSQL_NODE_DISASTER_DELAY=330
+_MGMT_NODE_DISASTER_DELAY=12
 
 class BaseNodeConnection:
     def __init__(self, node: str) -> None:
@@ -40,38 +41,59 @@ class BaseNodeConnection:
         self.node: str = node
 
     def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
-        request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command)
+        try:
+            request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command)
+        except (docker.errors.NotFound, docker.errors.APIError) as error:
+            raise requests.exceptions.RequestException(f'Can not running commands on the container {self.node}: {error}')
         if request.exit_code != 0:
             raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
         return request.output
 
     def stop_node(self, node: str) -> None:
-        self.client.containers.get(node).stop()
-    
+        try:
+            self.client.containers.get(node).stop()
+        except (docker.errors.NotFound, docker.errors.APIError) as error:
+            raise requests.exceptions.RequestException(f'Error stopping node {node}: {error}')
+
     def find_node_ip(self, node: str) -> str:
-        return self.client.containers.get(node).attrs['NetworkSettings']['Networks'][f'{NODE_PREFIX}-network']['IPAddress']
+        try:
+            return self.client.containers.get(node).attrs['NetworkSettings']['Networks'][f'{NODE_PREFIX}-network']['IPAddress']
+        except (docker.errors.NotFound, docker.errors.APIError, KeyError) as error:
+            raise requests.exceptions.RequestException(f'Error finding IP for node {node}: {error}')
 
     @staticmethod
     def find_in_the_output(output: bytes, text: bytes) -> bool:
-        if output.find(text) != -1:
-            return True
-        return False
+        return text in output
     
     @staticmethod
     def extract_session_cookie(request_output: bytes) -> str:
-        return re.search(r'Set-Cookie: session=(.*?);', request_output.decode('utf-8')).group(1)
+        cookie_section: str | None = re.search(r'Set-Cookie: session=(.*?);', request_output.decode('utf-8'))
+        if cookie_section:
+            return cookie_section.group(1)
+        raise ValueError(f'Session cookie in {request_output} has not been found')
     
     @staticmethod
     def decode_command_output(command: bytes) -> dict:
-        return ast.literal_eval(command.decode('utf-8').replace('null', 'None').replace('true', 'True').replace('false', 'False'))
-    
+        try:
+            return ast.literal_eval(
+                command.decode('utf-8')
+                .replace('null', 'None')
+                .replace('true', 'True')
+                .replace('false', 'False')
+            )
+        except (ValueError, SyntaxError) as error:
+            raise ValueError(f'Error decoding command {command} output: {error}')
+
+
 class Utils(type):
-    def __call__(cls, *args, **kwargs) -> typing.Type:
+    def __call__(cls, *args, **kwargs) -> typing.Any:
         instance = super().__call__(*args, **kwargs)
-        for attr_name in dir(instance):
-            attr = getattr(instance, attr_name)
-            if callable(attr) and getattr(attr, '_is_post_init_hook', False):
-                attr()
+        for class_attribute in dir(instance):
+            if class_attribute.startswith('_'):
+                continue
+            attribute = getattr(instance, class_attribute)
+            if callable(attribute) and getattr(attribute, '_is_post_init_hook', False):
+                attribute()
         return instance
 
     @staticmethod
@@ -84,11 +106,14 @@ class Utils(type):
 
     @staticmethod
     def singleton_function(method_reference: typing.Callable) -> typing.Callable:
+        lock = threading.Lock()
         @functools.wraps(method_reference)
         def method_wrapper(*args, **kwargs) -> str | dict[str, str]:
             if not method_wrapper.object_created:
-                method_wrapper.tokens = method_reference(*args, **kwargs)
-                method_wrapper.object_created = True
+                with lock:
+                    if not method_wrapper.object_created:
+                        method_wrapper.tokens = method_reference(*args, **kwargs)
+                        method_wrapper.object_created = True
             return method_wrapper.tokens
         method_wrapper.object_created = False
         return method_wrapper
@@ -103,9 +128,10 @@ class Redis(BaseNodeConnection, metaclass=Utils):
         test_connection: bytes = self.run_command_on_the_container(f"docker exec {SUPERSET_HOSTNAME} python3 -c 'import redis; print(redis.StrictRedis(host=\"{REDIS_HOSTNAME}\", port={REDIS_PORT}).ping())'")
         assert self.find_in_the_output(test_connection, b'True'), f'The Redis container {SUPERSET_HOSTNAME} on {SUPERSET_NODE} is not responding or not working properly'
 
-    def fetch_query_result(self, results_key: float) -> None | AssertionError:
+    def fetch_query_result(self, results_key: float) -> bool | AssertionError:
         query_result: bytes = self.run_command_on_the_container(f"docker exec {SUPERSET_HOSTNAME} python3 -c 'import redis; print(redis.StrictRedis(host=\"{REDIS_HOSTNAME}\", port={REDIS_PORT}).get(\"{results_key}\"))'")
-        assert self.find_in_the_output(query_result, b"None"), f'Query results given key {results_key} not found in Redis'
+        assert not self.find_in_the_output(query_result, b"None"), f'Query results given key {results_key} not found in Redis'
+        return True
 
 
 class Celery(BaseNodeConnection, metaclass=Utils):
@@ -125,12 +151,13 @@ class Celery(BaseNodeConnection, metaclass=Utils):
         celery_worker_id: str = next(iter(celery_workers_configuration))
         assert all(features in celery_workers_configuration[celery_worker_id]['include'] for features in ['superset.tasks.cache', 'superset.tasks.scheduler']), f'Celery cache and scheduler features in the {CELERY_BROKER} not found'
 
-    def find_processed_queries(self) -> None | AssertionError:
+    def find_processed_queries(self) -> bool | AssertionError:
         celery_workers_stats: dict = self.decode_command_output(
             self.run_command_on_the_container(f"docker exec {SUPERSET_HOSTNAME} python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{CELERY_BROKER}\").control.inspect().stats())'")
         )
         celery_worker_id: str = next(iter(celery_workers_stats))
         assert celery_workers_stats[celery_worker_id]['total'][CELERY_SQL_LAB_TASK_ANNOTATIONS] > 0, f'Executed SQL Lab queries are not processed or registered by Celery on {SUPERSET_NODE}, check the Celery worker process on {SUPERSET_HOSTNAME}'
+        return True
 
 
 class SupersetNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
@@ -173,7 +200,6 @@ class SupersetNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
 
     @Utils.post_init_hook
     def status_datasets(self) -> None | AssertionError:
-        # self.run_command_on_the_container(f"docker exec {SUPERSET_HOSTNAME} superset load_examples")
         dashboard_charts: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1 --header '{self.api_authorization_header}'")
         dashboard_datasets: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1/datasets --header '{self.api_authorization_header}'")
         assert not self.find_in_the_output(dashboard_charts, b'{"message":"Not found"}'), f'No dashboards found in the Superset\'s {DATABASE_NAME} database'
@@ -188,23 +214,29 @@ class SupersetNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
         assert self.find_in_the_output(swarm_status_output, b'Is Manager: true'), f'The {SUPERSET_NODE} is supposed to be a Swarm manager, but it is not'
         # assert self.find_in_the_output(swarm_status_output, b'Nodes: 3'), 'The Swarm is expected to consist of three nodes in the pool, but the actual number varies.'
 
-    def run_query(self) -> float | AssertionError:
-        # check what assertions include
-        payload: str = f'{{"database_id":2, "runAsync": true, "sql": "SELECT * FROM {DATABASE_NAME}.logs;"}}'
-        sqllab_run_query: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/sqllab/execute/ --header 'Content-Type: application/json' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
+    def create_database_connection(self) -> int | AssertionError:
+        payload: str = f'{{"engine":"mysql","configuration_method":"sqlalchemy_form","database_name":"MySQL","sqlalchemy_uri":"mysql+mysqlconnector://{MYSQL_USER}:{MYSQL_PASSWORD}@{self.find_node_ip(MGMT_PRIMARY_NODE)}:6446/{DATABASE_NAME}"}}'
+        mysql_connect: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
+        assert not self.find_in_the_output(mysql_connect, b'"message"'), f'Could not create database from API: {mysql_connect}'
+        return self.decode_command_output(mysql_connect).get('id')
+
+    def run_query(self, database_id: int) -> float | AssertionError:
+        payload: str = f'{{"database_id":{database_id}, "runAsync": true, "sql": "SELECT * FROM {DATABASE_NAME}.logs;"}}'
+        sqllab_run_query: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/sqllab/execute/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
+        assert not self.find_in_the_output(sqllab_run_query, b'"msg"'), f'SQL query execution failed with the following message: {sqllab_run_query}'
+        assert not self.find_in_the_output(sqllab_run_query, b'"message"'), f'Could not execute query on: {DATABASE_NAME}'
         dttm_time_query_identifier: float = self.decode_command_output(sqllab_run_query).get("query").get("startDttm")
         return dttm_time_query_identifier
     
     def get_query_results(self, dttm_time_query_identifier: float):
-        # find what assertions include
         time.sleep(1)  # state refreshing
         query_result: dict = self.decode_command_output(
-            self.run_command_on_the_container(f"curl --silent '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' --header 'Accept: application/json' --header '{self.api_session_header}' --header '{self.api_csrf_header}'")
+            self.run_command_on_the_container(f"curl --silent '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' --header 'Accept: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}'")
         )
         assert query_result.get("result")[0]['state'] == 'success', f'Could not find query state or returned unsuccessful: {query_result}'
         results_key: str = f"superset_results{query_result.get('result')[0]['resultsKey']}"
-        assert self.redis.fetch_query_result(results_key), 'asd'
-        assert self.celery.find_processed_queries(), 'qwe'
+        assert self.redis.fetch_query_result(results_key), f'Query result with the {results_key} key can not be found in Redis'
+        assert self.celery.find_processed_queries(), 'Query seems to be processed outside Celery worker'
 
 
 class MgmtNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
@@ -229,8 +261,8 @@ class MgmtNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
 
     def check_mysql_after_disaster(self):
         self.stop_node(MYSQL_PRIMARY_NODE)
-        new_mysql_primary_node: bytes = self.run_command_on_the_container(f"docker exec {MGMT_HOSTNAME} mysqlsh --interactive --uri root:{MYSQL_PASSWORD}@{MGMT_PRIMARY_NODE}:6446 --sql --execute \"SELECT @@hostname;\"")
-        time.sleep(MYSQL_NODE_DISASTER_DELAY)
+        time.sleep(_MYSQL_NODE_DISASTER_DELAY)
+        new_mysql_primary_node: bytes = self.run_command_on_the_container(f"docker exec {MGMT_HOSTNAME} mysqlsh --interactive --uri {MYSQL_USER}:{MYSQL_PASSWORD}@{MGMT_PRIMARY_NODE}:6446 --sql --execute \"SELECT @@hostname;\"")
         assert self.find_in_the_output(new_mysql_primary_node, MYSQL_SECONDARY_NODES[0].encode('utf-8')), f'After stopping {MYSQL_PRIMARY_NODE}, {MYSQL_SECONDARY_NODES[0]} was expected to be selected as the new primary in a round-robin fashion. Selection process failed'
 
     def check_router_after_disaster(self):
@@ -239,9 +271,10 @@ class MgmtNodeFunctionalTests(BaseNodeConnection, metaclass=Utils):
 
 
 if __name__ == '__main__':
-    # s = SupersetNodeFunctionalTests()
-    # query_dttm = s.run_query()
-    # s.get_query_results(query_dttm)
-    m = MgmtNodeFunctionalTests()
-    m.check_mysql_after_disaster()
-    m.check_router_after_disaster()
+    superset_functional = SupersetNodeFunctionalTests()
+    database_id = superset_functional.create_database_connection()
+    query_dttm = superset_functional.run_query(database_id)
+    superset_functional.get_query_results(query_dttm)
+    mgmt_functional = MgmtNodeFunctionalTests()
+    mgmt_functional.check_mysql_after_disaster()
+    mgmt_functional.check_router_after_disaster()

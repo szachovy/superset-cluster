@@ -5,6 +5,7 @@ nodes="${2}"
 network_interface="${3}"
 
 _path_to_root_catalog="../.."
+preload_examples=true
 
 for ((node=0; node < ${nodes}; node++)); do
   if [ ${node} -eq 0 ]; then
@@ -39,5 +40,5 @@ start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]})"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]}) ${preload_examples}"
 }

@@ -5,6 +5,7 @@ mysql_nodes=("10.145.211.153" "10.145.211.154" "10.145.211.156")
 network_interface="tun0"
 
 _path_to_root_catalog="."
+preload_examples=false
 
 source ${_path_to_root_catalog}/src/common.sh
 
@@ -18,7 +19,7 @@ restart_nodes() {
 start_superset() {
   docker network create --driver overlay --attachable superset-network
   ./services/redis/init.sh
-  ./services/superset/init.sh ${mgmt_nodes[0]}
+  ./services/superset/init.sh ${mgmt_nodes[0]} ${preload_examples}
 }
 
 initialize_nodes

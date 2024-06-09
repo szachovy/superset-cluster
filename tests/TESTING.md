@@ -12,12 +12,10 @@ Testing consist of two modules:
   * ...trying to mimic the same deployment process, but against terraform generated infrastructure instead of user provided hosts
 * [Functional](testsuite/roles/testing/tasks/functional.yml) tests
   * ...
-* [Performance](testsuite/roles/testing/tasks/performance.yml) tests
-  * ...
 
 ## Running tests
 
-### Required sotfware
+### Required software
 
 ### Default ...
 
