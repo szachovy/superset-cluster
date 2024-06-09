@@ -1,7 +1,9 @@
 # Testing
 
 Testing consist of two modules:
-* `setup`: Sets up Terraform infrastructure which typically consist of `n` number of docker containers imitating standalone nodes.
+* `setup`: Sets up Terraform infrastructure which typically consist of 6 docker containers imitating standalone nodes, where:
+  * `<node-prefix>-0` is ...
+  ...
 * `testsuite`: Ansible playbook that run testsuite against applied terraform infrastructure.
 
 ## Testing objectives and procedures
@@ -35,7 +37,7 @@ terraform init
 terraform apply --auto-approve
 ```
 
-After successfull run, and 5 docker containers appeared with a healthy state, populate terraform variables and project's defaults to the ansible group variables by running the script:
+After successfull run, and 5 docker containers appeared with a healthy state, populate terraform variables and project's defaults to the ansible group variables by running the script from the `tests` directory:
 
 ```
 ./generate_group_vars.sh
@@ -59,7 +61,7 @@ Some of the variables are shared between [terraform variables](./setup/variables
 
 ### Ansible variables
 
-Ansible group variables is a dynamically modified file consisting of pre-pupulated [defaults](../src/defaults.yml), shared values from [Terraform variables](#terraform-variables) and dynamically generated passwords for testing:
+Ansible group variables is a dynamically modified file consisting of pre-populated [defaults](../src/defaults.yml), shared values from [Terraform variables](#terraform-variables) and dynamically generated passwords for testing:
 
 ...
 

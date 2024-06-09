@@ -47,7 +47,6 @@
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
     command: "python3 introspect.py
-      --nodes {{ nodes }}
       --node-prefix {{ node_prefix }}
       --network-interface {{ network_interface }}"
     chdir: "/opt/superset-cluster/src"

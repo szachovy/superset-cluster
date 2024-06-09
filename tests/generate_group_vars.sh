@@ -28,6 +28,8 @@ while IFS= read -r line; do
 done < ./setup/variables.tf
 
 # Write to YAML file with proper formatting
+echo "mysql_password: $(openssl rand -base64 12)" >> "$output_file"
+echo "superset_password: $(openssl rand -base64 12)" >> "$output_file"
 while IFS= read -r line; do
     var_name=$(echo "$line" | cut -d':' -f1)
     case $var_name in
