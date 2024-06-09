@@ -62,11 +62,6 @@ The exemplary command for execution is as follows:
 
 For development purposes, you can set up and run end-to-end tests from the test suite locally. Testing infrastructure remains preserved. Please refer to [the testing guide](tests/TESTING.md) for more information.
 
-```bash
-cd tests
-./run.sh
-```
-
 ## License
 
 [Apache v2.0](LICENSE)
