@@ -5,10 +5,9 @@ mysql_user: "root"
 redis_hostname: "redis"
 redis_port: 6379
 celery_sql_lab_task_annotations: "sql_lab.get_sql_results"
-celery_broker: "redis://{redis_hostname}:{redis_port}/0"
+celery_broker: "redis://{{ redis_hostname }}:{{ redis_port }}/0"
 superset_hostname: "superset"
 database_name: "superset"
-mysql_password: 9s13aWfw0PPOmorG
-superset_password: iQilcuXCoDM5Ymda
-nodes: 5
+mysql_password: mysql
+superset_password: admin
 node_prefix: "node"

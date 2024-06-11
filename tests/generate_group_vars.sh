@@ -37,12 +37,7 @@ while IFS= read -r line; do
             continue ;;
         *)
             default_value=$(echo "$line" | cut -d':' -f2- | xargs)
-            # Check if the value is a number or a string
-            if [[ $default_value =~ ^[0-9]+$ ]]; then
-                echo "$var_name: $default_value" >> "$output_file"
-            else
-                echo "$var_name: \"$default_value\"" >> "$output_file"
-            fi ;;
+            echo "$var_name: \"$default_value\"" >> "$output_file"
     esac
 done < "$temp_file"
 

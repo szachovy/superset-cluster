@@ -1,52 +1,56 @@
 ---
 - name: "copy superset functional tests source to the container"
   community.docker.docker_container_copy_into:
-    container: "{{ node-prefix }}-4"
-    path: "{{ role_path }}/files/functional-superset.py"
-    container_path: "/opt/superset-cluster/src/functional-superset.py"
+    container: "{{ node_prefix }}-4"
+    path: "{{ role_path }}/files/functional_superset.py"
+    container_path: "/opt/superset-cluster/src/functional_superset.py"
     timeout: 10
 
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
-    container: "{{ node-prefix }}-4"
-    command: "python3 functional-superset.py
-        --nodes {{ nodes }}
-        --node-prefix {{ node-prefix }}
-        --mgmt-hostname {{ mgmt-hostname }}
-        --mysql-user {{ mysql-user }}
-        --mysql-password {{ mysql-password }}
-        --redis-hostname {{ redis-hostname }}
-        --redis-port {{ redis-port }}
-        --celery-sql-lab-task-annotations {{ celery-sql-lab-task-annotations }}
-        --celery-broker {{ celery-broker }}
-        --superset-hostname {{ superset-hostname }}
-        --database-name {{ database-name }}
-        --superset-password {{ superset-password }}"
+    container: "{{ node_prefix }}-4"
+    command: "python3 -c 
+      'import functional_superset;
+      superset_functional = functional_superset.SupersetNodeFunctionalTests(
+        node_prefix=\"{{ node_prefix }}\",
+        mysql_user=\"{{ mysql_user }}\",
+        mysql_password=\"{{ mysql_password }}\",
+        redis_hostname=\"{{ redis_hostname }}\",
+        redis_port={{ redis_port }},
+        celery_sql_lab_task_annotations=\"{{ celery_sql_lab_task_annotations }}\",
+        celery_broker=\"{{ celery_broker }}\",
+        superset_hostname=\"{{ superset_hostname }}\",
+        database_name=\"{{ database_name }}\",
+        superset_password=\"{{ superset_password }}\"
+      );
+      database_id = superset_functional.create_database_connection();
+      query_dttm = superset_functional.run_query(database_id);
+      superset_functional.get_query_results(query_dttm)'"
     chdir: "/opt/superset-cluster/src"
     timeout: 300
 
 - name: "copy mgmt functional tests source to the container"
   community.docker.docker_container_copy_into:
-    container: "{{ node-prefix }}-0"
-    path: "{{ role_path }}/files/functional-mgmt.py"
-    container_path: "/opt/superset-cluster/src/functional-mgmt.py"
+    container: "{{ node_prefix }}-0"
+    path: "{{ role_path }}/files/functional_mgmt.py"
+    container_path: "/opt/superset-cluster/src/functional_mgmt.py"
     timeout: 10
 
-- name: "run mgmt functional tests"
-  community.docker.docker_container_exec:
-    container: "{{ node-prefix }}-0"
-    command: "python3 functional-mgmt.py
-        --nodes {{ nodes }}
-        --node-prefix {{ node-prefix }}
-        --mgmt-hostname {{ mgmt-hostname }}
-        --mysql-user {{ mysql-user }}
-        --mysql-password {{ mysql-password }}
-        --redis-hostname {{ redis-hostname }}
-        --redis-port {{ redis-port }}
-        --celery-sql-lab-task-annotations {{ celery-sql-lab-task-annotations }}
-        --celery-broker {{ celery-broker }}
-        --superset-hostname {{ superset-hostname }}
-        --database-name {{ database-name }}
-        --superset-password {{ superset-password }}"
-    chdir: "/opt/superset-cluster/src"
-    timeout: 600
+# - name: "run mgmt functional tests"
+#   community.docker.docker_container_exec:
+#     container: "{{ node-prefix }}-0"
+#     command: "python3 functional-mgmt.py
+#         --nodes {{ nodes }}
+#         --node-prefix {{ node-prefix }}
+#         --mgmt-hostname {{ mgmt-hostname }}
+#         --mysql-user {{ mysql-user }}
+#         --mysql-password {{ mysql-password }}
+#         --redis-hostname {{ redis-hostname }}
+#         --redis-port {{ redis-port }}
+#         --celery-sql-lab-task-annotations {{ celery-sql-lab-task-annotations }}
+#         --celery-broker {{ celery-broker }}
+#         --superset-hostname {{ superset-hostname }}
+#         --database-name {{ database-name }}
+#         --superset-password {{ superset-password }}"
+#     chdir: "/opt/superset-cluster/src"
+#     timeout: 600

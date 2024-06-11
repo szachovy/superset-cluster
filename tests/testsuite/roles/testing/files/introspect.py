@@ -1,65 +1,28 @@
 
-import argparse
+import ipaddress
 import socket
 import subprocess
 
+import data_structures
 import interfaces
 
 
-class ArgumentParser:
-    def __init__(self) -> None:
-        self.parser: argparse.ArgumentParser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
+class ContainerChecks(metaclass=data_structures.Overlay):
+    def __init__(self, node_prefix: str, network_interface: str) -> None:
+        self.node_prefix: str = node_prefix
+        self.network_interface: str = network_interface
+        self.nodes: int = 5
 
-        self.parser.add_argument('--nodes', type=int, required=True)
-        self.parser.add_argument('--node-prefix', type=str, required=True)
-        self.parser.add_argument('--network-interface', type=str, required=True)
+    @data_structures.Overlay.post_init_hook
+    def status_services(self) -> None | AssertionError:
+        assert subprocess.run(['service', 'ssh', 'status'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0, f'SSH service is not running in {socket.gethostname()} node'
+        assert subprocess.run(['service', 'docker', 'status'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).returncode == 0, f'Docker service is not running in {socket.gethostname()} node'
 
-    def parse_arguments(self) -> argparse.Namespace:
-        return self.parser.parse_args()
+    @data_structures.Overlay.post_init_hook
+    def status_dns(self) -> None | AssertionError:
+        for node_number in range(self.nodes):
+            assert bool(ipaddress.IPv4Address(socket.gethostbyname(f"{self.node_prefix}-{node_number}"))), f"{self.node_prefix}-{node_number} node can not be resolved."
 
-
-class ServiceNotRunningError(Exception):
-    def __init__(self, service_name: str) -> None:
-        super().__init__(f"The service '{service_name}' is not running.")
-
-
-class ContainerChecks:
-    def __init__(self) -> None:
-        self.arguments: argparse.Namespace = ArgumentParser().parse_arguments()
-        print(self)
-    
-    def __str__(self) -> str:
-        return f"Running checks on container {socket.gethostname()}"
-
-    @staticmethod
-    def check_service(service: str) -> None | ServiceNotRunningError:
-        if subprocess.run(['service', service, 'status'],
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE).returncode != 0:
-            raise ServiceNotRunningError(service)
-
-    def check_dns(self) -> None | socket.gaierror:
-        for node in range(self.arguments.nodes):
-            host: str = f"{self.arguments.node_prefix}-{node}"
-            try:
-                socket.gethostbyname(host)
-            except socket.gaierror as socketerror:
-                if socketerror.errno == -2:
-                    raise socket.gaierror(f"{host} node can not be resolved.")
-                raise
-
-    def check_network_interface(self) -> None | StopIteration:
-        try:
-            interfaces.network_interfaces(network_interface=self.arguments.network_interface)
-        except StopIteration:
-            raise
-
-    def run(self) -> None:
-        self.check_service('ssh')
-        self.check_service('docker')
-        self.check_dns()
-        self.check_network_interface()
-
-
-if __name__ == "__main__":
-    ContainerChecks().run()
+    @data_structures.Overlay.post_init_hook
+    def status_network_interfaces(self) -> None | AssertionError:
+        assert socket.gethostbyaddr(interfaces.network_interfaces(network_interface=self.network_interface))[0] == socket.gethostname(), 'Hostname does not resolve to IPv4 address of the node taken from the configuration'

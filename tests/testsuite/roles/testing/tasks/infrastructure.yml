@@ -46,9 +46,13 @@
 - name: "introspect running containers"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "python3 introspect.py
-      --node-prefix {{ node_prefix }}
-      --network-interface {{ network_interface }}"
+    command: "python3 -c 
+      'import introspect;
+      introspect.ContainerChecks(
+        node_prefix=\"{{ node_prefix }}\",
+        network_interface=\"{{ network_interface }}\"
+      )
+      '"
     chdir: "/opt/superset-cluster/src"
     timeout: 15
   loop: "{{ network.network.Containers | dict2items }}"
