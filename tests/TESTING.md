@@ -15,6 +15,12 @@ Ansible testsuite include: ...
 
 ## Running tests
 
+### Host requirements
+
+Tests would fail if the host system is unable to hold 6 <...> containers running in parallel.
+It has been tested on: ...
+<RAM> ...
+
 ### Required software
 
 Testing host is the `ubuntu:22.04` and has the following software installed:
@@ -72,3 +78,5 @@ Ansible group variables is a dynamically modified file consisting of pre-populat
 ### Additional resources
 
 * [Terraform Docker provider](https://registry.terraform.io/providers/kreuzwerker/docker/latest/docs)
+* [Ansible Community Docker](https://docs.ansible.com/ansible/latest/collections/community/docker/index.html)
+* [Superset API](https://superset.apache.org/docs/api/#api)

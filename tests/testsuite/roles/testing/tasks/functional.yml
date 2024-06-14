@@ -1,4 +1,13 @@
 ---
+- name: "install required pip packages on {{ node_prefix }}-4"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-4"
+    command: "/bin/bash -c
+      'wget https://bootstrap.pypa.io/get-pip.py &&
+      python3 get-pip.py &&
+      pip install --no-cache-dir --user requests==2.32.3 docker==7.1.0 retry==0.9.2'"
+    timeout: 15
+
 - name: "copy superset functional tests source to the container"
   community.docker.docker_container_copy_into:
     container: "{{ node_prefix }}-4"
@@ -9,7 +18,7 @@
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-4"
-    command: "python3 -c 
+    command: "python3 -c
       'import functional_superset;
       superset_functional = functional_superset.SupersetNodeFunctionalTests(
         node_prefix=\"{{ node_prefix }}\",
@@ -27,7 +36,16 @@
       query_dttm = superset_functional.run_query(database_id);
       superset_functional.get_query_results(query_dttm)'"
     chdir: "/opt/superset-cluster/src"
-    timeout: 300
+    timeout: 30
+
+- name: "install required pip packages on {{ node_prefix }}-0"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: "/bin/bash -c
+      'wget https://bootstrap.pypa.io/get-pip.py &&
+      python3 get-pip.py &&
+      pip install --no-cache-dir --user requests==2.32.3 docker==7.1.0 retry==0.9.2'"
+    timeout: 15
 
 - name: "copy mgmt functional tests source to the container"
   community.docker.docker_container_copy_into:
@@ -36,21 +54,50 @@
     container_path: "/opt/superset-cluster/src/functional_mgmt.py"
     timeout: 10
 
-# - name: "run mgmt functional tests"
-#   community.docker.docker_container_exec:
-#     container: "{{ node-prefix }}-0"
-#     command: "python3 functional-mgmt.py
-#         --nodes {{ nodes }}
-#         --node-prefix {{ node-prefix }}
-#         --mgmt-hostname {{ mgmt-hostname }}
-#         --mysql-user {{ mysql-user }}
-#         --mysql-password {{ mysql-password }}
-#         --redis-hostname {{ redis-hostname }}
-#         --redis-port {{ redis-port }}
-#         --celery-sql-lab-task-annotations {{ celery-sql-lab-task-annotations }}
-#         --celery-broker {{ celery-broker }}
-#         --superset-hostname {{ superset-hostname }}
-#         --database-name {{ database-name }}
-#         --superset-password {{ superset-password }}"
-#     chdir: "/opt/superset-cluster/src"
-#     timeout: 600
+- name: "run mgmt functional tests"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: "python3 -c
+      'import functional_mgmt;
+      mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
+        mgmt_hostname=\"{{ mgmt_hostname }}\",
+        mysql_user=\"{{ mysql_user }}\",
+        mysql_password=\"{{ mysql_password }}\",
+        node_prefix=\"{{ node_prefix }}\",
+        after_disaster=False
+      );'"
+    chdir: "/opt/superset-cluster/src"
+    timeout: 15
+
+- name: Disaster testing - Stop MySQL primary node
+  community.docker.docker_container:
+    name: "{{ node_prefix }}-1"
+    state: stopped
+
+- name: "run mgmt functional tests after disasters"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: "python3 -c
+      'import functional_mgmt;
+      mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
+        mgmt_hostname=\"{{ mgmt_hostname }}\",
+        mysql_user=\"{{ mysql_user }}\",
+        mysql_password=\"{{ mysql_password }}\",
+        node_prefix=\"{{ node_prefix }}\",
+        after_disaster=True
+      );
+      mgmt_functional.check_mysql_after_disaster();
+      mgmt_functional.check_router_after_disaster()'"
+    chdir: "/opt/superset-cluster/src"
+  register: out
+  # timeout: 390
+
+- name: "out"
+  copy:
+    content: "{{ out.stdout }}"
+    dest: "counter.txt"
+
+- name: "err"
+  copy:
+    content: "{{ out.stderr }}"
+    dest: "counterr.txt"

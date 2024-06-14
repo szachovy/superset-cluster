@@ -22,4 +22,5 @@ if ${PRELOAD_EXAMPLES} ; then
   docker exec superset superset load_examples
 fi
 docker exec superset superset init
+sleep 15
 nohup docker exec superset celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4 > /dev/null 2>&1 &

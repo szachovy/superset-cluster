@@ -1,29 +1,23 @@
 #!/bin/bash
 
 node_prefix="${1}"
-nodes="${2}"
-network_interface="${3}"
+network_interface="${2}"
+
+mgmt_nodes=("${node_prefix}-0")
+mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
+superset_node="${node_prefix}-4"
 
 _path_to_root_catalog="../.."
 preload_examples=true
 
-for ((node=0; node < ${nodes}; node++)); do
-  if [ ${node} -eq 0 ]; then
-    mgmt_nodes=("${node_prefix}-${node}")
-  elif [ ${node} -eq $((${nodes}-1)) ]; then
-    superset_node="${node_prefix}-${node}"
-  else
-    mysql_nodes+=("${node_prefix}-${node}")
-  fi
-done
-
 source "${_path_to_root_catalog}/src/common.sh"
 
 restart_nodes() {
+  sleep 60
   for mysql_node in "${mysql_nodes[@]}"; do
     docker restart ${mysql_node}
-    sleep 10
-    nohup ssh root@${mysql_node} "dockerd"  > /dev/null 2>&1 &
+    sleep 60
+    nohup ssh root@${mysql_node} "service docker start"  > /dev/null 2>&1 &
   done
 }
 
