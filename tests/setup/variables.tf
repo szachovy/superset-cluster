@@ -1,9 +1,3 @@
-variable "nodes" {
-  description = "Number of nodes"
-  type        = number
-  default     = 5
-}
-
 variable "node_version" {
   description = "Version of the container nodes deployed"
   type        = string

@@ -89,15 +89,4 @@
       mgmt_functional.check_mysql_after_disaster();
       mgmt_functional.check_router_after_disaster()'"
     chdir: "/opt/superset-cluster/src"
-  register: out
-  # timeout: 390
-
-- name: "out"
-  copy:
-    content: "{{ out.stdout }}"
-    dest: "counter.txt"
-
-- name: "err"
-  copy:
-    content: "{{ out.stderr }}"
-    dest: "counterr.txt"
+  timeout: 300

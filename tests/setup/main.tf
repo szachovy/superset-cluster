@@ -73,7 +73,7 @@ resource "docker_image" "node_image" {
 }
 
 resource "docker_container" "nodes" {
-  count = "${var.nodes}"
+  count = "5"
   name  = "${var.node_prefix}-${count.index}"
   hostname = "${var.node_prefix}-${count.index}"
   image = "${docker_image.node_image.name}"
@@ -83,6 +83,7 @@ resource "docker_container" "nodes" {
     internal = 8088
     external = "${8088 + count.index}"
   }
+
   ulimit {
     name = "nofile"
     soft = 1024
@@ -120,6 +121,40 @@ resource "docker_container" "nodes" {
     docker_network.nodes_network,
     null_resource.manage_ssh
   ]
+}
+
+resource "null_resource" "generate_ansible_group_vars" {
+  triggers = {
+    always_run = "${timestamp()}"
+  }
+
+  provisioner "local-exec" {
+    when = create
+    command = <<-EOT
+      mkdir $(dirname $GROUP_VARS_FILE)
+      cp $DEFAULTS_FILE $GROUP_VARS_FILE
+      {
+        echo "mysql_password: \"mysql\""
+        echo "superset_password: \"admin\""
+        echo "node_prefix: \"$NODE_PREFIX\""
+      } >> $GROUP_VARS_FILE
+    EOT
+
+    environment = {
+      DEFAULTS_FILE="../../src/defaults.yml"
+      GROUP_VARS_FILE="../testsuite/group_vars/testing.yml"
+      NODE_PREFIX="${var.node_prefix}"
+    }
+  }
+
+  provisioner "local-exec" {
+    when = destroy
+    command = "rm --recursive $(dirname $GROUP_VARS_FILE)"
+
+    environment = {
+      GROUP_VARS_FILE="../testsuite/group_vars/testing.yml"
+    }
+  }
 }
 
 resource "null_resource" "finish_configuration" {

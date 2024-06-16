@@ -1,9 +1,7 @@
 
-import time
-
-import data_structures
 import container_connection
-import retry
+import data_structures
+
 
 class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
     def __init__(self, mgmt_hostname: str, mysql_user: str, mysql_password: str, node_prefix: str, after_disaster: bool) -> None:
@@ -15,10 +13,6 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
         self.mysql_primary_node: str = f"{node_prefix}-1"
         self.mysql_secondary_nodes: list = [f"{node_prefix}-2", f"{node_prefix}-3"]
         self.after_disaster: bool = after_disaster
-        if after_disaster:
-            self.mysql_node_disaster_delay: int = 600
-            self.counter = 0
-            self.mgmt_node_disaster_delay: int = 12
 
     @data_structures.Overlay.post_init_hook
     def status_cluster(self):
@@ -46,7 +40,6 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
 
     def check_mysql_after_disaster(self):
         if self.after_disaster:
-            # time.sleep(self.mysql_node_disaster_delay)
             new_mysql_primary_node: bytes = self.run_command_on_the_container(f"mysqlsh --interactive --uri {self.mysql_user}:{self.mysql_password}@{self.mgmt_primary_node}:6446 --sql --execute \"SELECT @@hostname;\"")
             if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[0].encode('utf-8')):
                 if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[1].encode('utf-8')):
@@ -54,7 +47,6 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
 
     def check_router_after_disaster(self):
         if self.after_disaster:
-            # time.sleep(self.mgmt_node_disaster_delay)
             # new_self.mgmt_primary_node: bytes = ...
             # assert self.find_in_the_output(new_self.mgmt_primary_node, ...), f'After stopping {self.mgmt_primary_node}, {self.mgmt_secondary_node: str }  was expected to be selected as the new primary in a round-robin fashion. Selection process failed'
             pass

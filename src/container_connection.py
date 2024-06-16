@@ -15,10 +15,10 @@ class ContainerUtilities:
         self.node: str = node
         self.counter: int = 0
 
-    @retry.retry(tries=150, delay=5)
+    @retry.retry(tries=60, delay=5)
     def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
-        print(self.counter)
         self.counter += 5
+        print(self.counter)
         try:
             request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command, stdout=True, stderr=True)
         except (docker.errors.NotFound, docker.errors.APIError) as error:

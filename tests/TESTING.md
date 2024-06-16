@@ -1,23 +1,27 @@
 # Testing
 
-Testing consist of two modules:
-* `setup`: Sets up Terraform infrastructure which typically consist of 6 docker containers imitating standalone nodes, where:
-  * `<node-prefix>-0` is ...
-  ...
-* `testsuite`: Ansible playbook that run testsuite against applied terraform infrastructure.
+Main tests catalog of `superset-cluster`.
 
 ## Testing objectives and procedures
 
-Ansible testsuite include: ...
-* [Infrastructure](testsuite/roles/testing/tasks/infrastructure.yml) tests: Conditional checks if the [requirements](../README.md#requirements) of generated infrastructure are meet.
-* [System](testsuite/roles/testing/tasks/system.yml) tests: Simulated end-to-end deployment process of `superset-cluster` against terraform generated infrastructure instead of user provided hosts.
-* [Functional](testsuite/roles/testing/tasks/functional.yml) tests: ... meet the requirements for the end user ...
+Testing consist of two modules:
+* `setup`: Generates / makes changes in files (see [SECURITY.md](../docs/SECURITY.md)), and sets up Terraform infrastructure which typically consist of 5 docker containers imitating standalone nodes from the [architecture](../docs/ARCHITECTURE.md), where:
+  * `<node-prefix>-0` is the primary management node
+  * `<node-prefix>-1` is the primary mysql node
+  * `<node-prefix>-2` is the secondary mysql node
+  * `<node-prefix>-3` is the secondary mysql node
+  * `<node-prefix>-4` is the superset node
+  ...
+* `testsuite`: Ansible playbook running testsuite against applied terraform infrastructure, that include:
+  * [Infrastructure](testsuite/roles/testing/tasks/infrastructure.yml) tests: Conditional checks if the [requirements](../README.md#requirements) of generated infrastructure are meet.
+  * [System](testsuite/roles/testing/tasks/system.yml) tests: Simulated end-to-end deployment process of `superset-cluster` against terraform generated infrastructure instead of user provided hosts.
+  * [Functional](testsuite/roles/testing/tasks/functional.yml) tests: ... meet the requirements for the end user ...
 
 ## Running tests
 
 ### Host requirements
 
-Tests would fail if the host system is unable to hold 6 <...> containers running in parallel.
+Tests would fail if the host system is unable to hold 5 <...> containers running in parallel.
 It has been tested on: ...
 <RAM> ...
 
@@ -43,21 +47,11 @@ terraform init
 terraform apply --auto-approve
 ```
 
-After successfull run, and 5 docker containers appeared with a healthy state, populate terraform variables and project's defaults to the ansible group variables by running the script from the `tests` directory:
-
-```
-./generate_group_vars.sh
-```
-
-To execute testsuite, run ansible playbook while being in the `testsuite` catalog:
+After successful run, and 5 docker containers appeared with a healthy state, run ansible playbook while being in the `testsuite` catalog to start tests:
 
 ```
 ansible-playbook --inventory inventory.yml deploy.yml
 ```
-
-## Defaults
-
-Some of the variables are shared between [terraform variables](./setup/variables.tf) and 
 
 ### Terraform variables
 
