@@ -72,7 +72,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         self.api_csrf_header: str = f"X-CSRFToken: {self.login_to_superset()['csrf_token']}"
         self.api_session_header: str = f"Cookie: session={self.login_to_superset()['session_token']}"
 
-    @data_structures.Overlay.single_login
+    @data_structures.Overlay.single_sign_on
     def login_to_superset_api(self) -> str | AssertionError:
         headers: str = "Content-Type: application/json"
         payload: str = f'{{"username": "admin", "password": "{self.superset_password}", "provider": "db", "refresh": true}}'
@@ -80,7 +80,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         assert not self.find_in_the_output(api_login_output, b'"message"'), f'Could not log in to the Superset API {api_login_output}'
         return self.decode_command_output(api_login_output).get("access_token")
 
-    @data_structures.Overlay.single_login
+    @data_structures.Overlay.single_sign_on
     def login_to_superset(self) -> dict[str, str] | AssertionError:
         csrf_login_request: bytes = self.run_command_on_the_container(f"curl --include --url {self.api_default_url}/security/csrf_token/ --header '{self.api_authorization_header}'")
         assert not self.find_in_the_output(csrf_login_request, b'"msg"'), f'Could not pass login request {csrf_login_request}'

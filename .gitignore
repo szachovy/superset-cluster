@@ -1,4 +1,4 @@
-# Terraform
+# Terraform setup
 **/.terraform/*
 *.tfstate
 *.tfstate.*
@@ -6,8 +6,8 @@
 id_rsa
 id_rsa.pub
 
-# Ansible
+# Ansible testsuite dynamic vars
 group_vars/
 
-# Python
+# Python cache
 __pycache__/

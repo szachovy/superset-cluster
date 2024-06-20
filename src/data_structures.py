@@ -45,7 +45,7 @@ class Overlay(type):
         return method_wrapper
 
     @staticmethod
-    def single_login(method_reference: typing.Callable) -> typing.Callable:
+    def single_sign_on(method_reference: typing.Callable) -> typing.Callable:
         lock = threading.Lock()
         @functools.wraps(method_reference)
         def method_wrapper(*args, **kwargs) -> str | dict[str, str]:
