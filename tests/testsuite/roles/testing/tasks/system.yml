@@ -1,0 +1,15 @@
+---
+- name: end-to-end run
+  ansible.builtin.shell: |
+    set -euxo pipefail
+    source {{ role_path }}/files/system.sh \
+      {{ node_prefix }} \
+      {{ network_interface }}
+    initialize_nodes
+    restart_nodes
+    superset_node_address=$(superset_node_address)
+    docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
+    clusterize_nodes
+    start_superset
+  args:
+    executable: /bin/bash

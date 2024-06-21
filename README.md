@@ -7,12 +7,16 @@ Apache Superset against MySQL InnoDB cluster.
 
 ### Hosts specification
 
-* Images are built specifically for `x86_64` or `arm64` Linux platforms.
+* Images are built specifically for `x86_64` or `arm64` Linux platforms shipped with Python 3.
 * Both `ssh` and `docker` services on the nodes must be enabled by default.
 _[See how to do it with `systemctl`](https://documentation.suse.com/smart/systems-management/html/reference-systemctl-enable-disable-services/index.html#id-1.4)._
 * Nodes must be able to resolve DNS names between each other.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
+* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
+* Ability to read/write to the `/opt` directory on the nodes.
 * For production setups follow [SECURITY.md](docs/SECURITY.md).
+* On the MySQL nodes port `3306` should be open for external communication.
+* On the Management nodes port `6446` should be open for external communication.
 
 ### Installed software
 
@@ -24,7 +28,6 @@ The following software needs to be installed on both the user's host and externa
 * `docker-buildx-plugin v0.14.0-1~ubuntu.22.04~jammy`
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
-* `net-tools v1.60+git20181103.0eebece-1ubuntu5`
 * `openssh-server v1:8.9p1-3ubuntu0.7`
 
 ## Installation & Usage
@@ -59,12 +62,7 @@ The exemplary command for execution is as follows:
 
 ### Development
 
-For development purposes, you can set up and run end-to-end tests from the test suite locally. Please refer to [the testing guide](tests/TESTING.md) for more information.
-
-```bash
-cd tests
-./run.sh
-```
+For development purposes, you can set up and run end-to-end tests from the test suite locally. Testing infrastructure remains preserved. Please refer to [the testing guide](tests/TESTING.md) for more information.
 
 ## License
 
@@ -73,8 +71,6 @@ cd tests
 ## Contributing
 
 If you notice anything missing, spot a bug, or have an enhancement proposal, feel free to open an issue with the appropriate label. Pull requests are welcome. Please ensure that the tests are updated as necessary.
-
-This is a private project and is not affiliated with [SUSE](https://github.com/SUSE). 
 
 ## Additional resources
 

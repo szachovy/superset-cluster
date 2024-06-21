@@ -1,24 +1,24 @@
 #!/bin/bash
 
-source services/common.sh
-
 mgmt_nodes=("10.145.211.152")
-mysql_nodes=("10.145.211.153" "10.145.211.154" "10.145.211.156")
-
-path_to_services="services"
+mysql_nodes=("10.145.211.156" "10.145.211.154" "10.145.211.153")
 network_interface="tun0"
+
+_path_to_root_catalog="."
+preload_examples=false
+
+source ${_path_to_root_catalog}/src/common.sh
 
 restart_nodes() {
   for mysql_node in "${mysql_nodes[@]}"; do
-    ssh root@${mysql_node} "reboot"
+    ssh root@${mysql_node} "docker restart mysql"
   done
-  sleep 200
 }
 
 start_superset() {
   docker network create --driver overlay --attachable superset-network
   ./services/redis/init.sh
-  ./services/superset/init.sh ${mgmt_nodes[0]}
+  ./services/superset/init.sh ${mgmt_nodes[0]} ${preload_examples}
 }
 
 initialize_nodes

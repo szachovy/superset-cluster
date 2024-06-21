@@ -1,0 +1,60 @@
+---
+- name: "check out nodes network"
+  community.docker.docker_network_info:
+    name: "{{ node_prefix }}-network"
+    timeout: 10
+  register: "network"
+  failed_when: |
+    (network.exists == false) or
+    (network.network.Internal == true) or
+    (network.network.Scope != 'local')
+
+- name: "check out nodes infrastructure"
+  community.docker.docker_container_info:
+    name: "{{ container.value['Name'] }}"
+    timeout: 10
+  loop: "{{ network.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: "container"
+  register: "node"
+  failed_when: |
+    (node.container.State.Running == false) or
+    (container.value['Name'] != node.container.Config.Hostname) or
+    (node.container.HostConfig.MemorySwap != 0) or
+    (node.container.HostConfig.NetworkMode != 'bridge')
+
+# (node.container.HostConfig.Privileged == true) or
+# (node.container.Config.ExposedPorts | length != 0) or
+# (node.container.Config.User == 'root')
+
+- name: "check passwordless ssh to the nodes"
+  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+  loop: "{{ network.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: "container"
+
+- name: "copy introspection source to the containers"
+  community.docker.docker_container_copy_into:
+    container: "{{ container.value['Name'] }}"
+    path: "{{ role_path }}/files/introspect.py"
+    container_path: "/opt/superset-cluster/src/introspect.py"
+    timeout: 10
+  loop: "{{ network.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: "container"  
+
+- name: "introspect running containers"
+  community.docker.docker_container_exec:
+    container: "{{ container.value['Name'] }}"
+    command: "python3 -c 
+      'import introspect;
+      introspect.ContainerChecks(
+        node_prefix=\"{{ node_prefix }}\",
+        network_interface=\"{{ network_interface }}\"
+      )
+      '"
+    chdir: "/opt/superset-cluster/src"
+    timeout: 15
+  loop: "{{ network.network.Containers | dict2items }}"
+  loop_control:
+    loop_var: "container"

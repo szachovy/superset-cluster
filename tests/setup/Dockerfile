@@ -2,6 +2,8 @@ FROM ubuntu:22.04
 
 USER root
 
+ENV PYTHONPATH /opt/superset-cluster:${PYTHONPATH}
+
 RUN \
   apt \
     update \
@@ -35,13 +37,15 @@ RUN \
       tee /etc/apt/sources.list.d/docker.list > /dev/null \
   && \
   mkdir \
-    ${HOME}/.ssh \
+    "/root/.ssh" \
   && \
   chmod \
     700 \
-      ${HOME}/.ssh
-
-RUN \
+      "/root/.ssh" \
+  && \
+  mkdir \
+    "/opt/superset-cluster" \
+  && \
   apt \
     update \
   && \
@@ -52,10 +56,15 @@ RUN \
       docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy \
       docker-ce=5:26.1.0-1~ubuntu.22.04~jammy \
       docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy \
-      net-tools=1.60+git20181103.0eebece-1ubuntu5 \
       openssh-server=1:8.9p1-3ubuntu0.7 \
   && \
   apt \
     clean
 
-ENTRYPOINT [ "bash", "-c", "service ssh start && service docker start && tail --follow /dev/null" ]
+COPY --chown=root "id_rsa.pub" "/root/.ssh/authorized_keys"
+
+ENTRYPOINT [ "bash", "-c", "service ssh start \
+  && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf \
+  && echo 'nameserver 8.8.4.4' >> /etc/resolv.conf \
+  && service docker start \
+  && tail --follow /dev/null" ]
