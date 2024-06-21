@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mgmt_nodes=("10.145.211.152")
-mysql_nodes=("10.145.211.153" "10.145.211.154" "10.145.211.156")
+mysql_nodes=("10.145.211.156" "10.145.211.154" "10.145.211.153")
 network_interface="tun0"
 
 _path_to_root_catalog="."
@@ -11,9 +11,8 @@ source ${_path_to_root_catalog}/src/common.sh
 
 restart_nodes() {
   for mysql_node in "${mysql_nodes[@]}"; do
-    ssh root@${mysql_node} "reboot"
+    ssh root@${mysql_node} "docker restart mysql"
   done
-  sleep 200
 }
 
 start_superset() {

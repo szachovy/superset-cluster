@@ -15,6 +15,8 @@ _[See how to do it with `systemctl`](https://documentation.suse.com/smart/system
 * There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
 * Ability to read/write to the `/opt` directory on the nodes.
 * For production setups follow [SECURITY.md](docs/SECURITY.md).
+* On the MySQL nodes port `3306` should be open for external communication.
+* On the Management nodes port `6446` should be open for external communication.
 
 ### Installed software
 
