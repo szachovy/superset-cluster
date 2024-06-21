@@ -30,12 +30,6 @@ The following software needs to be installed on both the user's host and externa
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
 * `openssh-server v1:8.9p1-3ubuntu0.7`
 
-[Official ubuntu:22.04](https://hub.docker.com/layers/library/ubuntu/22.04/images/sha256-94db6b944510db19c0ff5eb13281cf166abfe6f9e01a6f8e716e976664537c60?context=explore) image has Python v3.10.12 preinstalled. The following packages need to be installed on the user's host and management nodes:
-
-* `docker v7.1.0`
-* `retry v0.9.2`
-* `requests v2.32.3`
-
 ## Installation & Usage
 
 With the [Requirements](#requirements) satisfied, you can build and run the entire setup from the repository root catalog:
@@ -77,8 +71,6 @@ For development purposes, you can set up and run end-to-end tests from the test 
 ## Contributing
 
 If you notice anything missing, spot a bug, or have an enhancement proposal, feel free to open an issue with the appropriate label. Pull requests are welcome. Please ensure that the tests are updated as necessary.
-
-This is a private project and is not affiliated with [SUSE](https://github.com/SUSE). 
 
 ## Additional resources
 
