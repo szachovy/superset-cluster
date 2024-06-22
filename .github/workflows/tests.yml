@@ -37,6 +37,7 @@ jobs:
           sudo apt update
           sudo apt install --yes openssh-server=1:8.9p1-3ubuntu0.7
           sudo apt install --yes tree
+          rm -rf /opt/hostedtoolcache/CodeQL
           sudo service ssh start
 
       - name: Initialize Terraform infrastructure
@@ -44,17 +45,18 @@ jobs:
         working-directory: ./tests/setup
 
       - name: Show VM metrics
-        run: cat /proc/cpuinfo && cat /proc/meminfo && df -h && du -h --max-depth=3 / | sort -rh | head -n 100
+        run: cat /proc/cpuinfo && cat /proc/meminfo && df -h
+      # && du -h --max-depth=3 / | sort -rh | head -n 100
 
-      # - name: Apply Terraform infrastructure
-      #   run: terraform apply --auto-approve
-      #   working-directory: ./tests/setup
+      - name: Apply Terraform infrastructure
+        run: terraform apply --auto-approve
+        working-directory: ./tests/setup
 
-      # - name: Run testsuite
-      #   run: ansible-playbook --inventory inventory.yml deploy.yml
-      #   working-directory: ./tests/testsuite
+      - name: Run testsuite
+        run: ansible-playbook --inventory inventory.yml deploy.yml
+        working-directory: ./tests/testsuite
 
-      # - name: Cleanup
-      #   if: always()
-      #   run: terraform destroy --auto-approve
-      #   working-directory: ./tests/setup
+      - name: Cleanup
+        if: always()
+        run: terraform destroy --auto-approve
+        working-directory: ./tests/setup
