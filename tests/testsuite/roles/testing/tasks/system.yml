@@ -10,6 +10,14 @@
     superset_node_address=$(superset_node_address)
     docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
     clusterize_nodes
-    start_superset
+    start_superset > /tmp/start_superset.log 2>&1
   args:
     executable: /bin/bash
+  ignore_errors: yes
+
+- name: Read and display the log file
+  ansible.builtin.shell: cat /tmp/start_superset.log
+  register: log_file
+
+- debug:
+    msg: "{{ log_file.stdout_lines }}"
