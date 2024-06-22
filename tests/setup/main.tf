@@ -17,7 +17,7 @@ resource "null_resource" "manage_ssh" {
   }
 
   provisioner "local-exec" {
-    when = create
+    when    = create
     command = <<-EOT
       ssh-keygen -t rsa -b 2048 -f id_rsa -N ''
       chmod 600 id_rsa.pub
@@ -26,7 +26,7 @@ resource "null_resource" "manage_ssh" {
   }
 
   provisioner "local-exec" {
-    when = destroy
+    when    = destroy
     command = <<-EOT
       rm id_rsa id_rsa.pub
       sed --in-place \
@@ -38,11 +38,11 @@ resource "null_resource" "manage_ssh" {
 }
 
 resource "docker_network" "nodes_network" {
-  name   = "${var.node_prefix}-network"
+  name = "${var.node_prefix}-network"
 
   ipam_config {
-    subnet = "${var.subnet}"
-    gateway = "${var.gateway}"
+    subnet  = var.subnet
+    gateway = var.gateway
   }
 
   labels {
@@ -73,15 +73,15 @@ resource "docker_image" "node_image" {
 }
 
 resource "docker_container" "nodes" {
-  count = "5"
-  name  = "${var.node_prefix}-${count.index}"
-  hostname = "${var.node_prefix}-${count.index}"
-  image = "${docker_image.node_image.name}"
+  count      = "5"
+  name       = "${var.node_prefix}-${count.index}"
+  hostname   = "${var.node_prefix}-${count.index}"
+  image      = docker_image.node_image.name
   privileged = true
 
   ports {
     internal = 8088
-    external = "${8088 + count.index}"
+    external = 8088 + count.index
   }
 
   ulimit {
@@ -91,7 +91,7 @@ resource "docker_container" "nodes" {
   }
 
   networks_advanced {
-    name = "${docker_network.nodes_network.name}"
+    name         = docker_network.nodes_network.name
     ipv4_address = cidrhost("${var.subnet}", "${2 + count.index}")
   }
 
@@ -111,7 +111,7 @@ resource "docker_container" "nodes" {
     EOT
 
     environment = {
-      HOSTNAME = "${var.node_prefix}-${count.index}"
+      HOSTNAME   = "${var.node_prefix}-${count.index}"
       IP_ADDRESS = cidrhost("${var.subnet}", "${2 + count.index}")
     }
   }
@@ -129,7 +129,7 @@ resource "null_resource" "generate_ansible_group_vars" {
   }
 
   provisioner "local-exec" {
-    when = create
+    when    = create
     command = <<-EOT
       mkdir $(dirname $GROUP_VARS_FILE)
       cp $DEFAULTS_FILE $GROUP_VARS_FILE
@@ -141,18 +141,18 @@ resource "null_resource" "generate_ansible_group_vars" {
     EOT
 
     environment = {
-      DEFAULTS_FILE="../../src/defaults.yml"
-      GROUP_VARS_FILE="../testsuite/group_vars/testing.yml"
-      NODE_PREFIX="${var.node_prefix}"
+      DEFAULTS_FILE   = "../../src/defaults.yml"
+      GROUP_VARS_FILE = "../testsuite/group_vars/testing.yml"
+      NODE_PREFIX     = "${var.node_prefix}"
     }
   }
 
   provisioner "local-exec" {
-    when = destroy
+    when    = destroy
     command = "rm --recursive $(dirname $GROUP_VARS_FILE)"
 
     environment = {
-      GROUP_VARS_FILE="../testsuite/group_vars/testing.yml"
+      GROUP_VARS_FILE = "../testsuite/group_vars/testing.yml"
     }
   }
 }
