@@ -44,7 +44,7 @@ jobs:
         working-directory: ./tests/setup
 
       - name: Show VM metrics
-        run: cat /proc/cpuinfo && cat /proc/meminfo && tree -h -L 3 /dev/root
+        run: cat /proc/cpuinfo && cat /proc/meminfo && df -h && tree -h -L 3 /dev/root
 
       # - name: Apply Terraform infrastructure
       #   run: terraform apply --auto-approve
