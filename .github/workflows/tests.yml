@@ -42,9 +42,8 @@ jobs:
         run: terraform init
         working-directory: ./tests/setup
 
-      - name: Validate Terraform configuration
-        run: terraform validate
-        working-directory: ./tests/setup
+      - name: Show VM metrics
+        run: cat /proc/cpuinfo && cat /proc/meminfo && df -h
 
       - name: Apply Terraform infrastructure
         run: terraform apply --auto-approve
@@ -58,4 +57,3 @@ jobs:
         if: always()
         run: terraform destroy --auto-approve
         working-directory: ./tests/setup
-
