@@ -1,4 +1,30 @@
 ---
+- name: Execute Docker commands on multiple containers
+  block:
+    - ansible.builtin.loop:
+        start: 0
+        end: 4
+        step: 1
+      register: node_indices
+    - community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-{{ item.index }}"
+        command: "/bin/bash -c 'docker ps -a'"
+        timeout: 15
+      register: docker_output
+      loop: "{{ node_indices.results }}"
+    - debug:
+        msg: "=== {{ item.item }} ==="
+        verbosity: 2
+      loop: "{{ docker_output.results }}"
+    - debug:
+        msg: "STDOUT: {{ item.stdout_lines }}"
+        verbosity: 2
+      loop: "{{ docker_output.results }}"
+    - debug:
+        msg: "STDERR: {{ item.stderr_lines }}"
+        verbosity: 2
+      loop: "{{ docker_output.results }}"
+
 - name: "install required pip packages on {{ node_prefix }}-4"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-4"
