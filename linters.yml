@@ -19,11 +19,13 @@ jobs:
   
       - name: Initialize TFLint
         run: tflint --init
+        working-directory: ./tests/setup
         env:
           GITHUB_TOKEN: ${{ github.token }}
   
       - name: Run TFLint
-        run: tflint -f compact
+        run: tflint
+        working-directory: ./tests/setup
 
       - name: Run ansible-lint
         uses: ansible/ansible-lint@main
