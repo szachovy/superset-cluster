@@ -10,7 +10,9 @@
     superset_node_address=$(superset_node_address)
     docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
     clusterize_nodes
-    start_superset > /tmp/start_superset.log 2>&1
+    df -h > /tmp/start_superset.log 2>&1
+    free -m >> /tmp/start_superset.log 2>&1
+    start_superset >> /tmp/start_superset.log 2>&1
   args:
     executable: /bin/bash
   ignore_errors: yes
