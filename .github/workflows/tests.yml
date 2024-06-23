@@ -6,7 +6,7 @@ on:
 
 jobs:
   tests:
-    runs-on: ubuntu-22.04
+    runs-on: self-hosted
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -29,7 +29,6 @@ jobs:
           sudo apt update
           sudo apt install --yes openssh-server=1:8.9p1-3ubuntu0.7
           sudo apt install --yes tree
-          rm -rf /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/go /opt/hostedtoolcache/node /opt/hostedtoolcache/Ruby /opt/actionarchivecache
           sudo service ssh start
 
       - name: Initialize Terraform infrastructure
