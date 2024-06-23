@@ -17,5 +17,7 @@
     ssh root@node-3 "docker system prune -a --volumes --force"
     ssh root@node-4 "docker system prune -a --volumes --force"
     start_superset
+    docker system prune -a --volumes --force
+    ssh root@node-4 "docker system prune -a --volumes --force"
   args:
     executable: /bin/bash
