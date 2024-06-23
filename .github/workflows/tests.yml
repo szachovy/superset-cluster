@@ -29,7 +29,7 @@ jobs:
           sudo apt update
           sudo apt install --yes openssh-server=1:8.9p1-3ubuntu0.7
           sudo apt install --yes tree
-          rm -rf /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/node /opt/az
+          rm -rf /opt/hostedtoolcache/CodeQL /opt/hostedtoolcache/node /opt/az /opt/microsoft
           sudo service ssh start
 
       - name: Initialize Terraform infrastructure
