@@ -11,11 +11,11 @@
     docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
     clusterize_nodes
     docker system prune -a --volumes --force
-    df -h > /tmp/start_superset.log 2>&1
-    free -m >> /tmp/start_superset.log 2>&1
-    df -h /var/lib/docker >> /tmp/start_superset.log 2>&1
-    df -i >> /tmp/start_superset.log 2>&1
-    start_superset >> /tmp/start_superset.log 2>&1
-    rm -rf /tmp/start_superset.log
+    ssh root@node-0 "docker system prune -a --volumes --force"
+    ssh root@node-1 "docker system prune -a --volumes --force"
+    ssh root@node-2 "docker system prune -a --volumes --force"
+    ssh root@node-3 "docker system prune -a --volumes --force"
+    ssh root@node-4 "docker system prune -a --volumes --force"
+    start_superset
   args:
     executable: /bin/bash
