@@ -1,11 +1,14 @@
-name: Run tests
+name: Test
 
-on: 
-  push:
-    branches: '**'
+on:
+  workflow_run:
+    workflows: ["Lint"]
+    types:
+      - completed
 
 jobs:
   tests:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: self-hosted
     steps:
       - name: Checkout repository

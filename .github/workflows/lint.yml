@@ -1,12 +1,11 @@
-
 name: Lint
 
-on: 
+on:
   push:
     branches: '**'
 
 jobs:
-  lint:
+  setup:
     runs-on: self-hosted
     steps:
       - name: Checkout repository
@@ -31,6 +30,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+  lint-markdown:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Markdown files
         uses: articulate/actions-markdownlint@v1
         with:
@@ -38,26 +41,54 @@ jobs:
           ignore: node_modules
           version: 0.28.1
 
+  lint-shell:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint shell scripts
         uses: ludeeus/action-shellcheck@master
 
+  lint-docker:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Dockerfiles
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Dockerfile
-  
+
+  lint-terraform:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Terraform testing infrastructure
         run: tflint
         working-directory: ./tests/setup
 
+  lint-ansible:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint ansible testing playbook
         uses: ansible/ansible-lint@main
 
+  lint-python-pylint:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Python files with pylint
         run: pylint **/*.py
 
+  lint-python-mypy:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Python files with mypy
         run: mypy .
 
+  lint-python-flake8:
+    runs-on: self-hosted
+    needs: setup
+    steps:
       - name: Lint Python files with flake8
         run: flake8 .
