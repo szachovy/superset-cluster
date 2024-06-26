@@ -29,10 +29,9 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` and has the following software installed:
+Testing host is the `ubuntu:22.04` runner with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
 
 * `terraform v1.0.10`
-* `openssh-server v1:8.9p1-3ubuntu0.7`
 * `python v3.10.12` with the following third party packages:
   * `ansible v9.5.1`
 

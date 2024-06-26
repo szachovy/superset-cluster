@@ -1,0 +1,63 @@
+
+name: Lint
+
+on: 
+  push:
+    branches: '**'
+
+jobs:
+  lint:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10.12"
+
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir --user pylint mypy flake8
+
+      - name: Setup Terraform linter
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.3
+
+      - name: Initialize Terraform linter
+        run: tflint --init
+        working-directory: ./tests/setup
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Lint Markdown files
+        uses: articulate/actions-markdownlint@v1
+        with:
+          files: '**/*.md'
+          ignore: node_modules
+          version: 0.28.1
+
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+  
+      - name: Lint Terraform testing infrastructure
+        run: tflint
+        working-directory: ./tests/setup
+
+      - name: Lint ansible testing playbook
+        uses: ansible/ansible-lint@main
+
+      - name: Lint Python files with pylint
+        run: pylint **/*.py
+
+      - name: Lint Python files with mypy
+        run: mypy .
+
+      - name: Lint Python files with flake8
+        run: flake8 .
