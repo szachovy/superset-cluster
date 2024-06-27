@@ -10,14 +10,6 @@
     superset_node_address=$(superset_node_address)
     docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
     clusterize_nodes
-    docker system prune -a --volumes --force
-    ssh root@node-0 "docker system prune -a --volumes --force"
-    ssh root@node-1 "docker system prune -a --volumes --force"
-    ssh root@node-2 "docker system prune -a --volumes --force"
-    ssh root@node-3 "docker system prune -a --volumes --force"
-    ssh root@node-4 "docker system prune -a --volumes --force"
     start_superset
-    docker system prune -a --volumes --force
-    ssh root@node-4 "docker system prune -a --volumes --force"
   args:
     executable: /bin/bash

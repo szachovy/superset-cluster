@@ -94,12 +94,25 @@ jobs:
     steps:
       - name: Lint Python files with flake8
         run: "flake8"
+  
+  end-to-end-tests-coverage:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Calculate coverage and generate badge
+        run: python coverage.py
+
+      - name: Upload badge as artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-badge
+          path: coverage-badge.svg
 
   tests:
     runs-on: self-hosted
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3

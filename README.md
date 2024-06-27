@@ -1,3 +1,5 @@
+![Coverage](./coverage-badge.svg)
+
 # superset-cluster
 
 Apache Superset against MySQL InnoDB cluster.
