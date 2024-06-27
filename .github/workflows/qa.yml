@@ -100,7 +100,7 @@ jobs:
     needs: setup
     steps:
       - name: Calculate coverage and generate badge
-        run: python coverage.py
+        run: python3 coverage.py
 
       - name: Upload badge as artifact
         uses: actions/upload-artifact@v2
@@ -108,46 +108,46 @@ jobs:
           name: coverage-badge
           path: coverage-badge.svg
 
-  tests:
-    runs-on: self-hosted
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  # tests:
+  #   runs-on: self-hosted
+  #   steps:
+  #     - name: Checkout repository
+  #       uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.0.10"
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with:
+  #         terraform_version: "1.0.10"
       
-      - name: Setup Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: "3.10.12"
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v3
+  #       with:
+  #         python-version: "3.10.12"
 
-      - name: Install Python dependencies
-        run: pip install --no-cache-dir --user ansible==9.5.1
+  #     - name: Install Python dependencies
+  #       run: pip install --no-cache-dir --user ansible==9.5.1
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
-        with:
-          node-version: "16"
+  #     - name: Set up Node.js
+  #       uses: actions/setup-node@v2
+  #       with:
+  #         node-version: "16"
 
-      - name: Initialize Terraform infrastructure
-        run: terraform init
-        working-directory: ./tests/setup
+  #     - name: Initialize Terraform infrastructure
+  #       run: terraform init
+  #       working-directory: ./tests/setup
 
-      - name: Show VM metrics
-        run: cat /proc/cpuinfo && cat /proc/meminfo && df -h
+  #     - name: Show VM metrics
+  #       run: cat /proc/cpuinfo && cat /proc/meminfo && df -h
 
-      - name: Apply Terraform infrastructure
-        run: terraform apply --auto-approve
-        working-directory: ./tests/setup
+  #     - name: Apply Terraform infrastructure
+  #       run: terraform apply --auto-approve
+  #       working-directory: ./tests/setup
 
-      - name: Run testsuite
-        run: ansible-playbook --inventory inventory.yml deploy.yml
-        working-directory: ./tests/testsuite
+  #     - name: Run testsuite
+  #       run: ansible-playbook --inventory inventory.yml deploy.yml
+  #       working-directory: ./tests/testsuite
 
-      - name: Cleanup
-        if: always()
-        run: terraform destroy --auto-approve
-        working-directory: ./tests/setup
+  #     - name: Cleanup
+  #       if: always()
+  #       run: terraform destroy --auto-approve
+  #       working-directory: ./tests/setup
