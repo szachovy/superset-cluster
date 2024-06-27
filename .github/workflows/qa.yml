@@ -27,6 +27,8 @@ jobs:
       - name: Initialize Terraform linter
         run: tflint --init
         working-directory: ./tests/setup
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
 
   lint-markdown:
     runs-on: self-hosted
@@ -35,7 +37,7 @@ jobs:
       - name: Lint Markdown files
         uses: articulate/actions-markdownlint@v1
         with:
-          files: "*.md"
+          files: "$(find . -name '*.md')"
           version: "0.41.0"
 
   lint-shell:
