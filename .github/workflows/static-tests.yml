@@ -99,14 +99,16 @@ jobs:
     runs-on: self-hosted
     needs: setup
     steps:
-      - name: System tests coverage
+      - name: Get system tests coverage
+        run: $(python3 .github/coverage.py) >> $COVERAGE
+      - name: Generate badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: d4fd269e226b0ed70954f861129a2756
           filename: superset-cluster-codecoverage.json
-          label: System tests coverage
-          message: $(python3 .github/coverage.py)
-          valColorRange: $(python3 .github/coverage.py)
+          label: System Tests Coverage
+          message: ${{ env.COVERAGE }}
+          valColorRange: ${{ env.COVERAGE }}
           maxColorRange: 100
           minColorRange: 0
