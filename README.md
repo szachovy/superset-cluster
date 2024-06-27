@@ -1,4 +1,3 @@
-![Coverage](./coverage-badge.svg)
 ![badge](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/szachovy/d4fd269e226b0ed70954f861129a2756/raw/superset-cluster-codecoverage.json)
 
 # superset-cluster

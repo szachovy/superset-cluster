@@ -107,7 +107,7 @@ jobs:
         with:
           auth: ${{ secrets.GIST_SECRET }}
           gistID: d4fd269e226b0ed70954f861129a2756
-          filename: test.json
+          filename: superset-cluster-codecoverage.json
           label: System tests coverage
           message: 43
           valColorRange: 43
