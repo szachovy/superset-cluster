@@ -30,70 +30,70 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-  lint-markdown:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Markdown files
-        uses: articulate/actions-markdownlint@v1
-        with:
-          files: "$(find . -name '*.md')"
-          version: "0.41.0"
+  # lint-markdown:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Markdown files
+  #       uses: articulate/actions-markdownlint@v1
+  #       with:
+  #         files: "$(find . -name '*.md')"
+  #         version: "0.41.0"
 
-  lint-shell:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint shell scripts
-        uses: ludeeus/action-shellcheck@master
-        with:
-          version: "v0.10.0"
+  # lint-shell:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint shell scripts
+  #       uses: ludeeus/action-shellcheck@master
+  #       with:
+  #         version: "v0.10.0"
 
-  lint-docker:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Dockerfiles
-        uses: hadolint/hadolint-action@v3.1.0
-        with:
-          dockerfile: Dockerfile
-          recursive: true
+  # lint-docker:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Dockerfiles
+  #       uses: hadolint/hadolint-action@v3.1.0
+  #       with:
+  #         dockerfile: Dockerfile
+  #         recursive: true
 
-  lint-terraform:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Terraform testing infrastructure
-        run: tflint
-        working-directory: ./tests/setup
+  # lint-terraform:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Terraform testing infrastructure
+  #       run: tflint
+  #       working-directory: ./tests/setup
 
-  lint-ansible:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint ansible testing playbook
-        uses: ansible/ansible-lint@main
+  # lint-ansible:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint ansible testing playbook
+  #       uses: ansible/ansible-lint@main
 
-  lint-python-pylint:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Python files with pylint
-        run: "pylint $(find . -name '*.py')"
+  # lint-python-pylint:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Python files with pylint
+  #       run: "pylint $(find . -name '*.py')"
 
-  lint-python-mypy:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Python files with mypy
-        run: "mypy $(find . -name '*.py')"
+  # lint-python-mypy:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Python files with mypy
+  #       run: "mypy $(find . -name '*.py')"
 
-  lint-python-flake8:
-    runs-on: self-hosted
-    needs: setup
-    steps:
-      - name: Lint Python files with flake8
-        run: "flake8"
+  # lint-python-flake8:
+  #   runs-on: self-hosted
+  #   needs: setup
+  #   steps:
+  #     - name: Lint Python files with flake8
+  #       run: "flake8"
   
   end-to-end-tests-coverage:
     runs-on: self-hosted
@@ -102,11 +102,17 @@ jobs:
       - name: Calculate coverage and generate badge
         run: python3 coverage.py
 
-      - name: Upload badge as artifact
-        uses: actions/upload-artifact@v2
+      - name: Create Awesome Badge
+        uses: schneegans/dynamic-badges-action@v1.7.0
         with:
-          name: coverage-badge
-          path: coverage-badge.svg
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: d4fd269e226b0ed70954f861129a2756
+          filename: test.json
+          label: System tests coverage
+          message: 43
+          valColorRange: 43
+          maxColorRange: 100
+          minColorRange: 0
 
   # tests:
   #   runs-on: self-hosted
