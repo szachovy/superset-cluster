@@ -28,68 +28,70 @@ jobs:
         run: tflint --init
         working-directory: ./tests/setup
 
-  # lint-markdown:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Markdown files
-  #       uses: articulate/actions-markdownlint@v1
-  #       with:
-  #         files: '**/*.md'
-  #         ignore: node_modules
-  #         version: 0.28.1
+  lint-markdown:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Markdown files
+        uses: articulate/actions-markdownlint@v1
+        with:
+          files: "*.md"
+          version: "0.41.0"
 
-  # lint-shell:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint shell scripts
-  #       uses: ludeeus/action-shellcheck@master
+  lint-shell:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          version: "v0.10.0"
 
-  # lint-docker:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Dockerfiles
-  #       uses: hadolint/hadolint-action@v3.1.0
-  #       with:
-  #         dockerfile: Dockerfile
+  lint-docker:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          recursive: true
 
-  # lint-terraform:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Terraform testing infrastructure
-  #       run: tflint
-  #       working-directory: ./tests/setup
+  lint-terraform:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Terraform testing infrastructure
+        run: tflint
+        working-directory: ./tests/setup
 
-  # lint-ansible:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint ansible testing playbook
-  #       uses: ansible/ansible-lint@main
+  lint-ansible:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint ansible testing playbook
+        uses: ansible/ansible-lint@main
 
-  # lint-python-pylint:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Python files with pylint
-  #       run: pylint **/*.py
+  lint-python-pylint:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with pylint
+        run: "pylint $(find . -name '*.py')"
 
-  # lint-python-mypy:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Python files with mypy
-  #       run: mypy .
+  lint-python-mypy:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with mypy
+        run: "mypy $(find . -name '*.py')"
 
-  # lint-python-flake8:
-  #   runs-on: self-hosted
-  #   needs: setup
-  #   steps:
-  #     - name: Lint Python files with flake8
-  #       run: flake8 .
+  lint-python-flake8:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with flake8
+        run: "flake8"
 
   tests:
     runs-on: self-hosted
@@ -114,12 +116,6 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: "16"
-
-      # - name: Setup OpenSSH Server
-      #   run: |
-      #     sudo apt update
-      #     sudo apt install --yes openssh-server=1:8.9p1-3ubuntu0.7
-      #     sudo service ssh start
 
       - name: Initialize Terraform infrastructure
         run: terraform init
