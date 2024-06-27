@@ -1,0 +1,112 @@
+name: Static Tests
+
+on:
+  push:
+    branches: '**'
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10.12"
+
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir --user pylint mypy flake8
+
+      - name: Setup Terraform linter
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.3
+
+      - name: Initialize Terraform linter
+        run: tflint --init
+        working-directory: ./tests/setup
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+  lint-markdown:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Markdown files
+        uses: articulate/actions-markdownlint@v1
+        with:
+          files: "$(find . -name '*.md')"
+          version: "0.41.0"
+
+  lint-shell:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint shell scripts
+        uses: ludeeus/action-shellcheck@master
+        with:
+          version: "v0.10.0"
+
+  lint-docker:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Dockerfiles
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          recursive: true
+
+  lint-terraform:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Terraform testing infrastructure
+        run: tflint
+        working-directory: ./tests/setup
+
+  lint-ansible:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint ansible testing playbook
+        uses: ansible/ansible-lint@main
+
+  lint-python-pylint:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with pylint
+        run: "pylint $(find . -name '*.py')"
+
+  lint-python-mypy:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with mypy
+        run: "mypy $(find . -name '*.py')"
+
+  lint-python-flake8:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Lint Python files with flake8
+        run: "flake8"
+  
+  system-tests-coverage:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: System tests coverage
+        uses: schneegans/dynamic-badges-action@v1.7.0
+        with:
+          auth: ${{ secrets.GIST_SECRET }}
+          gistID: d4fd269e226b0ed70954f861129a2756
+          filename: superset-cluster-codecoverage.json
+          label: System tests coverage
+          message: $(python3 .github/coverage.py)
+          valColorRange: $(python3 .github/coverage.py)
+          maxColorRange: 100
+          minColorRange: 0

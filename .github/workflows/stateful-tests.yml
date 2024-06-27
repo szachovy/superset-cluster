@@ -1,0 +1,51 @@
+name: Stateful Tests
+
+on:
+  push:
+    branches: '**'
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.10.12"
+
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir --user ansible==9.5.1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.0.10"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+
+  tests:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - name: Initialize Terraform infrastructure
+        run: terraform init
+        working-directory: ./tests/setup
+
+      - name: Apply Terraform infrastructure
+        run: terraform apply --auto-approve
+        working-directory: ./tests/setup
+
+      - name: Run Ansible testsuite
+        run: ansible-playbook --inventory inventory.yml deploy.yml
+        working-directory: ./tests/testsuite
+
+      - name: Destroy Terraform environment
+        if: always()
+        run: terraform destroy --auto-approve
+        working-directory: ./tests/setup
