@@ -1,5 +1,5 @@
-![Stateful Tests](https://github.com/szachovy/superset-cluster/actions/workflows/stateful-tests.yml/badge.svg)
-![Static Tests](https://github.com/szachovy/superset-cluster/actions/workflows/static-tests.yml/badge.svg)
+![Tests](https://github.com/szachovy/superset-cluster/actions/workflows/stateful-tests.yml/badge.svg)
+![Style](https://github.com/szachovy/superset-cluster/actions/workflows/static-tests.yml/badge.svg)
 ![System Tests Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/szachovy/d4fd269e226b0ed70954f861129a2756/raw/superset-cluster-codecoverage.json)
 
 # superset-cluster

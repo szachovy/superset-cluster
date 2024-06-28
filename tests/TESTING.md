@@ -29,11 +29,22 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` runner with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
+Testing host is the `ubuntu:22.04` runner (specs ...) with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
 
 * `terraform v1.0.10`
 * `python v3.10.12` with the following third party packages:
   * `ansible v9.5.1`
+
+Optionally, the following software is installed for doing style checks, and is present in the [automated testing](https://github.com/szachovy/superset-cluster/actions):
+
+* `pylint v3.2.4`
+* `mypy v1.10.1 (compiled)`
+* `flake8 v7.1.0`
+* `markdownlint-cli v0.41.0`
+* `shellcheck v0.8.0`
+* `hadolint v2.12.2`
+* `ansible-lint v24.6.1`
+* `tflint v0.51.1`
 
 Testing does not require any additional modules on the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
 

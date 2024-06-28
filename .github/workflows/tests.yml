@@ -1,0 +1,51 @@
+name: Tests
+
+on:
+  push:
+    branches: '**'
+
+env:
+  TERRAFORM_WORKING_DIR: ./tests/setup
+  ANSIBLE_WORKING_DIR: ./tests/testsuite
+
+jobs:
+  setup:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.0.10"
+      
+      - name: Initialize Terraform infrastructure
+        run: terraform init
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+  
+      - name: Apply Terraform infrastructure
+        run: terraform apply --auto-approve
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
+
+  testsuite:
+    runs-on: self-hosted
+    needs: setup
+    steps:
+      - uses: actions/setup-python@v3
+        with:
+          python-version: "3.10.12"
+
+      - name: Install Python dependencies
+        run: pip install --no-cache-dir --user ansible==9.5.1
+
+      - name: Run Ansible testsuite
+        run: ansible-playbook --inventory inventory.yml deploy.yml
+        working-directory: ${{ env.ANSIBLE_WORKING_DIR }}
+
+  cleanup:
+    runs-on: self-hosted
+    needs: testsuite
+    steps:
+      - name: Destroy Terraform environment
+        if: always()
+        run: terraform destroy --auto-approve
+        working-directory: ${{ env.TERRAFORM_WORKING_DIR }}
