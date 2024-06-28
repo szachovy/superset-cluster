@@ -100,7 +100,7 @@ jobs:
     needs: setup
     steps:
       - name: Get system tests coverage
-        run: $(python3 .github/coverage.py) >> $COVERAGE
+        run: echo "COVERAGE=$(python3 .github/coverage.py)" >> $GITHUB_ENV
       - name: Generate badge
         uses: schneegans/dynamic-badges-action@v1.7.0
         with:
