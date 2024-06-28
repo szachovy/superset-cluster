@@ -24,23 +24,23 @@ jobs:
         with:
           tflint_version: v0.50.3
 
+      - name: Add tflint to PATH
+        run: echo "$HOME/.tflint/bin" >> $GITHUB_PATH
+
       - name: Initialize Terraform linter
         run: tflint --init
         working-directory: ./tests/setup
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
 
-  lint-markdown:
+  run-markdown-lint:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: Lint Markdown files
         uses: articulate/actions-markdownlint@v1
         with:
-          files: "$(find . -name '*.md')"
           version: "0.41.0"
 
-  lint-shell:
+  run-shell-check:
     runs-on: self-hosted
     needs: setup
     steps:
@@ -49,7 +49,7 @@ jobs:
         with:
           version: "v0.10.0"
 
-  lint-docker:
+  run-docker-hadolint:
     runs-on: self-hosted
     needs: setup
     steps:
@@ -59,7 +59,7 @@ jobs:
           dockerfile: Dockerfile
           recursive: true
 
-  lint-terraform:
+  run-terraform-tflint:
     runs-on: self-hosted
     needs: setup
     steps:
@@ -67,35 +67,35 @@ jobs:
         run: tflint
         working-directory: ./tests/setup
 
-  lint-ansible:
+  run-ansible-lint:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: Lint ansible testing playbook
         uses: ansible/ansible-lint@main
 
-  lint-python-pylint:
+  run-python-pylint:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: Lint Python files with pylint
         run: "pylint $(find . -name '*.py')"
 
-  lint-python-mypy:
+  run-python-mypy:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: Lint Python files with mypy
         run: "mypy $(find . -name '*.py')"
 
-  lint-python-flake8:
+  run-python-flake8:
     runs-on: self-hosted
     needs: setup
     steps:
       - name: Lint Python files with flake8
         run: "flake8"
   
-  system-tests-coverage:
+  run-system-tests-coverage:
     runs-on: self-hosted
     needs: setup
     steps:
