@@ -24,6 +24,9 @@ jobs:
         with:
           terraform_version: "1.0.10"
 
+      - name: test
+        run: whereis terraform && echo $PATH
+
       - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
