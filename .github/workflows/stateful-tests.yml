@@ -25,7 +25,7 @@ jobs:
           terraform_version: "1.0.10"
 
       - name: test
-        run: echo $(whereis terraform | awk '{print $2}') >> $GITHUB_PATH
+        run: mv $(whereis terraform | awk '{print $2}') /usr/local/bin
 
       - name: Set up Node.js
         uses: actions/setup-node@v2
@@ -35,20 +35,23 @@ jobs:
   tests:
     runs-on: self-hosted
     needs: setup
+    env:
+      TERRAFORM_WORKING_DIR: ./tests/setup
+      ANSIBLE_WORKING_DIR: ./tests/testsuite
     steps:
       - name: Initialize Terraform infrastructure
         run: terraform init
-        working-directory: ./tests/setup
+        working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Apply Terraform infrastructure
         run: terraform apply --auto-approve
-        working-directory: ./tests/setup
+        working-directory: ${{ env.TF_WORKING_DIR }}
 
       - name: Run Ansible testsuite
         run: ansible-playbook --inventory inventory.yml deploy.yml
-        working-directory: ./tests/testsuite
+        working-directory: ${{ env.ANSIBLE_WORKING_DIR }}
 
       - name: Destroy Terraform environment
         if: always()
         run: terraform destroy --auto-approve
-        working-directory: ./tests/setup
+        working-directory: ${{ env.TF_WORKING_DIR }}
