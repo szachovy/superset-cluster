@@ -1,104 +1,113 @@
-name: Style
+name: "Style"
 
 on:
   push:
-    branches: '**'
+    branches: "**"
 
 jobs:
   setup:
-    runs-on: self-hosted
+    runs-on: "self-hosted"
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v3
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
 
-      - name: Install Python dependencies
-        run: pip install --no-cache-dir --user pylint==3.2.4 mypy==1.10.1 flake8==7.1.0
+      - name: "Install Python dependencies"
+        run: |
+          pip install --no-cache-dir --user \
+            pylint==3.2.4 mypy==1.10.1 flake8==7.1.0 yamllint==1.35.1
 
   run-markdown-lint:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint Markdown files
-        uses: articulate/actions-markdownlint@v1
+      - name: "Lint Markdown files"
+        uses: "articulate/actions-markdownlint@v1"
         with:
           version: "0.41.0"
 
-  run-shell-check:
-    runs-on: self-hosted
-    needs: setup
+  run-yaml-lint:
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint shell scripts
-        uses: ludeeus/action-shellcheck@master
+      - name: "Lint YAML files"
+        run: "yamllint ."
+
+  run-shell-check:
+    runs-on: "self-hosted"
+    needs: "setup"
+    steps:
+      - name: "Lint shell scripts"
+        uses: "ludeeus/action-shellcheck@master"
         with:
           version: "v0.10.0"
 
   run-docker-hadolint:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint Dockerfiles
-        uses: hadolint/hadolint-action@v3.1.0
+      - name: "Lint Dockerfiles"
+        uses: "hadolint/hadolint-action@v3.1.0"
         with:
-          dockerfile: Dockerfile
+          dockerfile: "Dockerfile"
           recursive: true
 
   run-terraform-tflint:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - uses: terraform-linters/setup-tflint@v4
+      - uses: "terraform-linters/setup-tflint@v4"
         with:
-          tflint_version: v0.51.1
+          tflint_version: "v0.51.1"
 
-      - name: Lint Terraform testing infrastructure
+      - name: "Lint Terraform testing infrastructure"
         run: "tflint --init && tflint"
-        working-directory: ./tests/setup
+        working-directory: "./tests/setup"
 
   run-ansible-lint:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint ansible testing playbook
-        uses: ansible/ansible-lint@v24.6.1
+      - name: "Lint ansible testing playbook"
+        uses: "ansible/ansible-lint@v24.6.1"
 
   run-python-pylint:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint Python files with pylint
+      - name: "Lint Python files with pylint"
         run: "pylint $(find . -name '*.py')"
 
   run-python-mypy:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint Python files with mypy
+      - name: "Lint Python files with mypy"
         run: "mypy $(find . -name '*.py')"
 
   run-python-flake8:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Lint Python files with flake8
+      - name: "Lint Python files with flake8"
         run: "flake8"
   
   run-system-tests-coverage:
-    runs-on: self-hosted
-    needs: setup
+    runs-on: "self-hosted"
+    needs: "setup"
     steps:
-      - name: Get system tests coverage
-        run: echo "COVERAGE=$(python3 .github/coverage.py)" >> $GITHUB_ENV
+      - name: "Get system tests coverage"
+        run: "echo 'COVERAGE=$(python3 .github/coverage.py)' >> $GITHUB_ENV"
 
-      - name: Generate badge
-        uses: schneegans/dynamic-badges-action@v1.7.0
+      - name: "Generate badge"
+        uses: "schneegans/dynamic-badges-action@v1.7.0"
         with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: d4fd269e226b0ed70954f861129a2756
-          filename: superset-cluster-codecoverage.json
-          label: System Tests Coverage
-          message: ${{ env.COVERAGE }}
-          valColorRange: ${{ env.COVERAGE }}
+          auth: "${{ secrets.GIST_SECRET }}"
+          gistID: "d4fd269e226b0ed70954f861129a2756"
+          filename: "superset-cluster-codecoverage.json"
+          label: "System Tests Coverage"
+          message: "${{ env.COVERAGE }}"
+          valColorRange: "${{ env.COVERAGE }}"
           maxColorRange: 100
           minColorRange: 0

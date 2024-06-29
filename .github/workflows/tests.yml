@@ -42,6 +42,7 @@ jobs:
 
   cleanup:
     runs-on: "self-hosted"
+    needs: ["setup", "testsuite"]
     steps:
       - name: "Destroy Terraform environment"
         if: "${{ always() }}"
