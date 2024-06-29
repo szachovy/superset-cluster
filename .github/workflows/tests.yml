@@ -37,19 +37,17 @@ jobs:
   testsuite:
     runs-on: "self-hosted"
     needs: "setup"
-    env:
-      TESTSUITE_ARTIFACT: "${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log"
     steps:
       - name: "Run Ansible testsuite"
         run: |
-          echo "ANSIBLE_LOG_PATH=${{ env.TESTSUITE_ARTIFACT }}" >> $GITHUB_ENV
+          echo "ANSIBLE_LOG_PATH=${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log" >> $GITHUB_ENV
           ansible-playbook --inventory inventory.yml deploy.yml
         working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
 
       - uses: "actions/upload-artifact@v4"
         if: "${{ always() }}"
         with:
-          path: "${{ env.TESTSUITE_ARTIFACT }}"
+          path: "${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log"
 
   cleanup:
     runs-on: "self-hosted"
