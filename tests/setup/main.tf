@@ -105,7 +105,7 @@ resource "docker_container" "nodes" {
     command = <<-EOT
       docker cp ../../src $HOSTNAME:/opt/superset-cluster/src
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-cluster/src
-      docker exec $HOSTNAME "wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && pip install --no-cache-dir --user --requirement /opt/superset-cluster/src/requirements.txt"
+      docker exec $HOSTNAME /bin/bash -c "wget https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py && pip install --no-cache-dir --user --requirement /opt/superset-cluster/src/requirements.txt"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no
