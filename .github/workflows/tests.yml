@@ -7,6 +7,7 @@ on:
 env:
   TERRAFORM_WORKING_DIRECTORY: "./tests/setup"
   ANSIBLE_WORKING_DIRECTORY: "./tests/testsuite"
+  TESTSUITE_ARTIFACT: "testsuite-log.txt"
 
 jobs:
   setup:
@@ -37,14 +38,19 @@ jobs:
     needs: "setup"
     steps:
       - name: "Run Ansible testsuite"
-        run: "ansible-playbook --inventory inventory.yml deploy.yml"
-        working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"
+        run: "ansible-playbook --inventory inventory.yml deploy.yml | tee ${{ env.TESTSUITE_ARTIFACT }}"
+        working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
+
+      - uses: "actions/upload-artifact@v3"
+        if: "${{ always() }}"
+        with:
+          path: "${{ env.TESTSUITE_ARTIFACT }}"
 
   cleanup:
     runs-on: "self-hosted"
     needs: ["setup", "testsuite"]
+    if: "${{ always() }}"
     steps:
       - name: "Destroy Terraform environment"
-        if: "${{ always() }}"
         run: "terraform destroy --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"

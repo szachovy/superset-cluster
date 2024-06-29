@@ -45,6 +45,7 @@ Optionally, the following software is installed for doing style checks, and is p
 * `hadolint v2.12.2`
 * `ansible-lint v24.6.1`
 * `tflint v0.51.1`
+* `yamllint v1.35.1`
 
 Testing does not require any additional modules on the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
 
