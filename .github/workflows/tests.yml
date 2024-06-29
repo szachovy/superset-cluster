@@ -7,7 +7,6 @@ on:
 env:
   TERRAFORM_WORKING_DIRECTORY: "./tests/setup"
   ANSIBLE_WORKING_DIRECTORY: "./tests/testsuite"
-  TESTSUITE_ARTIFACT: "testsuite-log.txt"
 
 jobs:
   setup:
@@ -38,9 +37,13 @@ jobs:
   testsuite:
     runs-on: "self-hosted"
     needs: "setup"
+    env:
+      TESTSUITE_ARTIFACT: "${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log"
     steps:
       - name: "Run Ansible testsuite"
-        run: "ansible-playbook --inventory inventory.yml deploy.yml > ${{ env.TESTSUITE_ARTIFACT }} 2>&1"
+        run: |
+          echo "ANSIBLE_LOG_PATH=${{ env.TESTSUITE_ARTIFACT }}" >> $GITHUB_ENV
+          ansible-playbook --inventory inventory.yml deploy.yml
         working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
 
       - uses: "actions/upload-artifact@v4"
