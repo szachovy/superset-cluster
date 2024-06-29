@@ -7,6 +7,7 @@ on:
 env:
   TERRAFORM_WORKING_DIRECTORY: "./tests/setup"
   ANSIBLE_WORKING_DIRECTORY: "./tests/testsuite"
+  ANSIBLE_LOG_PATH: "testsuite.log"
 
 jobs:
   setup:
@@ -40,7 +41,6 @@ jobs:
     steps:
       - name: "Run Ansible testsuite"
         run: |
-          echo "ANSIBLE_LOG_PATH=${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log" >> $GITHUB_ENV
           env
           cat /proc/meminfo
           cat /proc/cpuinfo
