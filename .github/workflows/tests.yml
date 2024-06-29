@@ -10,7 +10,7 @@ env:
   ANSIBLE_LOG_PATH: "testsuite.log"
 
 jobs:
-  setup:
+  tests:
     runs-on: "self-hosted"
     steps:
       - uses: "actions/checkout@v4"
@@ -35,10 +35,6 @@ jobs:
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
-  testsuite:
-    runs-on: "self-hosted"
-    needs: "setup"
-    steps:
       - name: "Run Ansible testsuite"
         run: |
           env
@@ -53,11 +49,7 @@ jobs:
         with:
           path: "${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log"
 
-  cleanup:
-    runs-on: "self-hosted"
-    needs: "testsuite"
-    if: "${{ always() }}"
-    steps:
       - name: "Destroy Terraform environment"
         run: "terraform destroy --auto-approve"
+        if: "${{ always() }}"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
