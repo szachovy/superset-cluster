@@ -11,12 +11,13 @@ Testing consist of two modules:
 * Generates `id_rsa` and `id_rsa.pub` keys on the user's host under `setup/` directory and adds them to ssh agent
 * Adds records to `$HOME/.ssh/config`
 * Creates `testing.yml` group variables for the testsuite
-* Sets up Terraform infrastructure which consist of 5 docker containers imitating standalone nodes, where:
-  * `<node-prefix>-0` is the primary management node
-  * `<node-prefix>-1` is the primary mysql node
-  * `<node-prefix>-2` is the secondary mysql node
-  * `<node-prefix>-3` is the secondary mysql node
-  * `<node-prefix>-4` is the superset node
+* Sets up Terraform infrastructure which consist of 5 equal docker containers imitating standalone nodes, where:
+  * `<node-prefix>-0` is set as the primary management node
+  * `<node-prefix>-1` is set as the primary mysql node
+  * `<node-prefix>-2` is set as the secondary mysql node
+  * `<node-prefix>-3` is set as the secondary mysql node
+  * `<node-prefix>-4` is set as the superset node
+* Each of the nodes have the same project's sources copied
 
 ### `testsuite`
 

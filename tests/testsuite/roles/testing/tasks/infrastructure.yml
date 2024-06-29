@@ -33,16 +33,6 @@
   loop_control:
     loop_var: "container"
 
-- name: "copy introspection source to the containers"
-  community.docker.docker_container_copy_into:
-    container: "{{ container.value['Name'] }}"
-    path: "{{ role_path }}/files/introspect.py"
-    container_path: "/opt/superset-cluster/src/introspect.py"
-    timeout: 10
-  loop: "{{ network.network.Containers | dict2items }}"
-  loop_control:
-    loop_var: "container"  
-
 - name: "introspect running containers"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"

@@ -41,6 +41,10 @@ jobs:
       - name: "Run Ansible testsuite"
         run: |
           echo "ANSIBLE_LOG_PATH=${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log" >> $GITHUB_ENV
+          env
+          cat /proc/meminfo
+          cat /proc/cpuinfo
+          df -H
           ansible-playbook --inventory inventory.yml deploy.yml
         working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
 
