@@ -31,10 +31,6 @@ jobs:
         run: "terraform init"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
-      - name: "Destroy previous Terraform environment"
-        run: "terraform destroy --auto-approve"
-        working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
-
       - name: "Apply Terraform infrastructure"
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
@@ -47,3 +43,8 @@ jobs:
         if: "${{ always() }}"
         with:
           path: "${{ env.ANSIBLE_WORKING_DIRECTORY }}/testsuite.log"
+
+      - name: "Destroy Terraform environment"
+        run: "terraform destroy --auto-approve"
+        if: "${{ always() }}"
+        working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
