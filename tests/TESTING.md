@@ -30,7 +30,7 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` runner (specs ...) with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
+Testing host is the `ubuntu:22.04` runner with 1 core of AMD EPYC 7773X x86_64 CPU and 8GiB of RAM with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
 
 * `terraform v1.0.10`
 * `python v3.10.12` with the following third party packages:
@@ -48,7 +48,8 @@ Optionally, the following software is installed for doing style checks, and is p
 * `tflint v0.51.1`
 * `yamllint v1.35.1`
 
-Testing does not require any additional modules on the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
+For functional testing the [required](./testsuite/roles/testing/files/requirements.txt) python packages are installed on the deployed containers.
+Testing does not require any additional modules unpresent in the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
 
 ### Usage
 
