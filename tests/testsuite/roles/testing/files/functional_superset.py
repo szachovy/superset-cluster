@@ -34,9 +34,10 @@ class Celery(container_connection.ContainerUtilities, metaclass=data_structures.
         self.superset_node: str = f"{node_prefix}-4"
 
     @data_structures.Overlay.post_init_hook
-    def status(self) -> None | AssertionError: 
-        test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'")
-        assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_hostname} container on {self.superset_node} node is not responding or not working properly'
+    def status(self) -> None | AssertionError:
+        command: str = f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'"
+        test_connection: bytes = self.run_command_on_the_container(command)
+        assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_hostname} container on {self.superset_node} node is not responding or not working properly, output after {command} is {test_connection}'
 
     @data_structures.Overlay.post_init_hook
     def status_cache(self) -> None | AssertionError:
