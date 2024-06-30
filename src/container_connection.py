@@ -19,7 +19,7 @@ class ContainerUtilities:
         try:
             request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command, stdout=True, stderr=True)
         except (docker.errors.NotFound, docker.errors.APIError) as error:
-            raise requests.exceptions.RequestException(f'Can not running commands on the container {self.node}: {error}')
+            raise requests.exceptions.RequestException(f'Can not run commands on the container {self.node}: {error}')
         if request.exit_code != 0:
             raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
         return request.output
