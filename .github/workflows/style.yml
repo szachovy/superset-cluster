@@ -1,6 +1,7 @@
+---
 name: "Style"
 
-on:
+on:  # yamllint disable-line rule:truthy
   push:
     branches: "**"
 
@@ -92,7 +93,7 @@ jobs:
     steps:
       - name: "Lint Python files with flake8"
         run: "flake8"
-  
+
   run-system-tests-coverage:
     runs-on: "self-hosted"
     needs: "setup"
