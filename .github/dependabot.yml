@@ -1,0 +1,11 @@
+---
+version: 2
+updates:
+  - package-ecosystem: "docker"
+    directory: "./tests/setup"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "pip"
+    directory: "./tests/testsuite/roles/testing/files"
+    schedule:
+      interval: "weekly"

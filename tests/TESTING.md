@@ -11,12 +11,13 @@ Testing consist of two modules:
 * Generates `id_rsa` and `id_rsa.pub` keys on the user's host under `setup/` directory and adds them to ssh agent
 * Adds records to `$HOME/.ssh/config`
 * Creates `testing.yml` group variables for the testsuite
-* Sets up Terraform infrastructure which consist of 5 docker containers imitating standalone nodes, where:
-  * `<node-prefix>-0` is the primary management node
-  * `<node-prefix>-1` is the primary mysql node
-  * `<node-prefix>-2` is the secondary mysql node
-  * `<node-prefix>-3` is the secondary mysql node
-  * `<node-prefix>-4` is the superset node
+* Sets up Terraform infrastructure which consist of 5 equal docker containers imitating standalone nodes, where:
+  * `<node-prefix>-0` is set as the primary management node
+  * `<node-prefix>-1` is set as the primary mysql node
+  * `<node-prefix>-2` is set as the secondary mysql node
+  * `<node-prefix>-3` is set as the secondary mysql node
+  * `<node-prefix>-4` is set as the superset node
+* Each of the nodes have the same project's sources copied
 
 ### `testsuite`
 
@@ -29,14 +30,26 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` and has the following software installed:
+Testing host is the `ubuntu:22.04` runner with 1 core of AMD EPYC 7773X x86_64 CPU and 8GiB of RAM with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
 
 * `terraform v1.0.10`
-* `openssh-server v1:8.9p1-3ubuntu0.7`
 * `python v3.10.12` with the following third party packages:
   * `ansible v9.5.1`
 
-Testing does not require any additional modules on the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
+Optionally, the following software is installed for doing style checks, and is present in the [automated testing](https://github.com/szachovy/superset-cluster/actions):
+
+* `pylint v3.2.4`
+* `mypy v1.10.1 (compiled)`
+* `flake8 v7.1.0`
+* `markdownlint-cli v0.41.0`
+* `shellcheck v0.8.0`
+* `hadolint v2.12.2`
+* `ansible-lint v24.6.1`
+* `tflint v0.51.1`
+* `yamllint v1.35.1`
+
+For functional testing the [required](./testsuite/roles/testing/files/requirements.txt) python packages are installed on the deployed containers.
+Testing does not require any additional modules unpresent in the terraform initiated infrastructure, current versions of deployed software has been described in the project's [`README.md`](../README.md/#installed-software).
 
 ### Usage
 
