@@ -25,14 +25,14 @@ if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
     SECONDARY_MYSQL_NODES_IP="${6:-} ${7:-}"
 
     for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE_IP}" ${SECONDARY_MYSQL_NODES_IP}; do
-      mysqlsh --execute "dba.configureInstance('${mysql_node_ip_address}:3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false})"
+      mysqlsh --execute "dba.configureInstance('${mysql_node_ip_address}:3306',{password:'${MYSQL_ROOT_PASSWORD}'})"
       sleep 15
     done
 
     mysqlsh --uri "root:${MYSQL_ROOT_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --execute "dba.createCluster('superset');"
     sleep 15
     for secondary_node_ip in ${SECONDARY_MYSQL_NODES_IP}; do
-      mysqlsh --uri "root:${MYSQL_ROOT_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --execute "dba.getCluster('superset').addInstance('root@${secondary_node_ip}:3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false,recoveryMethod:'incremental'});"
+      mysqlsh --uri "root:${MYSQL_ROOT_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --execute "dba.getCluster('superset').addInstance('root@${secondary_node_ip}:3306',{password:'${MYSQL_ROOT_PASSWORD}'});"
       sleep 60
     done
   fi
@@ -41,3 +41,4 @@ fi
 
 keepalived --use-file "/etc/keepalived/keepalived.conf" &
 mysqlrouter --config "/opt/mysql_router/mysqlrouter.conf" &
+    mysql_config_editor set --login-path=172.18.0.3 --host=172.18.0.3 --user=root --password

@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  mysql-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        SERVER_ID: 123
+        MYSQL_DATABASE: superset
+    image: mysql-server
+    environment:
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/superset_mysql_root_password
+    secrets:
+      - superset_mysql_root_password
+
+secrets:
+  superset_mysql_root_password:
+    external: true

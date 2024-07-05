@@ -21,7 +21,9 @@ RUN \
       wget \
       xz-utils \
       sysvinit-utils \
-      keepalived
+      keepalived \
+      mysql-client \
+      expect
 
 RUN \
   wget \
