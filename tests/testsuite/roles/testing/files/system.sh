@@ -3,12 +3,13 @@
 node_prefix="${1}"
 network_interface="${2}"
 
-mgmt_nodes=("${node_prefix}-0")
+mgmt_nodes=("${node_prefix}-0" "${node_prefix}-5")
 mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
 superset_node="${node_prefix}-4"
 
 _path_to_root_catalog="../.."
 preload_examples=true
+keepalive_ip="172.18.0.10"
 
 source "${_path_to_root_catalog}/src/common.sh"
 
@@ -34,5 +35,5 @@ start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]}) ${preload_examples}"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${keepalive_ip} ${preload_examples}"
 }

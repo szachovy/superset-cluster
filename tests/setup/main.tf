@@ -74,7 +74,7 @@ resource "docker_image" "node_image" {
 }
 
 resource "docker_container" "nodes" {
-  count      = "5"
+  count      = "6"
   name       = "${var.node_prefix}-${count.index}"
   hostname   = "${var.node_prefix}-${count.index}"
   image      = docker_image.node_image.name

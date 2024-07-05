@@ -11,7 +11,7 @@ class ContainerChecks(metaclass=data_structures.Overlay):
     def __init__(self, node_prefix: str, network_interface: str) -> None:
         self.node_prefix: str = node_prefix
         self.network_interface: str = network_interface
-        self.nodes: int = 5
+        self.nodes: int = 6
 
     @data_structures.Overlay.post_init_hook
     def status_services(self) -> None | AssertionError:
