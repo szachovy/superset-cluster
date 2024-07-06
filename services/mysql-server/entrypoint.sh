@@ -1,10 +1,16 @@
 #!/bin/bash
-export MYSQL_ROOT_PASSWORD=asdqwe
+export MYSQL_ROOT_PASSWORD=mysql
+export MYSQL_PASSWORD=mypass
+
+if [ -f /opt/.mylogin.cnf ]; then
+  mv /opt/.mylogin.cnf ${MYSQL_USER}
+fi
+
+/opt/store_credentials.sh
+
 docker-entrypoint.sh mysqld &
+
 unset MYSQL_ROOT_PASSWORD
 unset MYSQL_PASSWORD
-tail -f /dev/null
 
-# export MYSQL_ROOT_PASSWORD=asdqwe
-# mysqld &
-# unset MYSQL_ROOT_PASSWORD
+tail -f /dev/null

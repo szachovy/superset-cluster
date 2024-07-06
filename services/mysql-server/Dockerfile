@@ -1,4 +1,4 @@
-FROM mysql:8.3
+FROM mysql:8.0-debian
 
 ARG SERVER_ID
 ARG MYSQL_DATABASE
@@ -8,13 +8,21 @@ ARG MYSQL_PASSWORD
 ENV SERVER_ID="${SERVER_ID}"
 ENV MYSQL_DATABASE="${MYSQL_DATABASE}"
 ENV MYSQL_USER=${MYSQL_USER}
-ENV MYSQL_PASSWORD=${MYSQL_PASSWORD}
 
 COPY . /opt
 
 WORKDIR /opt
 
 RUN \
+  apt \
+    update \
+  && \
+  apt \
+    install \
+      --yes \
+      curl \
+      expect \
+  && \
   curl \
     --location \
     --output \
@@ -27,7 +35,7 @@ RUN \
   && \
     ./envsubst < "/opt/mysql_config.cnf.tpl" > "/etc/mysql/conf.d/mysql_config.cnf"
 
-RUN useradd --no-create-home --system ${MYSQL_USER}
+RUN useradd --create-home --system ${MYSQL_USER}
 RUN chown --recursive ${MYSQL_USER} /var/lib/mysql
 
 USER ${MYSQL_USER}

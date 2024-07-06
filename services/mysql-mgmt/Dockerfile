@@ -22,8 +22,7 @@ RUN \
       xz-utils \
       sysvinit-utils \
       keepalived \
-      mysql-client \
-      expect
+      mysql-client
 
 RUN \
   wget \
@@ -62,4 +61,4 @@ ENTRYPOINT [ "sleep", "infinity" ]
 #       "172.18.0.4", \
 #       "172.18.0.5" \
 # ]
-# /bin/bash /opt/entrypoint.sh true 172.18.0.10 eth0 mysql 172.18.0.3 172.18.0.4 172.18.0.5
+# /bin/bash /opt/entrypoint.sh true 172.18.0.10 eth0 mysql node-1 node-2 node-3
