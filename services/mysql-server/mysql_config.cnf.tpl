@@ -5,3 +5,5 @@ performance_schema=ON
 transaction_isolation=READ-COMMITTED
 default_authentication_plugin=mysql_native_password
 binlog_transaction_dependency_tracking=WRITESET
+enforce_gtid_consistency=ON
+gtid_mode=ON

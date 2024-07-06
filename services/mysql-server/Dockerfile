@@ -38,6 +38,6 @@ RUN \
 RUN useradd --create-home --system ${MYSQL_USER}
 RUN chown --recursive ${MYSQL_USER} /var/lib/mysql
 
-USER ${MYSQL_USER}
+# USER ${MYSQL_USER}
 
 CMD [ "/opt/entrypoint.sh" ]

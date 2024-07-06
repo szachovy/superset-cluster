@@ -20,6 +20,7 @@ fi
 
 if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
   if [ "${PRIMARY_NODE}" == "true" ]; then
+    mv /opt/.mylogin.cnf ${HOME}
     MYSQL_ROOT_PASSWORD="${4:-}"
     PRIMARY_MYSQL_NODE_IP="${5:-}"
     SECONDARY_MYSQL_NODES_IP="${6:-} ${7:-}"
@@ -36,7 +37,7 @@ if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
       sleep 60
     done
   fi
-  mysqlrouter --user "root" --bootstrap "root:${MYSQL_ROOT_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
+  mysqlrouter --user "root" --bootstrap "root:mysql@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
 fi
 
 keepalived --use-file "/etc/keepalived/keepalived.conf" &
