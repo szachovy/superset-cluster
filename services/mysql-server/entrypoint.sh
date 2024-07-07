@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export MYSQL_ROOT_PASSWORD=mysql
-export MYSQL_PASSWORD=mypass
+# export MYSQL_PASSWORD=mypass
 
 if [ -f /opt/.mylogin.cnf ]; then
   export MYSQL_TEST_LOGIN_FILE=/root/.mylogin.cnf
@@ -13,6 +13,6 @@ fi
 docker-entrypoint.sh mysqld &
 
 unset MYSQL_ROOT_PASSWORD
-unset MYSQL_PASSWORD
+# unset MYSQL_PASSWORD
 
 tail -f /dev/null
