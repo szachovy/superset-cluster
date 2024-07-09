@@ -4,7 +4,13 @@
     set -euxo pipefail
     source {{ role_path }}/files/system.sh \
       {{ node_prefix }} \
-      {{ network_interface }}
+      {{ network_interface }} \
+      {{ mysql_password }}
     initialize_nodes
   args:
     executable: /bin/bash
+  register: end_to_end_output
+
+- name: Display the output
+  ansible.builtin.debug:
+    var: end_to_end_output.stdout

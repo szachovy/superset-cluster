@@ -1,5 +1,17 @@
 FROM ubuntu:22.04
 
+ARG SUPERSET_USER_PASSWORD
+ARG IS_PRIMARY_MGMT_NODE
+ARG VIRTUAL_IP_ADDRESS
+ARG NETWORK_INTERFACE
+ARG MYSQL_NODES
+
+ENV SUPERSET_USER_PASSWORD=$SUPERSET_USER_PASSWORD
+ENV IS_PRIMARY_MGMT_NODE=$IS_PRIMARY_MGMT_NODE
+ENV VIRTUAL_IP_ADDRESS=$VIRTUAL_IP_ADDRESS
+ENV NETWORK_INTERFACE=$NETWORK_INTERFACE
+ENV MYSQL_NODES=$MYSQL_NODES
+
 ARG MYSQL_SHELL_VERSION=mysql-shell-8.3.0-linux-glibc2.28-x86-64bit
 ARG MYSQL_ROUTER_VERSION=mysql-router-8.3.0-linux-glibc2.28-x86_64
 
@@ -50,16 +62,8 @@ RUN \
     744 \
       /usr/bin/envsubst
 
-ENTRYPOINT [ "sleep", "infinity" ]
-# ENTRYPOINT [ \
-#   "/bin/bash", \
-#     "/opt/entrypoint.sh", \
-#       "true", \
-#       "172.18.0.10", \
-#       "eth0", \
-#       "mysql", \
-#       "172.18.0.3", \
-#       "172.18.0.4", \
-#       "172.18.0.5" \
-# ]
+# ENTRYPOINT [ "sleep", "infinity" ]
+# RUN echo "/opt/entrypoint.sh ${IS_PRIMARY_MGMT_NODE} ${VIRTUAL_IP_ADDRESS} ${NETWORK_INTERFACE} ${SUPERSET_USER_PASSWORD} ${MYSQL_NODES}"
+ENTRYPOINT /opt/entrypoint.sh ${IS_PRIMARY_MGMT_NODE} ${VIRTUAL_IP_ADDRESS} ${NETWORK_INTERFACE} ${SUPERSET_USER_PASSWORD} ${MYSQL_NODES}
+
 # /bin/bash /opt/entrypoint.sh true 172.18.0.10 eth0 mysql node-1 node-2 node-3

@@ -2,28 +2,28 @@
 
 set -euo pipefail
 
-PRIMARY_NODE="${1:-}"
+IS_PRIMARY_MGMT_NODE="${1:-}"
+VIRTUAL_IP_ADDRESS="${2:-}"
+NETWORK_INTERFACE="${3:-}"
+SUPERSET_USER_PASSWORD="${4:-}"
+PRIMARY_MYSQL_NODE_IP="${5:-}"
+SECONDARY_MYSQL_NODES_IP="${6:-} ${7:-}"
 
 if [ ! -f /etc/keepalived/keepalived.conf ]; then
-  if [ "${PRIMARY_NODE}" == "true" ]; then
+  if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
     STATE="MASTER"
     PRIORITY="100"
   else
     STATE="BACKUP"
     PRIORITY="90"
   fi
-  VIRTUAL_IPADDRESS="${2:-}"
-  INTERFACE="${3:-}"
-  export STATE PRIORITY VIRTUAL_IPADDRESS INTERFACE
+  export STATE PRIORITY VIRTUAL_IP_ADDRESS NETWORK_INTERFACE
   envsubst < "/opt/keepalived.conf.tpl" > "/etc/keepalived/keepalived.conf"
 fi
 
 if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
-  if [ "${PRIMARY_NODE}" == "true" ]; then
+  if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
     mv /opt/.mylogin.cnf ${HOME}
-    MYSQL_ROOT_PASSWORD="${4:-}"
-    PRIMARY_MYSQL_NODE_IP="${5:-}"
-    SECONDARY_MYSQL_NODES_IP="${6:-} ${7:-}"
 
     for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE_IP}" ${SECONDARY_MYSQL_NODES_IP}; do
       mysqlsh --login-path="${mysql_node_ip_address}" --execute="dba.configureInstance('${mysql_node_ip_address}')"
@@ -37,14 +37,14 @@ if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
       mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --execute="dba.getCluster('superset').addInstance('${secondary_node_ip}',{recoveryMethod:'incremental'});"
       sleep 60
     done
+    mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --sql --file=/opt/mysqlrouter-grants.sql
   fi
-  mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --sql --file=/opt/mysqlrouter-grants.sql
   # mysqlrouter --user "root" --bootstrap "root:mysql@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
-  mysqlrouter --user "root" --bootstrap "superset:mysql@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
+  mysqlrouter --user "root" --bootstrap "superset:${SUPERSET_USER_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
 fi
 
-keepalived --use-file "/etc/keepalived/keepalived.conf" &
-# mysqlrouter --config "/opt/mysql_router/mysqlrouter.conf" &
+keepalived --use-file "/etc/keepalived/keepalived.conf"
+mysqlrouter --config "/opt/mysql_router/mysqlrouter.conf"
 
 # SHOW VARIABLES LIKE 'gtid_executed';
 # SHOW BINARY LOGS;
