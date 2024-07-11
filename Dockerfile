@@ -9,7 +9,7 @@
 #     && rm -rf /var/lib/apt/lists/*
 
 # # Stage 2: Final
-FROM mysql:8.0-debian
+FROM ubuntu:22.04
 
 # # Copy mysql_config_editor from the builder stage
 # COPY --from=builder /usr/bin/mysql_config_editor /usr/bin/mysql_config_editor

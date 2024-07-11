@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  precontainer:
+    image: mysql-mgmt-init
+    command: ["sh", "-c", "your_precontainer_command && sleep infinity"]
+    volumes:
+      - data_volume:/data
+    restart: "no"
+
+  maincontainer:
+    image: your_maincontainer_image
+    depends_on:
+      - precontainer
+    volumes:
+      - data_volume:/data
+
+volumes:
+  data_volume:

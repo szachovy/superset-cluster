@@ -2,46 +2,34 @@
 
 set -euo pipefail
 
-IS_PRIMARY_MGMT_NODE="${1:-}"
-VIRTUAL_IP_ADDRESS="${2:-}"
-NETWORK_INTERFACE="${3:-}"
-SUPERSET_USER_PASSWORD="${4:-}"
-PRIMARY_MYSQL_NODE_IP="${5:-}"
-SECONDARY_MYSQL_NODES_IP="${6:-} ${7:-}"
-
-if [ ! -f /etc/keepalived/keepalived.conf ]; then
+if [ "${IS_SETUP}" == "true" ]; then
   if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
-    STATE="MASTER"
-    PRIORITY="100"
-  else
-    STATE="BACKUP"
-    PRIORITY="90"
-  fi
-  export STATE PRIORITY VIRTUAL_IP_ADDRESS NETWORK_INTERFACE
-  envsubst < "/opt/keepalived.conf.tpl" > "/etc/keepalived/keepalived.conf"
-fi
-
-if [ ! -f /opt/mysql_router/mysqlrouter.conf ]; then
-  if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
-    mv /opt/.mylogin.cnf ${HOME}
-
-    for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE_IP}" ${SECONDARY_MYSQL_NODES_IP}; do
+    for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
       mysqlsh --login-path="${mysql_node_ip_address}" --execute="dba.configureInstance('${mysql_node_ip_address}')"
       sleep 15
     done
 
-    mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --execute="dba.createCluster('superset');"
+    mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.createCluster('superset');"
     sleep 15
-    for secondary_node_ip in ${SECONDARY_MYSQL_NODES_IP}; do
+    for secondary_node_ip in "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
       mysqlsh --login-path="${secondary_node_ip}" --sql --execute="RESET MASTER;"
-      mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --execute="dba.getCluster('superset').addInstance('${secondary_node_ip}',{recoveryMethod:'incremental'});"
+      mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${secondary_node_ip}',{recoveryMethod:'incremental'});"
       sleep 60
     done
-    mysqlsh --login-path="${PRIMARY_MYSQL_NODE_IP}" --sql --file=/opt/mysqlrouter-grants.sql
+    mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file=/opt/mysqlrouter-grants.sql
   fi
-  # mysqlrouter --user "root" --bootstrap "root:mysql@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
-  mysqlrouter --user "root" --bootstrap "superset:${SUPERSET_USER_PASSWORD}@${PRIMARY_MYSQL_NODE_IP}:3306" --directory "/opt/mysql_router" --conf-use-sockets
+  mysqlrouter --user "root" --bootstrap "superset:mysql@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/mysql_router" --conf-use-sockets
 fi
+
+if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
+  STATE="MASTER"
+  PRIORITY="100"
+else
+  STATE="BACKUP"
+  PRIORITY="90"
+fi
+export STATE PRIORITY
+envsubst < "/opt/keepalived.conf.tpl" > "/etc/keepalived/keepalived.conf"
 
 keepalived --use-file "/etc/keepalived/keepalived.conf"
 mysqlrouter --config "/opt/mysql_router/mysqlrouter.conf"

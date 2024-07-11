@@ -36,5 +36,5 @@ start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${keepalive_ip} ${preload_examples}"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${preload_examples}"
 }
