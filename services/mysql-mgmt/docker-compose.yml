@@ -1,19 +1,32 @@
 version: '3.8'
 
 services:
-  precontainer:
-    image: mysql-mgmt-init
-    command: ["sh", "-c", "your_precontainer_command && sleep infinity"]
-    volumes:
-      - data_volume:/data
+  initcontainer:
+    build: /opt/superset-cluster/mysql-mgmt/initcontainer
+    container_name: mysql-mgmt-initcontainer
+    network_mode: "host"
     restart: "no"
+    environment:
+      - IS_PRIMARY_MGMT_NODE=${IS_PRIMARY_MGMT_NODE}
+      - VIRTUAL_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
+      - NETWORK_INTERFACE=${NETWORK_INTERFACE}
+      - PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}
+      - SECONDARY_FIRST_MYSQL_NODE=${SECONDARY_FIRST_MYSQL_NODE}
+      - SECONDARY_SECOND_MYSQL_NODE=${SECONDARY_SECOND_MYSQL_NODE}
+    volumes:
+      - initcontainer_generated:/opt/initcontainer
 
   maincontainer:
-    image: your_maincontainer_image
-    depends_on:
-      - precontainer
+    build: /opt/superset-cluster/mysql-mgmt
+    container_name: mysql-mgmt
+    restart: "always"
+    hostname: "${HOSTNAME}"
+    environment:
+      - PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}
+    network_mode: "host"
+    privileged: true
     volumes:
-      - data_volume:/data
+      - initcontainer_generated:/opt/initcontainer
 
 volumes:
-  data_volume:
+  initcontainer_generated:

@@ -1,28 +1,54 @@
 #!/bin/bash
 
-docker build \
-  --tag mysql-mgmt \
-  /opt/superset-cluster/mysql-mgmt
+export IS_PRIMARY_MGMT_NODE="${1}"
+export VIRTUAL_IP_ADDRESS="${2}"
+export NETWORK_INTERFACE="${3}"
+export PRIMARY_MYSQL_NODE="${4}"
+export SECONDARY_FIRST_MYSQL_NODE="${5}"
+export SECONDARY_SECOND_MYSQL_NODE="${6}"
 
-docker run \
-  --detach \
-  --name mysql-mgmt \
-  --restart always \
-  --hostname "${HOSTNAME}" \
-  --env IS_SETUP="${1}" \
-  --env IS_PRIMARY_MGMT_NODE="${2}" \
-  --env VIRTUAL_IP_ADDRESS="${3}" \
-  --env NETWORK_INTERFACE="${4}" \
-  --env PRIMARY_MYSQL_NODE="${5}" \
-  --env SECONDARY_FIRST_MYSQL_NODE="${6}" \
-  --env SECONDARY_SECOND_MYSQL_NODE="${7}" \
-  --network host \
-  --privileged \
-  mysql-mgmt
+cd /opt/superset-cluster/mysql-mgmt
+docker compose up initcontainer && docker compose up maincontainer --detach
 
-DO DOCKER COMPOSE PREINIT CONTAINER WITH SETUP (NO RESTART) and then main container only with final deamons.
+# docker build \
+#   --tag mysql-mgmt-initcontainer \
+#   /opt/superset-cluster/mysql-mgmt/initcontainer
 
-docker cp mysql-mgmt:/opt/mysql_router/ /opt/superset-cluster/mysql-mgmt
+# docker run \
+#   --detach \
+#   --name mysql-mgmt-initcontainer \
+#   --restart no \
+#   --hostname "${HOSTNAME}" \
+#   --env IS_PRIMARY_MGMT_NODE="${IS_PRIMARY_MGMT_NODE}" \
+#   --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
+#   --env NETWORK_INTERFACE="${NETWORK_INTERFACE}" \
+#   --env PRIMARY_MYSQL_NODE="${PRIMARY_MYSQL_NODE}" \
+#   --env SECONDARY_FIRST_MYSQL_NODE="${SECONDARY_FIRST_MYSQL_NODE}" \
+#   --env SECONDARY_SECOND_MYSQL_NODE="${SECONDARY_SECOND_MYSQL_NODE}" \
+#   --network host \
+#   --privileged \
+#   mysql-mgmt-initcontainer
+
+
+# export IS_PRIMARY_MGMT_NODE=true
+
+# export VIRTUAL_IP_ADDRESS=172.18.0.10
+
+# export NETWORK_INTERFACE=eth0
+
+# export PRIMARY_MYSQL_NODE=node-1
+
+# export SECONDARY_FIRST_MYSQL_NODE=node-2
+
+# export SECONDARY_SECOND_MYSQL_NODE=node-3
+
+
+# docker exec -it mysql-mgmt-initcontainer bash
+
+# DO DOCKER COMPOSE PREINIT CONTAINER WITH SETUP (NO RESTART) and then main container only with final deamons.
+
+# docker cp initcontainer:/opt/mysql_router/ /opt/superset-cluster/mysql-mgmt
+# docker cp initcontainer:/opt/keepalived.conf /opt/superset-cluster/keepalived.conf
 
 # sleep 15
 # for ip in "$@"; do
