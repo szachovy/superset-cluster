@@ -25,6 +25,7 @@ RUN \
 
 RUN \
   wget \
+    --quiet \
     https://dev.mysql.com/get/Downloads/MySQL-Shell/${MYSQL_SHELL_VERSION}.tar.gz \
     https://dev.mysql.com/get/Downloads/MySQL-Router/${MYSQL_ROUTER_VERSION}.tar.xz \
   && \

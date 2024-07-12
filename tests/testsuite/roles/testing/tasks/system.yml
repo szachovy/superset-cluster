@@ -7,6 +7,8 @@
       {{ network_interface }} \
       {{ mysql_password }}
     initialize_nodes
+    start_superset
+    sleep 60
   args:
     executable: /bin/bash
   register: end_to_end_output

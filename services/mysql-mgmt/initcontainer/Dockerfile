@@ -27,6 +27,7 @@ RUN \
 
 RUN \
   wget \
+    --quiet \
     https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-Linux-x86_64 \
     https://dev.mysql.com/get/Downloads/MySQL-Shell/${MYSQL_SHELL_VERSION}.tar.gz \
     https://dev.mysql.com/get/Downloads/MySQL-Router/${MYSQL_ROUTER_VERSION}.tar.xz \

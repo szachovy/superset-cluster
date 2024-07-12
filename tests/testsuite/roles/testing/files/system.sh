@@ -14,26 +14,26 @@ preload_examples=true
 
 source "${_path_to_root_catalog}/src/common.sh"
 
-restart_nodes() {
-  sleep 60
-  for mysql_node in "${mysql_nodes[@]}"; do
-    docker restart ${mysql_node}
-    sleep 60
-    nohup ssh root@${mysql_node} "service docker start"  > /dev/null 2>&1 &
-  done
-}
+# restart_nodes() {
+#   sleep 60
+#   for mysql_node in "${mysql_nodes[@]}"; do
+#     docker restart ${mysql_node}
+#     sleep 60
+#     nohup ssh root@${mysql_node} "service docker start"  > /dev/null 2>&1 &
+#   done
+# }
 
-superset_node_address() {
-  ssh root@"${superset_node}" "cd /opt/superset-cluster; $(typeset -f get_superset_node_ip); get_superset_node_ip ${network_interface}"
-}
+# superset_node_address() {
+#   ssh root@"${superset_node}" "cd /opt/superset-cluster; $(typeset -f get_superset_node_ip); get_superset_node_ip ${network_interface}"
+# }
 
-docker_swarm_token() {
-  local superset_node_address="${1}"
-  ssh root@"${superset_node}" "$(typeset -f init_and_get_docker_swarm_token); init_and_get_docker_swarm_token ${superset_node_address}"
-}
+# docker_swarm_token() {
+#   local superset_node_address="${1}"
+#   ssh root@"${superset_node}" "$(typeset -f init_and_get_docker_swarm_token); init_and_get_docker_swarm_token ${superset_node_address}"
+# }
 
 start_superset() {
-  ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
+  # ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${preload_examples}"

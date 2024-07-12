@@ -8,5 +8,6 @@ docker run \
   --detach \
   --name redis \
   --hostname redis \
-  --network superset-network \
   redis
+
+#   --network superset-network \

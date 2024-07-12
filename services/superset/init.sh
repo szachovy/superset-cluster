@@ -2,6 +2,7 @@
 
 MYSQL_IP="${1}"
 PRELOAD_EXAMPLES="${2}"
+# MYSQL_IP="172.18.0.10"
 
 docker build \
   --tag superset \
@@ -11,9 +12,10 @@ docker run \
   --detach \
   --name superset \
   --publish 8088:8088 \
-  --network superset-network \
   --env "MYSQL_IP=${MYSQL_IP}" \
   superset
+
+  # --network superset-network \
 
 sleep 25
 docker exec superset superset fab create-admin --username admin --firstname admin --lastname admin --email admin@admin.com --password admin
