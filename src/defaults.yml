@@ -1,5 +1,6 @@
 ---
 network_interface: "eth0"
+virtual_ip_address: "172.18.0.10"
 mgmt_hostname: "mysql-mgmt"
 mysql_user: "root"
 redis_hostname: "redis"

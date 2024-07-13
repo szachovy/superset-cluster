@@ -37,14 +37,19 @@
     chdir: "/opt/superset-cluster/src"
     timeout: 15
 
+- name: Disaster testing - Stop Mgmt primary node
+  community.docker.docker_container:
+    name: "{{ node_prefix }}-0"
+    state: stopped
+
 - name: Disaster testing - Stop MySQL primary node
   community.docker.docker_container:
     name: "{{ node_prefix }}-1"
     state: stopped
 
-- name: "run mgmt functional tests after disasters"
+- name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
+    container: "{{ node_prefix }}-5"
     command: "python3 -c
       'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
@@ -54,7 +59,6 @@
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=True
       );
-      mgmt_functional.check_mysql_after_disaster();
-      mgmt_functional.check_router_after_disaster()'"
+      mgmt_functional.check_after_disaster()'"
     chdir: "/opt/superset-cluster/src"
   timeout: 300

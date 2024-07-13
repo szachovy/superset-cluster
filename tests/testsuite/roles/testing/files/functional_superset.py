@@ -66,7 +66,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         self.superset_hostname: str = superset_hostname
         self.database_name: str = database_name
         self.superset_password: str = superset_password
-        self.mgmt_primary_node: str = f"{node_prefix}-0"
+        self.mgmt_primary_node: str = "172.18.0.10"
         self.superset_node: str = f"{node_prefix}-4"
         self.api_default_url: str = "http://localhost:8088/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"

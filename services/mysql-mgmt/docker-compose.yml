@@ -1,32 +1,33 @@
-version: '3.8'
+version: "3.8"
 
 services:
   initcontainer:
-    build: /opt/superset-cluster/mysql-mgmt/initcontainer
-    container_name: mysql-mgmt-initcontainer
+    build: "/opt/superset-cluster/mysql-mgmt"
+    container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"
     environment:
-      - IS_PRIMARY_MGMT_NODE=${IS_PRIMARY_MGMT_NODE}
-      - VIRTUAL_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
-      - NETWORK_INTERFACE=${NETWORK_INTERFACE}
-      - PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}
-      - SECONDARY_FIRST_MYSQL_NODE=${SECONDARY_FIRST_MYSQL_NODE}
-      - SECONDARY_SECOND_MYSQL_NODE=${SECONDARY_SECOND_MYSQL_NODE}
+      - "IS_PRIMARY_MGMT_NODE=${IS_PRIMARY_MGMT_NODE}"
+      - "VIRTUAL_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}"
+      - "NETWORK_INTERFACE=${NETWORK_INTERFACE}"
+      - "PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}"
+      - "SECONDARY_FIRST_MYSQL_NODE=${SECONDARY_FIRST_MYSQL_NODE}"
+      - "SECONDARY_SECOND_MYSQL_NODE=${SECONDARY_SECOND_MYSQL_NODE}"
     volumes:
-      - initcontainer_generated:/opt/initcontainer
+      - "initcontainer_generated:/opt/initcontainer"
 
   maincontainer:
-    build: /opt/superset-cluster/mysql-mgmt
-    container_name: mysql-mgmt
+    image: "mysql-mgmt"
+    command: "keepalived --use-file /opt/initcontainer/keepalived.conf && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf"
+    container_name: "mysql-mgmt"
     restart: "always"
     hostname: "${HOSTNAME}"
     environment:
-      - PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}
+      - "PRIMARY_MYSQL_NODE=${PRIMARY_MYSQL_NODE}"
     network_mode: "host"
     privileged: true
     volumes:
-      - initcontainer_generated:/opt/initcontainer
+      - "initcontainer_generated:/opt/initcontainer"
 
 volumes:
   initcontainer_generated:
