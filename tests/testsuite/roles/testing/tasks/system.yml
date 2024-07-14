@@ -15,8 +15,3 @@
     sleep 60
   args:
     executable: /bin/bash
-  register: end_to_end_output
-
-- name: Display the output
-  ansible.builtin.debug:
-    var: end_to_end_output.stdout

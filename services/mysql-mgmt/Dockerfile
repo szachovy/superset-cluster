@@ -48,5 +48,3 @@ RUN \
   chmod \
     744 \
       /usr/bin/envsubst
-
-ENTRYPOINT [ "/opt/entrypoint.sh" ]
