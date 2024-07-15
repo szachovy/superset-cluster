@@ -1,5 +1,6 @@
 ---
-network_interface: "eth0"
+superset_network_interface: "eth0"
+virtual_network_interface: "eth0"
 mgmt_hostname: "mysql-mgmt"
 mysql_user: "root"
 redis_hostname: "redis"

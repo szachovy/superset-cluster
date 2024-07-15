@@ -6,7 +6,7 @@ vrrp_script status {
 
 vrrp_instance virtual_instance {
     state ${STATE}
-    interface ${NETWORK_INTERFACE}
+    interface ${VIRTUAL_NETWORK_INTERFACE}
     virtual_router_id 51
     priority ${PRIORITY}
     advert_int 1

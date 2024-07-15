@@ -21,14 +21,14 @@ initialize_nodes() {
   for mgmt_node in "${mgmt_nodes[@]}"; do
     ssh root@${mgmt_node} "mkdir --parents /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "root@${mgmt_node}:/opt/superset-cluster"
-    ssh root@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${IS_PRIMARY_MGMT_NODE} ${virtual_ip_address} ${network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+    ssh root@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${IS_PRIMARY_MGMT_NODE} ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
     IS_PRIMARY_MGMT_NODE=false
   done
 }
 
 get_superset_node_ip() {
-  local network_interface="${1}"
-  python3 -c "import src.interfaces; print(src.interfaces.network_interfaces(network_interface='${network_interface}'))"
+  local superset_network_interface="${1}"
+  python3 -c "import src.interfaces; print(src.interfaces.network_interfaces(network_interface='${superset_network_interface}'))"
 }
 
 init_and_get_docker_swarm_token() {
