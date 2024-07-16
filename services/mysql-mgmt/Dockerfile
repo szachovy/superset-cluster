@@ -1,5 +1,7 @@
 FROM ubuntu:22.04
 
+COPY . "/opt"
+
 RUN \
   apt \
     update \
@@ -15,39 +17,42 @@ RUN \
   && \
   groupadd \
     --system \
-      superset \
+      "superset" \
   && \
   useradd \
     --system \
     --gid \
-      superset \
+      "superset" \
     --create-home \
     --home-dir \
-      /home/superset \
+      "/home/superset" \
     --shell \
-      /bin/bash \
+      "/bin/bash" \
     superset \
+  && \
+  mkdir \
+    "/opt/initcontainer" \
   && \
   chown \
     --recursive \
       superset:superset \
-        /opt/initcontainer \
+        "/opt/initcontainer" \
   && \
   rm \
     --recursive \
     --force \
-      /var/lib/apt/lists/*
+      "/var/lib/apt/lists/*"
 
 USER superset
 
-ARG MYSQL_SHELL_VERSION "mysql-shell-8.3.0-linux-glibc2.28-x86-64bit"
-ARG MYSQL_ROUTER_VERSION "mysql-router-8.3.0-linux-glibc2.28-x86_64"
+ARG MYSQL_SHELL_VERSION="mysql-shell-8.3.0-linux-glibc2.28-x86-64bit"
+ARG MYSQL_ROUTER_VERSION="mysql-router-8.3.0-linux-glibc2.28-x86_64"
 
-ENV DEBIAN_FRONTEND "noninteractive"
-ENV PATH "${PATH}:${HOME}/${MYSQL_SHELL_VERSION}/bin:${HOME}/${MYSQL_ROUTER_VERSION}/bin"
+ENV DEBIAN_FRONTEND="noninteractive"
+ENV PATH="${PATH}:/home/superset/${MYSQL_SHELL_VERSION}/bin:/home/superset/${MYSQL_ROUTER_VERSION}/bin"
+# ENV MYSQL_TEST_LOGIN_FILE="/home/superset/.mylogin.cnf"
 
-COPY . "${HOME}"
-WORKDIR "${HOME}"
+WORKDIR "/home/superset"
 
 RUN \
   wget \
@@ -69,8 +74,10 @@ RUN \
   && \
   chmod \
     744 \
-      "${HOME}/envsubst-Linux-x86_64" \
+      "/home/superset/envsubst-Linux-x86_64" \
   && \
-    rm \
-      "${MYSQL_SHELL_VERSION}.tar.gz" \
-      "${MYSQL_ROUTER_VERSION}.tar.xz"
+  rm \
+    "${MYSQL_SHELL_VERSION}.tar.gz" \
+    "${MYSQL_ROUTER_VERSION}.tar.xz"
+
+ENTRYPOINT [ "sleep", "infinity" ]

@@ -3,7 +3,7 @@ services:
   initcontainer:
     build: "/opt/superset-cluster/mysql-mgmt"
     image: "mysql-mgmt"
-    entrypoint: [ "/opt/entrypoint.sh" ]
+    entrypoint: "sleep infinity" #[ "/home/superset/entrypoint.sh" ]
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"

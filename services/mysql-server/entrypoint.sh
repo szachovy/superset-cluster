@@ -1,8 +1,9 @@
 #!/bin/bash
 
-export MYSQL_ROOT_PASSWORD=$(openssl rand -hex 9)
+export MYSQL_ROOT_PASSWORD=mysql
+#$(openssl rand -hex 9)
 
-/opt/store_credentials
+/home/superset/store_credentials
 docker-entrypoint.sh mysqld &
 
 unset MYSQL_ROOT_PASSWORD
