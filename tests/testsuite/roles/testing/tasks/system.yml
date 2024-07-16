@@ -5,7 +5,6 @@
     source {{ role_path }}/files/system.sh \
       {{ node_prefix }} \
       {{ superset_network_interface }} \
-      {{ mysql_password }} \
       {{ virtual_ip_address }} \
       {{ virtual_network_interface }}
     initialize_nodes

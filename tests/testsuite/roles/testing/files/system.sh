@@ -2,9 +2,8 @@
 
 node_prefix="${1}"
 superset_network_interface="${2}"
-mysql_password="${3}"
-virtual_ip_address="${4}"
-virtual_network_interface="${5}"
+virtual_ip_address="${3}"
+virtual_network_interface="${4}"
 
 mgmt_nodes=("${node_prefix}-0" "${node_prefix}-5")
 mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")

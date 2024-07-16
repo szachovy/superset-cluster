@@ -138,8 +138,6 @@ resource "null_resource" "generate_ansible_group_vars" {
       cp $DEFAULTS_FILE $GROUP_VARS_FILE
       {
         echo "virtual_ip_address: \"$VIRTUAL_IP_ADDRESS\""
-        echo "mysql_password: \"mysql\""
-        echo "superset_password: \"admin\""
         echo "node_prefix: \"$NODE_PREFIX\""
       } >> $GROUP_VARS_FILE
     EOT

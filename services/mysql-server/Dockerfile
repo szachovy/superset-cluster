@@ -3,10 +3,6 @@ FROM mysql:8.0-debian
 ARG SERVER_ID
 ENV SERVER_ID="${SERVER_ID}"
 
-COPY . /opt
-
-WORKDIR /opt
-
 RUN \
   apt \
     update \
@@ -27,6 +23,36 @@ RUN \
     744 \
       envsubst \
   && \
-    ./envsubst < "/opt/mysql_config.cnf.tpl" > "/etc/mysql/conf.d/mysql_config.cnf"
+    ./envsubst < "/opt/mysql_config.cnf.tpl" > "/etc/mysql/conf.d/mysql_config.cnf" \
+  && \
+  groupadd \
+    --system \
+      superset \
+  && \
+  useradd \
+    --system \
+    --gid \
+      superset \
+    --create-home \
+    --home-dir \
+      /home/superset \
+    --shell \
+      /bin/bash \
+    superset \
+  && \
+  chown \
+    --recursive \
+      superset:superset \
+        /var/run/mysqld \
+  && \
+  rm \
+    --recursive \
+    --force \
+      /var/lib/apt/lists/*
 
-CMD [ "/opt/entrypoint.sh" ]
+USER superset
+
+COPY . "${HOME}"
+WORKDIR "${HOME}"
+
+CMD [ "${HOME}/entrypoint.sh" ]
