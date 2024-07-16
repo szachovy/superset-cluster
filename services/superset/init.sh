@@ -10,8 +10,8 @@ docker build \
 docker run \
   --detach \
   --name superset \
-  --publish 8088:8088 \
   --network superset-network \
+  --publish 8088:8088 \
   --env "MYSQL_IP=${MYSQL_IP}" \
   superset
 

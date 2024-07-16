@@ -32,7 +32,7 @@ The following software needs to be installed on both the user's host and externa
 * `docker-buildx-plugin v0.14.0-1~ubuntu.22.04~jammy`
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
-* `openssh-server v1:8.9p1-3ubuntu0.7`
+* `openssh-server v1:8.9p1-3ubuntu0.10`
 
 ## Installation & Usage
 

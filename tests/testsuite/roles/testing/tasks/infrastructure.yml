@@ -40,7 +40,7 @@
       'import introspect;
       introspect.ContainerChecks(
         node_prefix=\"{{ node_prefix }}\",
-        network_interface=\"{{ network_interface }}\"
+        superset_network_interface=\"{{ superset_network_interface }}\"
       )
       '"
     chdir: "/opt/superset-cluster/src"

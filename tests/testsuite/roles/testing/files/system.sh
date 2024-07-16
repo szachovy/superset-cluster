@@ -1,9 +1,12 @@
 #!/bin/bash
 
 node_prefix="${1}"
-network_interface="${2}"
+superset_network_interface="${2}"
+mysql_password="${3}"
+virtual_ip_address="${4}"
+virtual_network_interface="${5}"
 
-mgmt_nodes=("${node_prefix}-0")
+mgmt_nodes=("${node_prefix}-0" "${node_prefix}-5")
 mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
 superset_node="${node_prefix}-4"
 
@@ -12,17 +15,8 @@ preload_examples=true
 
 source "${_path_to_root_catalog}/src/common.sh"
 
-restart_nodes() {
-  sleep 60
-  for mysql_node in "${mysql_nodes[@]}"; do
-    docker restart ${mysql_node}
-    sleep 60
-    nohup ssh root@${mysql_node} "service docker start"  > /dev/null 2>&1 &
-  done
-}
-
 superset_node_address() {
-  ssh root@"${superset_node}" "cd /opt/superset-cluster; $(typeset -f get_superset_node_ip); get_superset_node_ip ${network_interface}"
+  ssh root@"${superset_node}" "cd /opt/superset-cluster; $(typeset -f get_superset_node_ip); get_superset_node_ip ${superset_network_interface}"
 }
 
 docker_swarm_token() {
@@ -34,5 +28,5 @@ start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh $(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' ${mgmt_nodes[0]}) ${preload_examples}"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${preload_examples}"
 }

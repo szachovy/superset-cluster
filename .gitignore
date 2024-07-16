@@ -11,3 +11,6 @@ group_vars/
 
 # Python cache
 __pycache__/
+
+# MySQL login files
+**/.mylogin.cnf

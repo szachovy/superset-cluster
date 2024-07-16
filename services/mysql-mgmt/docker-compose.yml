@@ -1,0 +1,32 @@
+---
+services:
+  initcontainer:
+    build: "/opt/superset-cluster/mysql-mgmt"
+    image: "mysql-mgmt"
+    entrypoint: [ "/opt/entrypoint.sh" ]
+    container_name: "mysql-mgmt-initcontainer"
+    network_mode: "host"
+    restart: "no"
+    environment:
+      IS_PRIMARY_MGMT_NODE: "${IS_PRIMARY_MGMT_NODE}"
+      VIRTUAL_IP_ADDRESS: "${VIRTUAL_IP_ADDRESS}"
+      VIRTUAL_NETWORK_INTERFACE: "${VIRTUAL_NETWORK_INTERFACE}"
+      PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
+      SECONDARY_FIRST_MYSQL_NODE: "${SECONDARY_FIRST_MYSQL_NODE}"
+      SECONDARY_SECOND_MYSQL_NODE: "${SECONDARY_SECOND_MYSQL_NODE}"
+    volumes:
+      - "initcontainer_generated:/opt/initcontainer"
+
+  maincontainer:
+    image: "mysql-mgmt"
+    entrypoint: [ "sh", "-c", "keepalived --use-file /opt/initcontainer/keepalived.conf && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf" ]
+    container_name: "mysql-mgmt"
+    restart: "always"
+    hostname: "${HOSTNAME}"
+    network_mode: "host"
+    privileged: true
+    volumes:
+      - "initcontainer_generated:/opt/initcontainer"
+
+volumes:
+  initcontainer_generated:

@@ -14,7 +14,8 @@
         celery_broker=\"{{ celery_broker }}\",
         superset_hostname=\"{{ superset_hostname }}\",
         database_name=\"{{ database_name }}\",
-        superset_password=\"{{ superset_password }}\"
+        superset_password=\"{{ superset_password }}\",
+        virtual_ip_address=\"{{ virtual_ip_address }}\",
       );
       database_id = superset_functional.create_database_connection();
       query_dttm = superset_functional.run_query(database_id);
@@ -31,30 +32,36 @@
         mgmt_hostname=\"{{ mgmt_hostname }}\",
         mysql_user=\"{{ mysql_user }}\",
         mysql_password=\"{{ mysql_password }}\",
+        virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=False
       );'"
     chdir: "/opt/superset-cluster/src"
     timeout: 15
 
+- name: Disaster testing - Stop Mgmt primary node
+  community.docker.docker_container:
+    name: "{{ node_prefix }}-0"
+    state: stopped
+
 - name: Disaster testing - Stop MySQL primary node
   community.docker.docker_container:
     name: "{{ node_prefix }}-1"
     state: stopped
 
-- name: "run mgmt functional tests after disasters"
+- name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
+    container: "{{ node_prefix }}-5"
     command: "python3 -c
       'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
         mgmt_hostname=\"{{ mgmt_hostname }}\",
         mysql_user=\"{{ mysql_user }}\",
         mysql_password=\"{{ mysql_password }}\",
+        virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=True
       );
-      mgmt_functional.check_mysql_after_disaster();
-      mgmt_functional.check_router_after_disaster()'"
+      mgmt_functional.check_after_disaster()'"
     chdir: "/opt/superset-cluster/src"
   timeout: 300

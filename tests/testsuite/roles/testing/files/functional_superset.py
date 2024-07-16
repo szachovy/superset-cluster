@@ -57,7 +57,7 @@ class Celery(container_connection.ContainerUtilities, metaclass=data_structures.
 
 
 class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, node_prefix: str, mysql_user: str, mysql_password: str, redis_hostname: str, redis_port: int, celery_sql_lab_task_annotations: str, celery_broker: str, superset_hostname: str, database_name: str, superset_password: str) -> None:
+    def __init__(self, node_prefix: str, mysql_user: str, mysql_password: str, redis_hostname: str, redis_port: int, celery_sql_lab_task_annotations: str, celery_broker: str, superset_hostname: str, database_name: str, superset_password: str, virtual_ip_address: str) -> None:
         super().__init__(node=superset_hostname)
         self.celery: typing.Type = Celery(superset_hostname, celery_broker, celery_sql_lab_task_annotations, node_prefix)
         self.redis: typing.Type = Redis(superset_hostname, redis_hostname, redis_port, node_prefix)
@@ -66,7 +66,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         self.superset_hostname: str = superset_hostname
         self.database_name: str = database_name
         self.superset_password: str = superset_password
-        self.mgmt_primary_node: str = f"{node_prefix}-0"
+        self.virtual_ip_address: str = virtual_ip_address
         self.superset_node: str = f"{node_prefix}-4"
         self.api_default_url: str = "http://localhost:8088/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
@@ -97,9 +97,9 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
 
     @data_structures.Overlay.post_init_hook
     def status_database(self) -> None | AssertionError:
-        payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://{self.mysql_user}:{self.mysql_password}@{self.find_node_ip(self.mgmt_primary_node)}:6446/{self.database_name}", "impersonate_user": false}}'
+        payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://{self.mysql_user}:{self.mysql_password}@{self.virtual_ip_address}:6446/{self.database_name}", "impersonate_user": false}}'
         test_database_connection: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --data '{payload}'")
-        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {self.database_name} on {self.mgmt_primary_node} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
+        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {self.database_name} on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
 
     @data_structures.Overlay.post_init_hook
     def status_datasets(self) -> None | AssertionError:
@@ -118,7 +118,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         # assert swarm_info['Nodes'] == 3, f'The Swarm is expected to consist of 3 nodes instead of {swarm_info["Nodes"]} in the pool.'
 
     def create_database_connection(self) -> int | AssertionError:
-        payload: str = f'{{"engine": "mysql", "configuration_method": "sqlalchemy_form", "database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://{self.mysql_user}:{self.mysql_password}@{self.find_node_ip(self.mgmt_primary_node)}:6446/{self.database_name}"}}'
+        payload: str = f'{{"engine": "mysql", "configuration_method": "sqlalchemy_form", "database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://{self.mysql_user}:{self.mysql_password}@{self.virtual_ip_address}:6446/{self.database_name}"}}'
         mysql_connect: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
         assert not self.find_in_the_output(mysql_connect, b'"message"'), f'Could not create database from API: {mysql_connect}'
         return self.decode_command_output(mysql_connect).get('id')

@@ -1,21 +1,11 @@
 #!/bin/bash
 
-MYSQL_ROOT_PASSWORD=mysql
+export IS_PRIMARY_MGMT_NODE="${1}"
+export VIRTUAL_IP_ADDRESS="${2}"
+export VIRTUAL_NETWORK_INTERFACE="${3}"
+export PRIMARY_MYSQL_NODE="${4}"
+export SECONDARY_FIRST_MYSQL_NODE="${5}"
+export SECONDARY_SECOND_MYSQL_NODE="${6}"
 
-docker build \
-  --tag mysql-mgmt \
-  /opt/superset-cluster/mysql-mgmt
-
-docker run \
-  --detach \
-  --restart always \
-  --name mysql-mgmt \
-  --hostname "${HOSTNAME}" \
-  --network host \
-  mysql-mgmt
-
-sleep 15
-for ip in "$@"; do
-  docker exec mysql-mgmt mysqlsh --execute "dba.configureInstance('${ip}:3306',{password:'${MYSQL_ROOT_PASSWORD}',interactive:false});"
-  sleep 15
-done
+cd /opt/superset-cluster/mysql-mgmt
+docker compose up initcontainer && docker compose up maincontainer --detach

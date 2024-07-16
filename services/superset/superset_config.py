@@ -6,7 +6,7 @@ MYSQL_ROOT_PASSWORD="mysql"
 redis_ip="redis"
 mysql_ip=os.environ.get('MYSQL_IP')
 
-SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://root:{MYSQL_ROOT_PASSWORD}@{mysql_ip}:6446/superset"
+SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:{MYSQL_ROOT_PASSWORD}@{mysql_ip}:6446/superset"
 
 
 class CeleryConfig(object):
