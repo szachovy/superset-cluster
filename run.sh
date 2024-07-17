@@ -20,7 +20,7 @@ start_superset() {
 }
 
 initialize_nodes
-# superset_node_address=$(get_superset_node_ip ${superset_network_interface})
-# docker_swarm_token=$(init_and_get_docker_swarm_token ${superset_node_address})
-# clusterize_nodes
-# start_superset
+superset_node_address=$(get_superset_node_ip ${superset_network_interface})
+docker_swarm_token=$(init_and_get_docker_swarm_token ${superset_node_address})
+clusterize_nodes
+start_superset

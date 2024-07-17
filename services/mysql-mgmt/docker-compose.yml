@@ -3,7 +3,8 @@ services:
   initcontainer:
     build: "/opt/superset-cluster/mysql-mgmt"
     image: "mysql-mgmt"
-    entrypoint: "sleep infinity" #[ "/home/superset/entrypoint.sh" ]
+    user: "root"
+    entrypoint: [ "/opt/entrypoint.sh" ]
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"
@@ -19,6 +20,7 @@ services:
 
   maincontainer:
     image: "mysql-mgmt"
+    user: "superset"
     entrypoint: [ "sh", "-c", "keepalived --use-file /opt/initcontainer/keepalived.conf && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf" ]
     container_name: "mysql-mgmt"
     restart: "always"

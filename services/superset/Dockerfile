@@ -2,10 +2,13 @@ FROM apache/superset
 
 USER superset
 
-ARG PRELOAD_EXAMPLES=false
+ARG VIRTUAL_IP_ADDRESS
+ARG PRELOAD_EXAMPLES="false"
 
-COPY --chown=superset superset_config.py /app/
-ENV SUPERSET_CONFIG_PATH /app/superset_config.py
+COPY --chown=superset "superset_config.py" "/app/"
+
+ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
+ENV VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}"
 
 RUN \
   pip \
@@ -17,25 +20,27 @@ RUN \
     fab \
       create-admin \
         --username \
-          superset \
+          "superset" \
         --firstname \
-          superset \
+          "superset" \
         --lastname \
-          superset \
+          "superset" \
         --email \
-          superset@cluster.com \
+          "superset@cluster.com" \
         --password \
-          cluster \
+          "cluster" \
   && \
     superset \
       db \
         upgrade \
   && \
-    if ${PRELOAD_EXAMPLES}; then \
+    if "${PRELOAD_EXAMPLES}"; then \
       superset load_examples; \
     fi \
   &&  \
     superset \
       init
 
-ENTRYPOINT $(pwd)/services/superset/entrypoint.sh
+ENTRYPOINT [ "sh", "-c", \
+  "celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach && /usr/bin/run-server.sh" \
+]

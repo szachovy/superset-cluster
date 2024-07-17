@@ -25,7 +25,7 @@ RUN \
       "superset" \
     --create-home \
     --home-dir \
-      "/home/superset" \
+      "/opt" \
     --shell \
       "/bin/bash" \
     superset \
@@ -33,26 +33,19 @@ RUN \
   mkdir \
     "/opt/initcontainer" \
   && \
-  chown \
-    --recursive \
-      superset:superset \
-        "/opt/initcontainer" \
-  && \
   rm \
     --recursive \
     --force \
       "/var/lib/apt/lists/*"
 
-USER superset
-
 ARG MYSQL_SHELL_VERSION="mysql-shell-8.3.0-linux-glibc2.28-x86-64bit"
 ARG MYSQL_ROUTER_VERSION="mysql-router-8.3.0-linux-glibc2.28-x86_64"
 
 ENV DEBIAN_FRONTEND="noninteractive"
-ENV PATH="${PATH}:/home/superset/${MYSQL_SHELL_VERSION}/bin:/home/superset/${MYSQL_ROUTER_VERSION}/bin"
-# ENV MYSQL_TEST_LOGIN_FILE="/home/superset/.mylogin.cnf"
+ENV PATH="${PATH}:/opt/${MYSQL_SHELL_VERSION}/bin:/opt/${MYSQL_ROUTER_VERSION}/bin"
+ENV MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
 
-WORKDIR "/home/superset"
+WORKDIR "/opt"
 
 RUN \
   wget \
@@ -74,7 +67,7 @@ RUN \
   && \
   chmod \
     744 \
-      "/home/superset/envsubst-Linux-x86_64" \
+      "/opt/envsubst-Linux-x86_64" \
   && \
   rm \
     "${MYSQL_SHELL_VERSION}.tar.gz" \
