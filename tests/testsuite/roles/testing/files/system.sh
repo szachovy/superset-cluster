@@ -10,7 +10,7 @@ mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
 superset_node="${node_prefix}-4"
 
 _path_to_root_catalog="../.."
-preload_examples=true
+ENVIRONMENT="testing"
 
 source "${_path_to_root_catalog}/src/common.sh"
 
@@ -27,5 +27,5 @@ start_superset() {
   ssh root@${superset_node} "docker network create --driver overlay --attachable superset-network"
   scp -r ${_path_to_root_catalog}/services "root@${superset_node}:/opt/superset-cluster"
   ssh root@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${preload_examples}"
+  ssh root@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${ENVIRONMENT}"
 }

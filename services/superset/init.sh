@@ -1,11 +1,14 @@
 #!/bin/bash
 
-VIRTUAL_IP_ADDRESS="${1}"
-PRELOAD_EXAMPLES="${2}"
+# docker build \
+#   --build-arg VIRTUAL_IP_ADDRESS="172.18.0.8" \
+#   --build-arg ENVIRONMENT="testing" \
+#   --tag superset \
+#   $(pwd)/services/superset
 
 docker build \
-  --build-arg VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
-  --build-arg PRELOAD_EXAMPLES="${PRELOAD_EXAMPLES}" \
+  --build-arg VIRTUAL_IP_ADDRESS="${1}" \
+  --build-arg ENVIRONMENT="${2}" \
   --tag superset \
   $(pwd)/services/superset
 

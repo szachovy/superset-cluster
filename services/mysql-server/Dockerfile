@@ -77,6 +77,4 @@ WORKDIR "/home/superset"
 
 ENV MYSQL_TEST_LOGIN_FILE="/home/superset/.mylogin.cnf"
 
-# ENTRYPOINT [ "sh", "-c", "sleep infinity" ]
-
 ENTRYPOINT [ "/home/superset/entrypoint.sh" ]

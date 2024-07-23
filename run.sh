@@ -9,14 +9,14 @@ virtual_ip_address="10.145.211.155"
 virtual_network_interface="eth0"
 
 _path_to_root_catalog="."
-preload_examples=false
+ENVIRONMENT="production"
 
 source ${_path_to_root_catalog}/src/common.sh
 
 start_superset() {
   docker network create --driver overlay --attachable superset-network
   ./services/redis/init.sh
-  ./services/superset/init.sh ${virtual_ip_address} ${preload_examples}
+  ./services/superset/init.sh ${virtual_ip_address} ${ENVIRONMENT}
 }
 
 initialize_nodes

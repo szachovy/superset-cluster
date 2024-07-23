@@ -11,4 +11,5 @@ docker run \
   --name mysql \
   --hostname "${HOSTNAME}" \
   --network host \
+  --cap-add sys_nice \
   mysql-server

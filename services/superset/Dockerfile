@@ -3,12 +3,13 @@ FROM apache/superset
 USER superset
 
 ARG VIRTUAL_IP_ADDRESS
-ARG PRELOAD_EXAMPLES="false"
+ARG ENVIRONMENT
 
 COPY --chown=superset "superset_config.py" "/app/"
 
 ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
 ENV VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}"
+ENV ENVIRONMENT="${ENVIRONMENT}"
 
 RUN \
   pip \
@@ -30,17 +31,19 @@ RUN \
         --password \
           "cluster" \
   && \
-    superset \
-      db \
-        upgrade \
+  superset \
+    db \
+      upgrade \
   && \
-    if "${PRELOAD_EXAMPLES}"; then \
-      superset load_examples; \
-    fi \
+  superset load_examples \
   &&  \
-    superset \
-      init
+  superset \
+    init
 
 ENTRYPOINT [ "sh", "-c", \
   "celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach && /usr/bin/run-server.sh" \
 ]
+
+# if [ "${ENVIRONMENT}" == "testing" ]; then \
+#     superset load_examples; \
+#   fi \
