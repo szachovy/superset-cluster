@@ -14,7 +14,7 @@ initialize_nodes() {
   for mysql_node in "${mysql_nodes[@]}"; do
     ssh root@${mysql_node} "mkdir --parents /opt/superset-cluster"
     scp -r "${_path_to_root_catalog}/services/mysql-server" "root@${mysql_node}:/opt/superset-cluster"
-    # ssh root@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
+    ssh root@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
     # ssh root@${mysql_node} "rm /opt/superset-cluster/mysql-server/mysql_root_password.txt"
     # ssh root@${mysql_node} "docker cp mysql:/opt/.mylogin.cnf /opt/superset-cluster/mysql-server/"
     # scp "root@${mysql_node}:/opt/superset-cluster/mysql-server/.mylogin.cnf" "${_path_to_root_catalog}/services/mysql-server/"
