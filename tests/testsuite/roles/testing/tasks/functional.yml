@@ -44,6 +44,10 @@
     name: "{{ node_prefix }}-1"
     state: stopped
 
+- name: Pause for 60 seconds
+  pause:
+    seconds: 60
+
 - name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-5"

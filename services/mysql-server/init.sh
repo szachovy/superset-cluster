@@ -11,5 +11,10 @@ docker run \
   --name mysql \
   --hostname "${HOSTNAME}" \
   --network host \
-  --cap-add sys_nice \
+  --cap-add SYS_NICE \
+  --security-opt seccomp=default.json \
+  --env MYSQL_INITDB_SKIP_TZINFO="true" \
+  --env MYSQL_ROOT_PASSWORD_FILE="/opt/mysql_root_password.txt" \
   mysql-server
+
+docker exec --user=root mysql /bin/bash -c "chmod 400 /opt/mysql_root_password.txt && chown --recursive root:root /opt /var/run/mysqld"

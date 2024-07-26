@@ -35,7 +35,9 @@ RUN \
     db \
       upgrade \
   && \
-  superset load_examples \
+  if [ "${ENVIRONMENT}" = "testing" ]; then \
+    superset load_examples; \
+  fi \
   &&  \
   superset \
     init
@@ -43,7 +45,3 @@ RUN \
 ENTRYPOINT [ "sh", "-c", \
   "celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach && /usr/bin/run-server.sh" \
 ]
-
-# if [ "${ENVIRONMENT}" == "testing" ]; then \
-#     superset load_examples; \
-#   fi \

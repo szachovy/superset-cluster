@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
+if [ "${IS_PRIMARY_MGMT_NODE}" = "true" ]; then
   export STATE="MASTER"
   export PRIORITY="100"
 
@@ -27,7 +27,7 @@ mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE
 /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/initcontainer/keepalived.conf"
 chown "superset:superset" "/opt/initcontainer/keepalived.conf"
 
-if [ "${ENVIRONMENT}" == "testing" ]; then
+if [ "${ENVIRONMENT}" = "testing" ]; then
   mv "/opt/.mylogin.cnf" "/opt/initcontainer/.mylogin.cnf"
   chown "superset:superset" "/opt/initcontainer/.mylogin.cnf"
 fi
