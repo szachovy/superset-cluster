@@ -20,13 +20,13 @@ initialize_nodes() {
     # scp "root@${mysql_node}:/opt/superset-cluster/mysql-server/.mylogin.cnf" "${_path_to_root_catalog}/services/mysql-server/"
   done
   # # mv "${_path_to_root_catalog}/services/mysql-server/.mylogin.cnf" "${_path_to_root_catalog}/services/mysql-mgmt/"
-  # IS_PRIMARY_MGMT_NODE=true
-  # for mgmt_node in "${mgmt_nodes[@]}"; do
-  #   ssh root@${mgmt_node} "mkdir --parents /opt/superset-cluster"
-  #   scp -r ${_path_to_root_catalog}/services/mysql-mgmt "root@${mgmt_node}:/opt/superset-cluster"
-  #   ssh root@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} ${IS_PRIMARY_MGMT_NODE} ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
-  #   IS_PRIMARY_MGMT_NODE=false
-  # done
+  IS_PRIMARY_MGMT_NODE=true
+  for mgmt_node in "${mgmt_nodes[@]}"; do
+    ssh root@${mgmt_node} "mkdir --parents /opt/superset-cluster"
+    scp -r ${_path_to_root_catalog}/services/mysql-mgmt "root@${mgmt_node}:/opt/superset-cluster"
+    ssh root@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} ${IS_PRIMARY_MGMT_NODE} ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+    IS_PRIMARY_MGMT_NODE=false
+  done
 }
 
 get_superset_node_ip() {
