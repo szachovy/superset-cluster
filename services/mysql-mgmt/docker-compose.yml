@@ -1,7 +1,7 @@
 ---
 services:
   initcontainer:
-    build: "/opt/superset-cluster/mysql-mgmt"
+    build: "."
     image: "mysql-mgmt"
     user: "root"
     entrypoint: [ "/opt/entrypoint.sh" ]

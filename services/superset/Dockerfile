@@ -1,47 +1,34 @@
 FROM apache/superset
 
+USER root
+
+RUN \
+  apt \
+    update \
+  && \
+  apt \
+    install \
+      --yes \
+        expect \
+  && \
+  apt \
+    clean
+
 USER superset
 
-ARG VIRTUAL_IP_ADDRESS
-ARG ENVIRONMENT
-
-COPY --chown=superset "superset_config.py" "/app/"
-
+COPY --chown=superset "superset_config.py" "prev" "/app/"
 ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
-ENV VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}"
-ENV ENVIRONMENT="${ENVIRONMENT}"
+ENV SECRET_KEY="$(openssl rand -base64 42)"
 
 RUN \
   pip \
     install \
       redis \
-      mysql-connector-python \
-  && \
-  superset \
-    fab \
-      create-admin \
-        --username \
-          "superset" \
-        --firstname \
-          "superset" \
-        --lastname \
-          "superset" \
-        --email \
-          "superset@cluster.com" \
-        --password \
-          "cluster" \
-  && \
-  superset \
-    db \
-      upgrade \
-  && \
-  if [ "${ENVIRONMENT}" = "testing" ]; then \
-    superset load_examples; \
-  fi \
-  &&  \
-  superset \
-    init
+      mysql-connector-python
 
 ENTRYPOINT [ "sh", "-c", \
-  "celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach && /usr/bin/run-server.sh" \
+  "./prev && \
+  superset re-encrypt-secrets \
+  && celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach \
+  && /usr/bin/run-server.sh" \
 ]

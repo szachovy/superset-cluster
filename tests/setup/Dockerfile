@@ -2,8 +2,6 @@ FROM ubuntu:22.04
 
 USER root
 
-ENV PYTHONPATH /opt/superset-cluster:${PYTHONPATH}
-
 RUN \
   apt \
     update \
@@ -18,33 +16,55 @@ RUN \
     --mode \
       0755 \
     --directory \
-      /etc/apt/keyrings \
+      "/etc/apt/keyrings" \
   && \
   curl \
     --location \
       https://download.docker.com/linux/ubuntu/gpg \
     --output \
-      /etc/apt/keyrings/docker.asc \
+      "/etc/apt/keyrings/docker.asc" \
   && \
   chmod \
     644 \
-      /etc/apt/keyrings/docker.asc \
+      "/etc/apt/keyrings/docker.asc" \
   && \
   echo \
     "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] \
     https://download.docker.com/linux/ubuntu \
     $(. /etc/os-release && echo $VERSION_CODENAME) stable" | \
-      tee /etc/apt/sources.list.d/docker.list > /dev/null \
+      tee "/etc/apt/sources.list.d/docker.list" > /dev/null \
+  && \
+  groupadd \
+    --system \
+      "superset" \
+  && \
+  useradd \
+    --system \
+    --gid \
+      "superset" \
+    --create-home \
+    --home-dir \
+      "/home/superset" \
+    --shell \
+      "/bin/bash" \
+    superset \
   && \
   mkdir \
-    "/root/.ssh" \
+    --mode \
+      700 \
+      "/home/superset/.ssh" \
   && \
   chmod \
     700 \
-      "/root/.ssh" \
+      "/home/superset/.ssh" \
   && \
   mkdir \
     "/opt/superset-cluster" \
+  && \
+  chown \
+    superset:superset \
+      "/opt/superset-cluster" \
+      "/home/superset/.ssh" \
   && \
   apt \
     update \
@@ -61,10 +81,10 @@ RUN \
   apt \
     clean
 
-COPY --chown=root "id_rsa.pub" "/root/.ssh/authorized_keys"
+COPY --chown=superset:superset "id_rsa.pub" "/home/superset/.ssh/authorized_keys"
 
-ENTRYPOINT [ "bash", "-c", "service ssh start \
-  && echo 'nameserver 8.8.8.8' >> /etc/resolv.conf \
-  && echo 'nameserver 8.8.4.4' >> /etc/resolv.conf \
-  && service docker start \
-  && tail --follow /dev/null" ]
+USER superset
+
+ENV PYTHONPATH="/opt/superset-cluster:${PYTHONPATH}"
+
+ENTRYPOINT ["/bin/bash", "-c", "tail --follow /dev/null"]

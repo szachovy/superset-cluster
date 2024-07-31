@@ -78,7 +78,7 @@ resource "docker_container" "nodes" {
   name       = "${var.node_prefix}-${count.index}"
   hostname   = "${var.node_prefix}-${count.index}"
   image      = docker_image.node_image.name
-  privileged = true
+  privileged = true  # nodes containers are treated as standalone virtual machines
 
   ports {
     internal = 8088
@@ -105,7 +105,15 @@ resource "docker_container" "nodes" {
     command = <<-EOT
       docker cp ../../src $HOSTNAME:/opt/superset-cluster/src
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-cluster/src
-      docker exec $HOSTNAME /bin/bash -c "wget --quiet https://bootstrap.pypa.io/get-pip.py && python3 get-pip.py > /dev/null 2>&1 && pip install --quiet --no-cache-dir --user --requirement /opt/superset-cluster/src/requirements.txt"
+      docker exec $HOSTNAME /bin/bash -c \
+        "wget --quiet https://bootstrap.pypa.io/get-pip.py \
+        && python3 get-pip.py > /dev/null 2>&1 \
+        && pip install --quiet --no-cache-dir --user --requirement /opt/superset-cluster/src/requirements.txt"
+      docker exec --user=root $HOSTNAME /bin/bash -c \
+        "service ssh start \
+        && service docker start \
+        && echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf \
+        && usermod --append --groups docker superset"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no

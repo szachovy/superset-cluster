@@ -11,7 +11,6 @@ docker build \
 
 docker run \
   --detach \
-  --restart always \
   --name mysql \
   --hostname "${HOSTNAME}" \
   --network host \

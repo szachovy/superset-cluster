@@ -28,7 +28,7 @@
 # (node.container.Config.User == 'root')
 
 - name: "check passwordless ssh to the nodes"
-  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+  ansible.builtin.shell: "ssh superset@{{ container.value['Name'] }} exit"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"

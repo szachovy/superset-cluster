@@ -1,0 +1,9 @@
+#!/usr/bin/expect
+
+spawn superset shell
+expect ">>>"
+send "from flask import current_app; config_file = open('superset_config.py', 'a'); previous_secret_key = current_app.config.get('SECRET_KEY'); config_file.write(f'PREVIOUS_SECRET_KEY = \"{previous_secret_key}\"'); config_file.close();\n"
+expect ">>>"
+send "exit()"
+
+# send "from flask import current_app; print(current_app.config.get('SECRET_KEY'))\n"
