@@ -12,13 +12,13 @@ superset init
 
 INITIAL_MYSQL_CONNECTION_STRING="mysql+mysqlconnector://superset:cluster@${VIRTUAL_IP_ADDRESS}:6446/superset"
 
-if superset test_db "${INITIAL_MYSQL_CONNECTION_STRING}" --connect-args {}; then
-  superset set-database-uri \
-    --database_name \
-      "MySQL" \
-    --uri \
-      "${INITIAL_MYSQL_CONNECTION_STRING}"
-fi
+# if superset test_db "${INITIAL_MYSQL_CONNECTION_STRING}" --connect-args {}; then
+#   superset set-database-uri \
+#     --database_name \
+#       "MySQL" \
+#     --uri \
+#       "${INITIAL_MYSQL_CONNECTION_STRING}"
+# fi
 
 celery \
   --app superset.tasks.celery_app:app worker \
@@ -30,7 +30,7 @@ celery \
 /usr/bin/run-server.sh &
 
 if superset test_db "${INITIAL_MYSQL_CONNECTION_STRING}" --connect-args {}; then
-  ./app/set-database-uri.exp
+  /app/set-database-uri.exp
 fi
 
 tail -f /dev/null

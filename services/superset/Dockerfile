@@ -10,6 +10,7 @@ RUN \
     install \
       --yes \
         expect \
+        nano \
   && \
   apt \
     clean

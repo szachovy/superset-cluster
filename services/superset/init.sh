@@ -6,9 +6,7 @@
 #   --tag superset \
 #   /opt/superset-cluster/services/superset
 
-docker build \
-  --tag superset \
-  /opt/superset-cluster/services/superset
+
 
 docker build \
   --tag superset-cluster-service:latest \
@@ -32,6 +30,10 @@ docker service create \
   --env VIRTUAL_IP_ADDRESS="172.18.0.8" \
   --health-start-period "300s" \
   ghcr.io/szachovy/superset-cluster:latest
+
+docker build \
+  --tag superset \
+  /opt/superset-cluster/services/superset
 
 nano /opt/superset-cluster/services/superset/superset_secret_key
 
