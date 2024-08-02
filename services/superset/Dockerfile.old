@@ -1,0 +1,36 @@
+FROM apache/superset
+
+USER root
+
+RUN \
+  apt \
+    update \
+  && \
+  apt \
+    install \
+      --yes \
+        expect \
+        nano \
+  && \
+  apt \
+    clean
+
+USER superset
+
+COPY --chown=superset "superset_config.py" "prev" "/app/"
+ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
+
+RUN \
+  pip \
+    install \
+      redis \
+      mysql-connector-python
+
+ENTRYPOINT [ "sleep", "infinity" ]
+# ENTRYPOINT [ "sh", "-c", \
+#   "export SECRET_KEY=$(openssl rand -base64 42) \
+#   && ./prev \
+#   && superset re-encrypt-secrets \
+#   && celery --app superset.tasks.celery_app:app worker --pool prefork --concurrency 4 -O fair --detach \
+#   && /usr/bin/run-server.sh" \
+# ]

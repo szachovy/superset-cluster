@@ -11,6 +11,7 @@ RUN \
       --yes \
       ca-certificates=20230311ubuntu0.22.04.1 \
       curl=7.81.0-1ubuntu1.16 \
+      nano \
   && \
   install \
     --mode \

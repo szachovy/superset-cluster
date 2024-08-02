@@ -13,7 +13,7 @@ RUN \
       wget=1.21.2-2ubuntu1.1 \
       xz-utils=5.2.5-2ubuntu1 \
       keepalived=1:2.2.4-0.2build1 \
-      mysql-client=8.0.37-0ubuntu0.22.04.3 \
+      mysql-client \
       sudo=1.9.9-1ubuntu2.4 \
   && \
   groupadd \

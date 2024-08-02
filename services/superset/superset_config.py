@@ -1,7 +1,7 @@
 
+import json
 import flask_caching.backends.rediscache
 import os
-import secrets
 
 class CeleryConfig(object):
     broker_url = "redis://redis:6379/0"
@@ -18,9 +18,15 @@ class CeleryConfig(object):
         },
     }
 
-# PREVIOUS_SECRET_KEY = 'secret'
-SECRET_KEY = os.environ.get('SECRET_KEY') #secrets.token_hex(12)
-GLOBAL_ASYNC_QUERIES = True
+with open('/run/secrets/superset_secret_key', 'r') as superset_secret_key:
+    SECRET_KEY = superset_secret_key.read().strip()
+    # GLOBAL_ASYNC_QUERIES_JWT_SECRET = superset_secret_key.read().strip()
+
+# FEATURE_FLAGS = {
+#     "GLOBAL_ASYNC_QUERIES": True,
+#     "SQLLAB_FORCE_RUN_ASYNC": True
+# }
+
 SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:cluster@{os.environ.get('VIRTUAL_IP_ADDRESS')}:6446/superset"
 CELERY_CONFIG = CeleryConfig
 RESULTS_BACKEND = flask_caching.backends.rediscache.RedisCache(host='redis', port=6379, key_prefix='superset_results')
@@ -31,30 +37,6 @@ FILTER_STATE_CACHE_CONFIG = {
     'CACHE_REDIS_URL': 'redis://redis:6379/0'
 }
 
-# formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-# handler = RotatingFileHandler('celery.log', maxBytes=10485760, backupCount=5)
-# handler.setFormatter(formatter)
-
-# celery_logger = logging.getLogger('celery')
-# celery_logger.setLevel(logging.INFO)
-# celery_logger.addHandler(handler)
+# SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
 
 
-# from typing import Any
-# import click
-# from flask.cli import FlaskGroup, with_appcontext
-# from superset import app
-# from superset.cli.lib import normalize_token
-# from superset.extensions import db
-# @click.group(
-#     cls=FlaskGroup,
-#     context_settings={"token_normalize_func": normalize_token},
-# )
-# @with_appcontext
-# def superset() -> None:
-#     print(app)
-#     @app.shell_context_processor
-#     def make_shell_context() -> dict[str, Any]:
-#         return {"app": app, "db": db}
-
-# superset().make_shell_context()

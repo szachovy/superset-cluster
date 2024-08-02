@@ -7,29 +7,15 @@ services:
       - "sh"
       - "-c"
       - |
-        superset fab create-admin \
-          --username "superset" \
-          --firstname "superset" \
-          --lastname "superset" \
-          --email "superset@cluster.com" \
-          --password "cluster" \
-        && \
-        superset db upgrade \
-        && \
-        if [ "${ENVIRONMENT}" = "testing" ]; then \
-          superset load_examples; \
-        fi \
-        &&  \
-        superset init \
-        &&
-        superset set-database-uri --database_name MySQL --uri mysql+mysqlconnector://superset:cluster@172.18.0.8:6446/superset
-        superset test_db mysql+mysqlconnector://superset:cluster@172.18.0.8:6446/superset
+        sleep infinity
     container_name: "superset-initcontainer"
     environment:
       ENVIRONMENT: "${ENVIRONMENT}"
       VIRTUAL_IP_ADDRESS: "${VIRTUAL_IP_ADDRESS}"
     networks:
       - "superset-network"
+    ports:
+      - "8088:8088"
 
   maincontainer:
     image: "superset"
@@ -44,3 +30,23 @@ services:
 networks:
   superset-network:
     external: "true"
+
+
+            export SECRET_KEY="$(openssl rand -base64 42)" \
+        && \
+        superset fab create-admin \
+          --username "superset" \
+          --firstname "superset" \
+          --lastname "superset" \
+          --email "superset@cluster.com" \
+          --password "cluster" \
+        && \
+        superset db upgrade \
+        && \
+        if [ "${ENVIRONMENT}" = "testing" ]; then \
+          superset load_examples; \
+        fi \
+        &&  \
+        superset init \
+        && \
+        superset set-database-uri --database_name MySQL --uri mysql+mysqlconnector://superset:cluster@${VIRTUAL_IP_ADDRESS}:6446/superset
