@@ -10,7 +10,7 @@ array_to_string_converter() {
 
 initialize_nodes() {
   export MYSQL_TEST_LOGIN_FILE="${_path_to_root_catalog}/services/mysql-mgmt/.mylogin.cnf"
-  ./${_path_to_root_catalog}/src/store_credentials node-1 node-2 node-3 ${_path_to_root_catalog}
+  ./${_path_to_root_catalog}/src/store_credentials.exp node-1 node-2 node-3 ${_path_to_root_catalog}
   for mysql_node in "${mysql_nodes[@]}"; do
     ssh superset@${mysql_node} "mkdir --parents /opt/superset-cluster"
     scp -r "${_path_to_root_catalog}/services/mysql-server" "superset@${mysql_node}:/opt/superset-cluster"

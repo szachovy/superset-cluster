@@ -11,8 +11,7 @@
     superset_node_address=$(superset_node_address)
     docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
     clusterize_nodes
+    start_superset
+    sleep 60
   args:
     executable: /bin/bash
-
-    # start_superset
-    # sleep 60
