@@ -14,8 +14,7 @@
         database_name=\"{{ database_name }}\",
         virtual_ip_address=\"{{ virtual_ip_address }}\",
       );
-      database_id = superset_functional.create_database_connection();
-      query_dttm = superset_functional.run_query(database_id);
+      query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
     chdir: "/opt/superset-cluster/src"
     timeout: 30

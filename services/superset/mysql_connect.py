@@ -4,7 +4,6 @@ import os
 import superset
 import superset.models.core
 
-# https://github.com/apache/superset/blob/40520c54d40f887453827ef36a9f5924119ada62/superset-frontend/src/types/Database.ts#L20
 
 def create_mysql_connection():
     if not superset.db.session.query(superset.models.core.Database).filter_by(database_name='MySQL').first():

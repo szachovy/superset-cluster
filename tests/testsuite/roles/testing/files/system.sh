@@ -28,6 +28,5 @@ start_superset() {
   ssh superset@${superset_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
   scp -r ${_path_to_root_catalog}/services "superset@${superset_node}:/opt/superset-cluster"
   ssh superset@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
-  # ssh superset@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address}"
-  ssh superset@${superset_node} "docker exec superset bash -c 'superset load_examples'"
+  ssh superset@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address} ${ENVIRONMENT}"
 }

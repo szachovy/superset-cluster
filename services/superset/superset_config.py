@@ -1,5 +1,4 @@
 
-import json
 import flask_caching.backends.rediscache
 import os
 
@@ -20,12 +19,6 @@ class CeleryConfig(object):
 
 with open('/run/secrets/superset_secret_key', 'r') as superset_secret_key:
     SECRET_KEY = superset_secret_key.read().strip()
-    # GLOBAL_ASYNC_QUERIES_JWT_SECRET = superset_secret_key.read().strip()
-
-# FEATURE_FLAGS = {
-#     "GLOBAL_ASYNC_QUERIES": True,
-#     "SQLLAB_FORCE_RUN_ASYNC": True
-# }
 
 SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:cluster@{os.environ.get('VIRTUAL_IP_ADDRESS')}:6446/superset"
 CELERY_CONFIG = CeleryConfig
@@ -36,7 +29,3 @@ FILTER_STATE_CACHE_CONFIG = {
     'CACHE_KEY_PREFIX': 'superset_filter_cache',
     'CACHE_REDIS_URL': 'redis://redis:6379/0'
 }
-
-# SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
-
-

@@ -99,29 +99,14 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {self.database_name} on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
 
     @data_structures.Overlay.post_init_hook
-    def status_datasets(self) -> None | AssertionError:
-        dashboard_charts: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1 --header '{self.api_authorization_header}'")
-        dashboard_datasets: bytes = self.run_command_on_the_container(f"curl --silent --url {self.api_default_url}/dashboard/1/datasets --header '{self.api_authorization_header}'")
-        assert not self.find_in_the_output(dashboard_charts, b'{"message":"Not found"}'), f'No dashboards found in the Superset'
-        assert not self.find_in_the_output(dashboard_datasets, b'{"message":"Not found"}'), f'No datasets found in the Superset'
-        assert self.decode_command_output(dashboard_charts).get("result")["charts"] != [], f'Pre-loaded dashboards in the Superset have no charts'
-        assert self.decode_command_output(dashboard_datasets).get("result") != [], f'Pre-loaded datasets in the Superset are empty'
-
-    @data_structures.Overlay.post_init_hook
     def status_swarm(self) -> None | AssertionError:
         swarm_info = self.info()['Swarm']
         assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'
         assert swarm_info['ControlAvailable'] is True, f'The {self.superset_node} is supposed to be a Swarm manager, but it is not'
         assert swarm_info['Nodes'] == 3, f'The Swarm is expected to consist of 3 nodes instead of {swarm_info["Nodes"]} in the pool.'
 
-    def create_database_connection(self) -> int | AssertionError:
-        payload: str = f'{{"engine": "mysql", "configuration_method": "sqlalchemy_form", "database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:cluster@{self.virtual_ip_address}:6446/{self.database_name}"}}'
-        mysql_connect: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
-        assert not self.find_in_the_output(mysql_connect, b'"message"'), f'Could not create database from API: {mysql_connect}'
-        return self.decode_command_output(mysql_connect).get('id')
-
-    def run_query(self, database_id: int) -> float | AssertionError:
-        payload: str = f'{{"database_id": {database_id}, "runAsync": true, "sql": "SELECT * FROM {self.database_name}.logs;"}}'
+    def run_query(self) -> float | AssertionError:
+        payload: str = f'{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM {self.database_name}.logs;"}}'
         sqllab_run_query: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/sqllab/execute/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
         assert not self.find_in_the_output(sqllab_run_query, b'"msg"'), f'SQL query execution failed with the following message: {sqllab_run_query}'
         assert not self.find_in_the_output(sqllab_run_query, b'"message"'), f'Could not execute query on: {self.database_name}'
@@ -129,7 +114,7 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
         return dttm_time_query_identifier
     
     def get_query_results(self, dttm_time_query_identifier: float):
-        time.sleep(5)  # state refreshing
+        time.sleep(2)  # state refreshing
         query_result: dict = self.decode_command_output(
             self.run_command_on_the_container(f"curl --silent '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' --header 'Accept: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}'")
         )

@@ -36,11 +36,10 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
             assert swarm_info['ControlAvailable'] is False, f'The {self.virtual_ip_address} is not supposed to be a Swarm manager, but it is'
 
     def check_after_disaster(self):
-        if self.after_disaster:
-            try:
-                new_mysql_primary_node: bytes = self.run_command_on_the_container(f"mysqlsh --interactive --uri superset:cluster@{self.virtual_ip_address}:6446 --sql --execute \"SELECT @@hostname;\"")
-                if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[0].encode('utf-8')):
-                    if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[1].encode('utf-8')):
-                        raise AssertionError(f'After stopping {self.mysql_primary_node}, one of {self.mysql_secondary_nodes} was expected to be selected as the new primary. Selection process failed with the output: {new_mysql_primary_node}')
-            except requests.exceptions.RequestException:
-                raise AssertionError(f'After stopping {self.mgmt_primary_node} {self.mgmt_secondary_node} was expected to be selected as the new primary. Selection process failed')
+        try:
+            new_mysql_primary_node: bytes = self.run_command_on_the_container(f"mysqlsh --interactive --uri superset:cluster@{self.virtual_ip_address}:6446 --sql --execute \"SELECT @@hostname;\"")
+            if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[0].encode('utf-8')):
+                if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[1].encode('utf-8')):
+                    raise AssertionError(f'After stopping {self.mysql_primary_node}, one of {self.mysql_secondary_nodes} was expected to be selected as the new primary. Selection process failed with the output: {new_mysql_primary_node}')
+        except requests.exceptions.RequestException:
+            raise AssertionError(f'After stopping {self.mgmt_primary_node} {self.mgmt_secondary_node} was expected to be selected as the new primary. Selection process failed')
