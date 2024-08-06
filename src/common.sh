@@ -10,22 +10,20 @@ array_to_string_converter() {
 
 initialize_nodes() {
   export MYSQL_TEST_LOGIN_FILE="${_path_to_root_catalog}/services/mysql-mgmt/.mylogin.cnf"
-  ./${_path_to_root_catalog}/src/store_credentials.exp node-1 node-2 node-3 ${_path_to_root_catalog}
+  ./${_path_to_root_catalog}/store_credentials.exp ${mysql_nodes[@]} ${_path_to_root_catalog}
   for mysql_node in "${mysql_nodes[@]}"; do
     ssh superset@${mysql_node} "mkdir --parents /opt/superset-cluster"
     scp -r "${_path_to_root_catalog}/services/mysql-server" "superset@${mysql_node}:/opt/superset-cluster"
     ssh superset@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
-    # ssh superset@${mysql_node} "rm /opt/superset-cluster/mysql-server/mysql_root_password.txt"
-    # ssh superset@${mysql_node} "docker cp mysql:/opt/.mylogin.cnf /opt/superset-cluster/mysql-server/"
-    # scp "superset@${mysql_node}:/opt/superset-cluster/mysql-server/.mylogin.cnf" "${_path_to_root_catalog}/services/mysql-server/"
   done
-  # # mv "${_path_to_root_catalog}/services/mysql-server/.mylogin.cnf" "${_path_to_root_catalog}/services/mysql-mgmt/"
-  IS_PRIMARY_MGMT_NODE=true
   for mgmt_node in "${mgmt_nodes[@]}"; do
     ssh superset@${mgmt_node} "mkdir --parents /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
-    ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} ${IS_PRIMARY_MGMT_NODE} ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
-    IS_PRIMARY_MGMT_NODE=false
+    if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} true ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+    else
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} false ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+    fi
   done
 }
 
