@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# export ENVIRONMENT="${1}"
 export IS_PRIMARY_MGMT_NODE="${1}"
 export VIRTUAL_IP_ADDRESS="${2}"
 export VIRTUAL_NETWORK_INTERFACE="${3}"

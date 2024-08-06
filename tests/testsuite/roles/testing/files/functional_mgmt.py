@@ -7,13 +7,13 @@ import data_structures
 class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
     def __init__(self, mgmt_hostname: str, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(node=mgmt_hostname)
+        self.copy_mysql_login_configuration_to_the_container()
         self.virtual_ip_address: str = virtual_ip_address
         self.mgmt_primary_node: str = f"{node_prefix}-0"
         self.mgmt_secondary_node: str = f"{node_prefix}-5"
         self.mysql_primary_node: str = f"{node_prefix}-1"
         self.mysql_secondary_nodes: list = [f"{node_prefix}-2", f"{node_prefix}-3"]
         self.after_disaster: bool = after_disaster
-        self.run_command_on_the_container(f"docker cp /opt/superset-cluster/mysql-mgmt/.mylogin.cnf mysql-mgmt:/home/superset/")
 
     @data_structures.Overlay.post_init_hook
     def status_cluster(self):

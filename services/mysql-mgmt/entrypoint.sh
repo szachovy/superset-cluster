@@ -26,8 +26,3 @@ fi
 mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/initcontainer/mysql_router" --conf-use-sockets
 /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/initcontainer/keepalived.conf"
 chown "superset:superset" "/opt/initcontainer/keepalived.conf"
-
-# if [ "${ENVIRONMENT}" = "testing" ]; then
-#   mv "/opt/.mylogin.cnf" "/opt/initcontainer/.mylogin.cnf"
-#   chown "superset:superset" "/opt/initcontainer/.mylogin.cnf"
-# fi

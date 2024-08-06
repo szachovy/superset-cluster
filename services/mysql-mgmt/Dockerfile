@@ -44,7 +44,6 @@ ARG MYSQL_ROUTER_VERSION="mysql-router-8.3.0-linux-glibc2.28-x86_64"
 
 ENV DEBIAN_FRONTEND="noninteractive"
 ENV PATH="${PATH}:/opt/${MYSQL_SHELL_VERSION}/bin:/opt/${MYSQL_ROUTER_VERSION}/bin"
-ENV MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
 
 WORKDIR "/opt"
 

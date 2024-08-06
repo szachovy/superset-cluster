@@ -25,5 +25,4 @@ docker run \
   --publish 8088:8088 \
   --env VIRTUAL_IP_ADDRESS="${1}" \
   superset
-
-# ghcr.io/szachovy/superset-cluster:latest
+  # ghcr.io/szachovy/superset-cluster:latest

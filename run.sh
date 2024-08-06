@@ -9,7 +9,6 @@ virtual_ip_address="10.145.211.155"
 virtual_network_interface="eth0"
 
 _path_to_root_catalog="."
-# ENVIRONMENT="production"
 
 source ${_path_to_root_catalog}/src/common.sh
 

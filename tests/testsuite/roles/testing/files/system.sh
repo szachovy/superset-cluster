@@ -10,7 +10,6 @@ mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
 superset_node="${node_prefix}-4"
 
 _path_to_root_catalog="../.."
-# ENVIRONMENT="testing"
 
 source "${_path_to_root_catalog}/src/common.sh"
 

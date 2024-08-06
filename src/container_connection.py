@@ -1,8 +1,10 @@
 
 import ast
+import io
 import ipaddress
 import re
 import socket
+import tarfile
 
 import docker
 import requests
@@ -24,6 +26,14 @@ class ContainerUtilities:
     
     def info(self):
         return self.client.info()
+    
+    def copy_mysql_login_configuration_to_the_container(self) -> None:
+        tar_stream = io.BytesIO()
+        with tarfile.open(fileobj=tar_stream, mode='w') as archive:
+            archive.add("/opt/superset-cluster/mysql-mgmt/.mylogin.cnf", arcname=".mylogin.cnf")
+        tar_stream.seek(0)
+        self.client.containers.get(self.node).put_archive("/home/superset", tar_stream.getvalue())
+        tar_stream.close()
 
     @staticmethod
     def find_in_the_output(output: bytes, text: bytes) -> bool:
