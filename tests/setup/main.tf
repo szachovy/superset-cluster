@@ -113,7 +113,8 @@ resource "docker_container" "nodes" {
         "service ssh start \
         && service docker start \
         && echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf \
-        && usermod --append --groups docker superset"
+        && usermod --append --groups docker superset \
+        && apt install --yes jq"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no

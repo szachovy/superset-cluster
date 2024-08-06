@@ -17,7 +17,6 @@
       query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
     chdir: "/opt/superset-cluster/src"
-    timeout: 30
 
 - name: "run mgmt functional tests"
   community.docker.docker_container_exec:
@@ -31,7 +30,6 @@
         after_disaster=False
       );'"
     chdir: "/opt/superset-cluster/src"
-    timeout: 15
 
 - name: Disaster testing - Stop Mgmt primary node
   community.docker.docker_container:
@@ -42,10 +40,6 @@
   community.docker.docker_container:
     name: "{{ node_prefix }}-1"
     state: stopped
-
-- name: Pause for 60 seconds
-  pause:
-    seconds: 60
 
 - name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
@@ -60,4 +54,5 @@
       );
       mgmt_functional.check_after_disaster()'"
     chdir: "/opt/superset-cluster/src"
-  timeout: 300
+  retries: 6
+  delay: 10

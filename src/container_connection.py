@@ -6,7 +6,6 @@ import socket
 
 import docker
 import requests
-import retry
 
 
 class ContainerUtilities:
@@ -14,7 +13,6 @@ class ContainerUtilities:
         self.client: docker.client.DockerClient = docker.from_env()
         self.node: str = node
 
-    @retry.retry(tries=24, delay=5)
     def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
         try:
             request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command, stdout=True, stderr=True)
