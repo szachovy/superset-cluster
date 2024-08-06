@@ -20,9 +20,9 @@ initialize_nodes() {
     ssh superset@${mgmt_node} "mkdir --parents /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} true ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh true ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
     else
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh ${ENVIRONMENT} false ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh false ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
     fi
   done
 }

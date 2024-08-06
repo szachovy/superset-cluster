@@ -9,7 +9,6 @@ services:
     network_mode: "host"
     restart: "no"
     environment:
-      ENVIRONMENT: "${ENVIRONMENT}"
       IS_PRIMARY_MGMT_NODE: "${IS_PRIMARY_MGMT_NODE}"
       VIRTUAL_IP_ADDRESS: "${VIRTUAL_IP_ADDRESS}"
       VIRTUAL_NETWORK_INTERFACE: "${VIRTUAL_NETWORK_INTERFACE}"
@@ -32,8 +31,6 @@ services:
     restart: "always"
     hostname: "${HOSTNAME}"
     network_mode: "host"
-    environment:
-      MYSQL_TEST_LOGIN_FILE: "/opt/initcontainer/.mylogin.cnf"
     cap_add:
       - "NET_ADMIN"
     volumes:

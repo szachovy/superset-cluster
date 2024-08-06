@@ -9,12 +9,12 @@ RUN \
   apt \
     install \
       --yes \
-      libkeyutils1=1.6.1-2ubuntu3 \
-      wget=1.21.2-2ubuntu1.1 \
-      xz-utils=5.2.5-2ubuntu1 \
-      keepalived=1:2.2.4-0.2build1 \
+      libkeyutils1 \
+      wget \
+      xz-utils \
+      keepalived \
       mysql-client \
-      sudo=1.9.9-1ubuntu2.4 \
+      sudo \
   && \
   groupadd \
     --system \

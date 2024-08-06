@@ -36,9 +36,3 @@ for _ in $(seq 1 ${HEALTHCHECK_RETRIES}); do
     sleep ${HEALTHCHECK_INTERVAL}
   fi
 done
-
-
-#   && chmod -x /usr/bin/kill /usr/bin/killall /usr/bin/pkill /usr/bin/skill \
-# /var/lib/mysql
-# && chmod 666 /var/lib/mysql/* \
-  # && chmod 644 /var/lib/mysql/*ib* /var/lib/mysql/*.pem /var/lib/mysql/*.cnf \

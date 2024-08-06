@@ -13,6 +13,7 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
         self.mysql_primary_node: str = f"{node_prefix}-1"
         self.mysql_secondary_nodes: list = [f"{node_prefix}-2", f"{node_prefix}-3"]
         self.after_disaster: bool = after_disaster
+        self.run_command_on_the_container(f"docker cp /opt/superset-cluster/mysql-mgmt/.mylogin.cnf mysql-mgmt:/home/superset/")
 
     @data_structures.Overlay.post_init_hook
     def status_cluster(self):
