@@ -52,11 +52,7 @@ RUN \
   && \
   mkdir \
     --mode \
-      700 \
-      "/home/superset/.ssh" \
-  && \
-  chmod \
-    700 \
+      600 \
       "/home/superset/.ssh" \
   && \
   mkdir \

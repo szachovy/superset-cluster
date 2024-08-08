@@ -2,6 +2,8 @@ FROM apache/superset
 
 USER root
 
+COPY --chown=superset "." "/app/"
+
 RUN \
   apt \
     update \
@@ -11,12 +13,21 @@ RUN \
       --yes \
         expect \
   && \
+  chmod \
+    500 \
+    entrypoint.sh \
+    set-database-uri.exp \
+  && \
+  chmod \
+    400 \
+      mysql_connect.py \
+      superset_config.py \
+  && \
   apt \
     clean
 
 USER superset
 
-COPY --chown=superset "." "/app/"
 ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
 
 RUN \

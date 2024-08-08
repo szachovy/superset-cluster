@@ -24,7 +24,7 @@ class ContainerUtilities:
             raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
         return request.output
     
-    def info(self):
+    def info(self) -> dict:
         return self.client.info()
     
     def copy_mysql_login_configuration_to_the_container(self) -> None:

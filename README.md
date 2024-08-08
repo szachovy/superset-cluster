@@ -44,7 +44,6 @@ With the [Requirements](#requirements) satisfied, you can build and run the enti
 
 Explore [docs](docs/) for further information about the setup, or visit [additional resources](#additional-resources) to learn more about Superset and MySQL components as a whole.
 
-
 ### Example
 
 Having the `tun0` network interface on the localhost that enables connections to the hosts available for the management nodes with the following addresses:

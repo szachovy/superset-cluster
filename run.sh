@@ -14,6 +14,7 @@ source ${_path_to_root_catalog}/src/common.sh
 
 start_superset() {
   docker network create --driver overlay --attachable superset-network
+  echo $(openssl rand -base64 42) | docker secret create superset_secret_key -
   ./services/redis/init.sh
   ./services/superset/init.sh ${virtual_ip_address}
 }
