@@ -2,17 +2,29 @@
 - name: end-to-end run
   ansible.builtin.shell: |
     set -euxo pipefail
-    source {{ role_path }}/files/system.sh \
-      {{ node_prefix }} \
-      {{ superset_network_interface }} \
-      {{ mysql_password }} \
-      {{ virtual_ip_address }} \
-      {{ virtual_network_interface }}
-    initialize_nodes
-    superset_node_address=$(superset_node_address)
-    docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
-    clusterize_nodes
-    start_superset
-    sleep 60
+    {
+      source {{ role_path }}/files/system.sh \
+        {{ node_prefix }} \
+        {{ superset_network_interface }} \
+        {{ virtual_ip_address }} \
+        {{ virtual_network_interface }}
+      initialize_nodes
+      superset_node_address=$(superset_node_address)
+      docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
+      clusterize_nodes
+      start_superset
+    } | tee /tmp/superset_cluster_testsuite.log
   args:
     executable: /bin/bash
+
+- name: Check superset container status
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-4"
+    command: |
+      /bin/bash -c '
+      while [ "$(docker inspect superset | jq -r .[0].State.Health.Status)" != "healthy" ]; do
+          echo "Waiting for superset container to become healthy..."
+          exit 1
+      done'
+  retries: 6
+  delay: 50

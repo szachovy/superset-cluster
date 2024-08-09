@@ -1,0 +1,9 @@
+#!/usr/bin/expect -f
+
+spawn superset shell
+expect ">>>"
+send "import mysql_connect; mysql_connect.create_mysql_connection();\n"
+expect ">>>"
+send "exit()\n"
+
+expect eof

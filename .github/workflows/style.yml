@@ -95,6 +95,7 @@ jobs:
         run: "flake8"
 
   run-system-tests-coverage:
+    if: github.ref == 'refs/heads/master'
     runs-on: "self-hosted"
     needs: "setup"
     steps:

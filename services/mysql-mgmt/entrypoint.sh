@@ -2,9 +2,7 @@
 
 set -euo pipefail
 
-export MYSQL_TEST_LOGIN_FILE=/opt/.mylogin.cnf
-
-if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
+if [ "${IS_PRIMARY_MGMT_NODE}" = "true" ]; then
   export STATE="MASTER"
   export PRIORITY="100"
 
@@ -19,11 +17,12 @@ if [ "${IS_PRIMARY_MGMT_NODE}" == "true" ]; then
     mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${secondary_node_ip}',{recoveryMethod:'incremental'});"
   done
 
-  mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file=/opt/superset-user.sql
+  mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
 else
   export STATE="BACKUP"
   export PRIORITY="90"
 fi
 
-mysqlrouter --user "root" --bootstrap "superset:mysql@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/initcontainer/mysql_router" --conf-use-sockets
-envsubst < "/opt/keepalived.conf.tpl" > "/opt/initcontainer/keepalived.conf"
+mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/initcontainer/mysql_router" --conf-use-sockets
+/opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/initcontainer/keepalived.conf"
+chown "superset:superset" "/opt/initcontainer/keepalived.conf"

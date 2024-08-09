@@ -1,12 +1,13 @@
 
 import ast
+import io
 import ipaddress
 import re
 import socket
+import tarfile
 
 import docker
 import requests
-import retry
 
 
 class ContainerUtilities:
@@ -14,7 +15,6 @@ class ContainerUtilities:
         self.client: docker.client.DockerClient = docker.from_env()
         self.node: str = node
 
-    @retry.retry(tries=24, delay=5)
     def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
         try:
             request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command, stdout=True, stderr=True)
@@ -24,8 +24,16 @@ class ContainerUtilities:
             raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
         return request.output
     
-    def info(self):
+    def info(self) -> dict:
         return self.client.info()
+    
+    def copy_mysql_login_configuration_to_the_container(self) -> None:
+        tar_stream = io.BytesIO()
+        with tarfile.open(fileobj=tar_stream, mode='w') as archive:
+            archive.add("/opt/superset-cluster/mysql-mgmt/.mylogin.cnf", arcname=".mylogin.cnf")
+        tar_stream.seek(0)
+        self.client.containers.get(self.node).put_archive("/home/superset", tar_stream.getvalue())
+        tar_stream.close()
 
     @staticmethod
     def find_in_the_output(output: bytes, text: bytes) -> bool:

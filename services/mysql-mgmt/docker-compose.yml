@@ -1,8 +1,9 @@
 ---
 services:
   initcontainer:
-    build: "/opt/superset-cluster/mysql-mgmt"
+    build: "."
     image: "mysql-mgmt"
+    user: "root"
     entrypoint: [ "/opt/entrypoint.sh" ]
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
@@ -14,17 +15,25 @@ services:
       PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
       SECONDARY_FIRST_MYSQL_NODE: "${SECONDARY_FIRST_MYSQL_NODE}"
       SECONDARY_SECOND_MYSQL_NODE: "${SECONDARY_SECOND_MYSQL_NODE}"
+      MYSQL_TEST_LOGIN_FILE: "/opt/.mylogin.cnf"
     volumes:
       - "initcontainer_generated:/opt/initcontainer"
 
   maincontainer:
     image: "mysql-mgmt"
-    entrypoint: [ "sh", "-c", "keepalived --use-file /opt/initcontainer/keepalived.conf && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf" ]
+    user: "superset"
+    entrypoint:
+      - "sh"
+      - "-c"
+      - |
+        sudo keepalived --use-file /opt/initcontainer/keepalived.conf \
+        && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf
     container_name: "mysql-mgmt"
     restart: "always"
     hostname: "${HOSTNAME}"
     network_mode: "host"
-    privileged: true
+    cap_add:
+      - "NET_ADMIN"
     volumes:
       - "initcontainer_generated:/opt/initcontainer"
 

@@ -14,3 +14,4 @@ __pycache__/
 
 # MySQL login files
 **/.mylogin.cnf
+**/mysql_root_password.txt

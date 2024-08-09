@@ -2,7 +2,6 @@
 - name: "check out nodes network"
   community.docker.docker_network_info:
     name: "{{ node_prefix }}-network"
-    timeout: 10
   register: "network"
   failed_when: |
     (network.exists == false) or
@@ -12,7 +11,6 @@
 - name: "check out nodes infrastructure"
   community.docker.docker_container_info:
     name: "{{ container.value['Name'] }}"
-    timeout: 10
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
@@ -28,7 +26,7 @@
 # (node.container.Config.User == 'root')
 
 - name: "check passwordless ssh to the nodes"
-  ansible.builtin.shell: "ssh root@{{ container.value['Name'] }} exit"
+  ansible.builtin.shell: "ssh superset@{{ container.value['Name'] }} exit"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
@@ -44,7 +42,6 @@
       )
       '"
     chdir: "/opt/superset-cluster/src"
-    timeout: 15
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"

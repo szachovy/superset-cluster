@@ -87,15 +87,12 @@ Ansible group variables is a dynamically modified file consisting of pre-populat
 | `celery_sql_lab_task_annotations` | [defaults.yml](../src/defaults.yml)    |
 | `database_name`                   | [defaults.yml](../src/defaults.yml)    |
 | `mgmt_hostname`                   | [defaults.yml](../src/defaults.yml)    |
-| `mysql_password`                  | Auto-generated                         |
-| `mysql_user`                      | [defaults.yml](../src/defaults.yml)    |
 | `superset_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `virtual_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `node_prefix`                     | [variables.tf](./setup/variables.tf)   |
 | `redis_hostname`                  | [defaults.yml](../src/defaults.yml)    |
 | `redis_port`                      | [defaults.yml](../src/defaults.yml)    |
 | `superset_hostname`               | [defaults.yml](../src/defaults.yml)    |
-| `superset_password`               | Auto-generated                         |
 
 ### Additional resources
 

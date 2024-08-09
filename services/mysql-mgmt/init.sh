@@ -7,5 +7,9 @@ export PRIMARY_MYSQL_NODE="${4}"
 export SECONDARY_FIRST_MYSQL_NODE="${5}"
 export SECONDARY_SECOND_MYSQL_NODE="${6}"
 
-cd /opt/superset-cluster/mysql-mgmt
-docker compose up initcontainer && docker compose up maincontainer --detach
+docker compose \
+  --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \
+&& \
+docker compose \
+  --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up maincontainer \
+  --detach

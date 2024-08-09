@@ -1,4 +1,4 @@
-CREATE USER IF NOT EXISTS 'superset'@'%' IDENTIFIED BY 'mysql';
+CREATE USER IF NOT EXISTS 'superset'@'%' IDENTIFIED BY 'cluster';
 CREATE DATABASE IF NOT EXISTS `superset`;
 GRANT ALL PRIVILEGES ON `superset`.* TO 'superset'@'%';
 GRANT INSERT ON `mysql_innodb_cluster_metadata`.* TO 'superset'@'%';
