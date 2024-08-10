@@ -12,12 +12,10 @@ initialize_nodes() {
   export MYSQL_TEST_LOGIN_FILE="${_path_to_root_catalog}/services/mysql-mgmt/.mylogin.cnf"
   ./${_path_to_root_catalog}/store_credentials.exp ${mysql_nodes[@]} ${_path_to_root_catalog}
   for mysql_node in "${mysql_nodes[@]}"; do
-    ssh superset@${mysql_node} "mkdir --parents /opt/superset-cluster"
     scp -r "${_path_to_root_catalog}/services/mysql-server" "superset@${mysql_node}:/opt/superset-cluster"
     ssh superset@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
   done
   for mgmt_node in "${mgmt_nodes[@]}"; do
-    ssh superset@${mgmt_node} "mkdir --parents /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
       ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh true ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
