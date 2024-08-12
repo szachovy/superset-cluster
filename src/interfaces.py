@@ -1,6 +1,7 @@
 
 import ctypes
 import ctypes.util
+import ipaddress
 import socket
 
 import src.data_structures
@@ -31,3 +32,7 @@ def network_interfaces(network_interface: str) -> str | StopIteration:
                 clib.freeifaddrs(network_interfaces)
                 raise StopIteration(f'Provided network interface {network_interface} not found.')
             current_interface = current_interface.next_network_interface.contents
+
+
+def virtual_network(virtual_ip_address: str, virtual_ip_address_mask: str) -> str:
+    return ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_ip_address_mask}").network

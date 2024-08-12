@@ -8,16 +8,20 @@ services:
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"
+    cap_add:
+      - "NET_ADMIN"
     environment:
       IS_PRIMARY_MGMT_NODE: "${IS_PRIMARY_MGMT_NODE}"
       VIRTUAL_IP_ADDRESS: "${VIRTUAL_IP_ADDRESS}"
+      VIRTUAL_IP_ADDRESS_MASK: "${VIRTUAL_IP_ADDRESS_MASK}"
       VIRTUAL_NETWORK_INTERFACE: "${VIRTUAL_NETWORK_INTERFACE}"
+      VIRTUAL_NETWORK: "${VIRTUAL_NETWORK}"
       PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
       SECONDARY_FIRST_MYSQL_NODE: "${SECONDARY_FIRST_MYSQL_NODE}"
       SECONDARY_SECOND_MYSQL_NODE: "${SECONDARY_SECOND_MYSQL_NODE}"
       MYSQL_TEST_LOGIN_FILE: "/opt/.mylogin.cnf"
     volumes:
-      - "initcontainer_generated:/opt/initcontainer"
+      - "default_generated:/opt/default"
 
   maincontainer:
     image: "mysql-mgmt"
@@ -26,16 +30,23 @@ services:
       - "sh"
       - "-c"
       - |
-        sudo keepalived --use-file /opt/initcontainer/keepalived.conf \
-        && mysqlrouter --config /opt/initcontainer/mysql_router/mysqlrouter.conf
+        sleep infinity
     container_name: "mysql-mgmt"
     restart: "always"
     hostname: "${HOSTNAME}"
     network_mode: "host"
+    environment:
+      PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
     cap_add:
       - "NET_ADMIN"
     volumes:
-      - "initcontainer_generated:/opt/initcontainer"
+      - "default_generated:/opt/default"
 
 volumes:
-  initcontainer_generated:
+  default_generated:
+
+        # sudo keepalived --use-file "/opt/default/keepalived.conf"; \
+        # if [ ! -d "/opt/default/mysql_router/" ]; then \
+        #   mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets; \
+        # fi; \
+        # mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf";

@@ -1,0 +1,10 @@
+CREATE USER IF NOT EXISTS 'superset'@'${VIRTUAL_IP_ADDRESS}' IDENTIFIED BY 'cluster';
+CREATE DATABASE IF NOT EXISTS `superset`;
+GRANT ALL PRIVILEGES ON `superset`.* TO 'superset'@'${VIRTUAL_IP_ADDRESS}';
+GRANT INSERT ON `mysql_innodb_cluster_metadata`.* TO 'superset'@'${VIRTUAL_IP_ADDRESS}';
+GRANT SELECT ON `performance_schema`.* TO 'superset'@'${VIRTUAL_IP_ADDRESS}' WITH GRANT OPTION;
+GRANT CREATE USER ON *.* TO 'superset'@'${VIRTUAL_IP_ADDRESS}';
+GRANT SELECT, EXECUTE ON `mysql_innodb_cluster_metadata`.* TO 'superset'@'${VIRTUAL_IP_ADDRESS}' WITH GRANT OPTION;
+GRANT INSERT, UPDATE, DELETE ON `mysql_innodb_cluster_metadata`.`routers` TO 'superset'@'${VIRTUAL_IP_ADDRESS}' WITH GRANT OPTION;
+GRANT INSERT, UPDATE, DELETE ON `mysql_innodb_cluster_metadata`.`v2_routers` TO 'superset'@'${VIRTUAL_IP_ADDRESS}' WITH GRANT OPTION;
+GRANT SELECT ON `mysql`.`user` TO 'superset'@'${VIRTUAL_IP_ADDRESS}';

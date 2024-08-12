@@ -11,16 +11,21 @@ array_to_string_converter() {
 initialize_nodes() {
   export MYSQL_TEST_LOGIN_FILE="${_path_to_root_catalog}/services/mysql-mgmt/.mylogin.cnf"
   ./${_path_to_root_catalog}/store_credentials.exp ${mysql_nodes[@]} ${_path_to_root_catalog}
+
   for mysql_node in "${mysql_nodes[@]}"; do
     scp -r "${_path_to_root_catalog}/services/mysql-server" "superset@${mysql_node}:/opt/superset-cluster"
     ssh superset@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
   done
+
+  export PYTHONPATH="${PYTHONPATH}:${_path_to_root_catalog}"  # Delete it later
+  VIRTUAL_NETWORK=$(python3 -c "import src.interfaces; print(src.interfaces.virtual_network('${virtual_ip_address}','${virtual_ip_address_mask}'))")
+
   for mgmt_node in "${mgmt_nodes[@]}"; do
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh true ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh true ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
     else
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh false ${virtual_ip_address} ${virtual_network_interface} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh false ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
     fi
   done
 }

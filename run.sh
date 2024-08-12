@@ -7,13 +7,14 @@ superset_network_interface="tun0"
 
 virtual_ip_address="10.145.211.155"
 virtual_network_interface="eth0"
+virtual_ip_address_mask="/16"
 
 _path_to_root_catalog="."
 
 source ${_path_to_root_catalog}/src/common.sh
 
 start_superset() {
-  docker network create --driver overlay --attachable superset-network
+  docker network create --opt encrypted --driver overlay --attachable superset-network
   echo $(openssl rand -base64 42) | docker secret create superset_secret_key -
   ./services/redis/init.sh
   ./services/superset/init.sh ${virtual_ip_address}

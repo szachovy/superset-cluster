@@ -14,6 +14,9 @@ vrrp_instance virtual_instance {
         status
     }
     virtual_ipaddress {
-        ${VIRTUAL_IP_ADDRESS}
+        ${VIRTUAL_IP_ADDRESS}/${VIRTUAL_IP_ADDRESS_MASK}
+    }
+    virtual_routes {
+        ${VIRTUAL_NETWORK} src ${VIRTUAL_IP_ADDRESS} metric 1 dev ${VIRTUAL_NETWORK_INTERFACE} scope link
     }
 }

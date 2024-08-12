@@ -3,7 +3,8 @@
 node_prefix="${1}"
 superset_network_interface="${2}"
 virtual_ip_address="${3}"
-virtual_network_interface="${4}"
+virtual_ip_address_mask="${4}"
+virtual_network_interface="${5}"
 
 mgmt_nodes=("${node_prefix}-0" "${node_prefix}-5")
 mysql_nodes=("${node_prefix}-1" "${node_prefix}-2" "${node_prefix}-3")
@@ -23,7 +24,7 @@ docker_swarm_token() {
 }
 
 start_superset() {
-  ssh superset@${superset_node} "docker network create --driver overlay --attachable superset-network"
+  ssh superset@${superset_node} "docker network create --opt encrypted --driver overlay --attachable superset-network"
   ssh superset@${superset_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
   scp -r ${_path_to_root_catalog}/services "superset@${superset_node}:/opt/superset-cluster"
   ssh superset@${superset_node} "cd /opt/superset-cluster && ./services/redis/init.sh"
