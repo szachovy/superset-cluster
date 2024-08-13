@@ -9,43 +9,69 @@ export PRIMARY_MYSQL_NODE="${6}"
 export SECONDARY_FIRST_MYSQL_NODE="${7}"
 export SECONDARY_SECOND_MYSQL_NODE="${8}"
 
-export IS_PRIMARY_MGMT_NODE="true"
-export VIRTUAL_IP_ADDRESS="172.18.0.8"
-export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
-export VIRTUAL_NETWORK_INTERFACE="eth0"
-export VIRTUAL_NETWORK="172.18.0.0/16"
-export PRIMARY_MYSQL_NODE="node-1"
-export SECONDARY_FIRST_MYSQL_NODE="node-2"
-export SECONDARY_SECOND_MYSQL_NODE="node-3"
+# export IS_PRIMARY_MGMT_NODE="true"
+# export VIRTUAL_IP_ADDRESS="172.18.0.8"
+# export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
+# export VIRTUAL_NETWORK_INTERFACE="eth0"
+# export VIRTUAL_NETWORK="172.18.0.0/16"
+# export PRIMARY_MYSQL_NODE="node-1"
+# export SECONDARY_FIRST_MYSQL_NODE="node-2"
+# export SECONDARY_SECOND_MYSQL_NODE="node-3"
 
-openssl \
-  genpkey \
-    -algorithm RSA \
-    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem"
+# openssl \
+#   genpkey \
+#     -algorithm RSA \
+#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem"
 
-openssl \
-  req \
-    -new \
-    -key "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem" \
-    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
-    -subj "/CN=Superset-Cluster-MySQL-Router-${HOSTNAME}"
+# openssl \
+#   req \
+#     -new \
+#     -key "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem" \
+#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
+#     -subj "/CN=Superset-Cluster-MySQL-Router-${HOSTNAME}"
 
-openssl \
-  x509 \
-    -in "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
-    -CA "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_certificate.pem" \
-    -CAkey "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem" \
-    -CAcreateserial \
-    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate.pem" \
-    -req \
-    -days 365
+# openssl \
+#   x509 \
+#     -in "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
+#     -CA "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_certificate.pem" \
+#     -CAkey "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem" \
+#     -CAcreateserial \
+#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate.pem" \
+#     -req \
+#     -days 365
 
 docker compose \
-  --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer #\
-# && \
+  --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \
+&& \
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up maincontainer \
   --detach
+
+# export HEALTHCHECK_START_PERIOD=20
+# export VIRTUAL_NETWORK_INTERFACE='eth0'
+# export PRIMARY_MYSQL_NODE='172.18.0.3'
+
+# ip monitor dev ${VIRTUAL_NETWORK_INTERFACE} > /opt/default/ifstatus &
+# sudo keepalived --use-file '/opt/default/keepalived.conf' \
+# && \
+# timeout ${HEALTHCHECK_START_PERIOD} bash -c "watch -g -n 1 'stat /opt/default/ifstatus'" \
+# && \
+# if [ ! -d "/opt/default/mysql_router/" ]; then \
+#   mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets; \
+# fi \
+# && \
+# mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
+
+# timeout ${HEALTHCHECK_START_PERIOD} bash -c "/opt/default/ifstatus | while read -r line; do echo hi; rm /opt/default/ifstatus && kill -9 $MONITOR_PID; break; done"
+
+# ( ip monitor dev ${VIRTUAL_NETWORK_INTERFACE} ) &
+# MONITOR_PID=$!
+# sudo keepalived --use-file '/opt/default/keepalived.conf'
+# timeout ${HEALTHCHECK_START_PERIOD} bash -c "strace -p $MONITOR_PID -e write=1 | while read -r line; do kill -9 $MONITOR_PID; break; done"
+
+# tail -f /proc/$MONITOR_PID/fd/1
+# timeout ${HEALTHCHECK_START_PERIOD} bash -c "ip monitor link dev ${VIRTUAL_NETWORK_INTERFACE} | while read -r line; do sudo keepalived --use-file '/opt/default/keepalived.conf'; break; done"
+
 
 # mysqlsh --login-path=mysqlrouter-user --sql --ssl-mode=REQUIRED --host=127.0.0.1 --port=6446
 # SHOW STATUS LIKE 'Ssl_cipher';

@@ -27,16 +27,27 @@ services:
     image: "mysql-mgmt"
     user: "superset"
     entrypoint:
-      - "sh"
+      - "bash"
       - "-c"
       - |
-        sleep infinity
+        ip monitor dev ${VIRTUAL_NETWORK_INTERFACE} > /opt/default/ifstatus &
+        sudo keepalived --use-file "/opt/default/keepalived.conf" \
+        && \
+        timeout ${HEALTHCHECK_START_PERIOD} bash -c "watch -g -n 1 'stat /opt/default/ifstatus'" \
+        && \
+        if [ ! -d "/opt/default/mysql_router/" ]; then \
+          mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets; \
+        fi \
+        && \
+        mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
     container_name: "mysql-mgmt"
     restart: "always"
     hostname: "${HOSTNAME}"
     network_mode: "host"
     environment:
       PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
+      VIRTUAL_NETWORK_INTERFACE: "${VIRTUAL_NETWORK_INTERFACE}"
+      HEALTHCHECK_START_PERIOD: 20
     cap_add:
       - "NET_ADMIN"
     volumes:
@@ -44,9 +55,3 @@ services:
 
 volumes:
   default_generated:
-
-        # sudo keepalived --use-file "/opt/default/keepalived.conf"; \
-        # if [ ! -d "/opt/default/mysql_router/" ]; then \
-        #   mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets; \
-        # fi; \
-        # mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf";
