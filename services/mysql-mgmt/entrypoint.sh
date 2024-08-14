@@ -30,30 +30,29 @@ set -euo pipefail
 if [ "${IS_PRIMARY_MGMT_NODE}" = "true" ]; then
   export STATE="MASTER"
   export PRIORITY="100"
-
   for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
     mysqlsh --login-path="${mysql_node_ip_address}" --execute="dba.configureInstance('${mysql_node_ip_address}')"
   done
-
   mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.createCluster('superset');"
-
   for secondary_node_ip in "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
     mysqlsh --login-path="${secondary_node_ip}" --sql --execute="RESET MASTER;"
     mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${secondary_node_ip}',{recoveryMethod:'incremental'});"
   done
-
   /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
   mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
 else
   export STATE="BACKUP"
   export PRIORITY="90"
 fi
-
-# sleep infinity
-
 ifmetric ${VIRTUAL_NETWORK_INTERFACE} 2
 /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/default/keepalived.conf";
 chown superset:superset "/opt/default"
+
+    # environment:
+    #   PRIMARY_MYSQL_NODE: "${PRIMARY_MYSQL_NODE}"
+    #   VIRTUAL_NETWORK_INTERFACE: "${VIRTUAL_NETWORK_INTERFACE}"
+    #   HEALTHCHECK_START_PERIOD: 20
+# sleep infinity
 
 # THERE IS NO PYTHON
 # export VIRTUAL_NETWORK=$(python3 -c "import ipaddress; print(ipaddress.IPv4Interface('${VIRTUAL_IP_ADDRESS}/${VIRTUAL_IP_ADDRESS_MASK}').network)")

@@ -17,8 +17,9 @@ initialize_nodes() {
     ssh superset@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
   done
 
-  export PYTHONPATH="${PYTHONPATH}:${_path_to_root_catalog}"  # Delete it later
-  VIRTUAL_NETWORK=$(python3 -c "import src.interfaces; print(src.interfaces.virtual_network('${virtual_ip_address}','${virtual_ip_address_mask}'))")
+  # export PYTHONPATH="${PYTHONPATH}:${_path_to_root_catalog}"  # Delete it later
+  # VIRTUAL_NETWORK=$(python3 -c "import src.interfaces; print(src.interfaces.virtual_network('${virtual_ip_address}','${virtual_ip_address_mask}'))")
+  VIRTUAL_NETWORK="172.18.0.0/16"
 
   for mgmt_node in "${mgmt_nodes[@]}"; do
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
