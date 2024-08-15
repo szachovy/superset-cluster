@@ -47,12 +47,13 @@ services:
       - "-c"
       - |
         set -euo pipefail
+        export TERM=dumb
         ip monitor dev "${VIRTUAL_NETWORK_INTERFACE}" > "/opt/default/ifstatus" &
         sudo keepalived --use-file "/opt/default/keepalived.conf"
-        timeout ${HEALTHCHECK_START_PERIOD} watch --chgexit --interval 1 "stat /opt/default/ifstatus" > /dev/null 2>&1
-        &&
         if [ ! -d "/opt/default/mysql_router/" ]; then
-          mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets
+          if timeout ${HEALTHCHECK_START_PERIOD} watch --chgexit --interval 1 "stat /opt/default/ifstatus" > /dev/null 2>&1; then
+            mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets
+          fi
         fi
         mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
     container_name: "mysql-mgmt"
@@ -66,6 +67,3 @@ services:
 
 volumes:
   default_generated:
-
-    # env_file:
-    #   - "/opt/superset-cluster/mysql-mgmt/.env-maincontainer"

@@ -27,11 +27,11 @@ EOF
 # export VIRTUAL_NETWORK="172.18.0.0/16"
 
 # export IS_PRIMARY_MGMT_NODE="true"
-# export VIRTUAL_NETWORK_INTERFACE="eth0"
-# export PRIMARY_MYSQL_NODE="node-1"
+export VIRTUAL_NETWORK_INTERFACE="eth0"
+export PRIMARY_MYSQL_NODE="node-1"
+export HEALTHCHECK_START_PERIOD=20
 # export SECONDARY_FIRST_MYSQL_NODE="node-2"
 # export SECONDARY_SECOND_MYSQL_NODE="node-3"
-# export HEALTHCHECK_START_PERIOD=20
 # export MYSQL_TEST_LOGIN_FILE="/opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
 
 # openssl \
