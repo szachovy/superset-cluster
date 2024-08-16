@@ -23,6 +23,6 @@ docker run \
   --volume $(pwd)/services/superset/superset_secret_key:/run/secrets/superset_secret_key \
   --network superset-network \
   --publish 8088:8088 \
-  --env VIRTUAL_IP_ADDRESS="${1}" \
+  --env VIRTUAL_IP_ADDRESS="172.18.0.8" \
   superset
   # ghcr.io/szachovy/superset-cluster:latest
