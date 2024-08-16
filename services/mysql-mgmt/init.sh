@@ -1,19 +1,22 @@
 #!/bin/bash
 
-export IS_PRIMARY_MGMT_NODE="${1}"
+export MGMT_NODE_TYPE="${1}"
+export VIRTUAL_IP_ADDRESS="${2}"
+export VIRTUAL_IP_ADDRESS_MASK="${3}"
 export VIRTUAL_NETWORK_INTERFACE="${4}"
+export VIRTUAL_NETWORK="${5}"
 export PRIMARY_MYSQL_NODE="${6}"
 export SECONDARY_FIRST_MYSQL_NODE="${7}"
 export SECONDARY_SECOND_MYSQL_NODE="${8}"
 export HEALTHCHECK_START_PERIOD=20
 
-cat << EOF > /opt/superset-cluster/mysql-mgmt/.env-initcontainer
-VIRTUAL_IP_ADDRESS="${2}"
-VIRTUAL_IP_ADDRESS_MASK="${3}"
-VIRTUAL_NETWORK_INTERFACE="${4}"
-VIRTUAL_NETWORK="${5}"
-MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
-EOF
+# cat << EOF > /opt/superset-cluster/mysql-mgmt/.env-initcontainer
+# VIRTUAL_IP_ADDRESS="${2}"
+# VIRTUAL_IP_ADDRESS_MASK="${3}"
+# VIRTUAL_NETWORK_INTERFACE="${4}"
+# VIRTUAL_NETWORK="${5}"
+# MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
+# EOF
 
 # cat << EOF > /opt/superset-cluster/mysql-mgmt/.env-maincontainer
 # VIRTUAL_NETWORK_INTERFACE="${4}"
@@ -22,39 +25,40 @@ EOF
 # EOF
 
 # exit 0
+
+# export MGMT_NODE_TYPE="primary"
 # export VIRTUAL_IP_ADDRESS="172.18.0.8"
 # export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
+# export VIRTUAL_NETWORK_INTERFACE="eth0"
 # export VIRTUAL_NETWORK="172.18.0.0/16"
-
-# export IS_PRIMARY_MGMT_NODE="true"
-export VIRTUAL_NETWORK_INTERFACE="eth0"
-export PRIMARY_MYSQL_NODE="node-1"
-export HEALTHCHECK_START_PERIOD=20
+# export PRIMARY_MYSQL_NODE="node-1"
 # export SECONDARY_FIRST_MYSQL_NODE="node-2"
 # export SECONDARY_SECOND_MYSQL_NODE="node-3"
-# export MYSQL_TEST_LOGIN_FILE="/opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
+# export HEALTHCHECK_START_PERIOD=20
 
-# openssl \
-#   genpkey \
-#     -algorithm RSA \
-#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem"
+# export MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
 
-# openssl \
-#   req \
-#     -new \
-#     -key "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_key.pem" \
-#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
-#     -subj "/CN=Superset-Cluster-MySQL-Router-${HOSTNAME}"
+openssl \
+  genpkey \
+    -algorithm RSA \
+    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${MGMT_NODE_TYPE}_key.pem"
 
-# openssl \
-#   x509 \
-#     -in "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate_signing_request.pem" \
-#     -CA "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_certificate.pem" \
-#     -CAkey "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem" \
-#     -CAcreateserial \
-#     -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${HOSTNAME}_certificate.pem" \
-#     -req \
-#     -days 365
+openssl \
+  req \
+    -new \
+    -key "/opt/superset-cluster/mysql-mgmt/mysql_router_${MGMT_NODE_TYPE}_key.pem" \
+    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${MGMT_NODE_TYPE}_certificate_signing_request.pem" \
+    -subj "/CN=Superset-Cluster-MySQL-Router-${MGMT_NODE_TYPE}"
+
+openssl \
+  x509 \
+    -in "/opt/superset-cluster/mysql-mgmt/mysql_router_${MGMT_NODE_TYPE}_certificate_signing_request.pem" \
+    -CA "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_certificate.pem" \
+    -CAkey "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem" \
+    -CAcreateserial \
+    -out "/opt/superset-cluster/mysql-mgmt/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" \
+    -req \
+    -days 365
 
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \

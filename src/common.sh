@@ -24,9 +24,9 @@ initialize_nodes() {
   for mgmt_node in "${mgmt_nodes[@]}"; do
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh true ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh primary ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
     else
-      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh false ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
+      ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh secondary ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
     fi
   done
 }

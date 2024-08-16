@@ -27,7 +27,7 @@ set -euo pipefail
 #         from 172.18.0.8 table keepalived
 #     }
 
-if [ "${IS_PRIMARY_MGMT_NODE}" = "true" ]; then
+if [ "${MGMT_NODE_TYPE}" = "true" ]; then
   export STATE="MASTER"
   export PRIORITY="100"
   for mysql_node_ip_address in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
