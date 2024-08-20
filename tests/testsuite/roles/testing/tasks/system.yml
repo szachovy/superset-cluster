@@ -9,10 +9,10 @@
         {{ virtual_ip_address }} \
         {{ virtual_ip_address_mask }} \
         {{ virtual_network_interface }}
-      initialize_nodes
       superset_node_address=$(superset_node_address)
       docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
       clusterize_nodes
+      initialize_nodes
       start_superset
     } | tee /tmp/superset_cluster_testsuite.log
   args:

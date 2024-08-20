@@ -1,3 +1,8 @@
+
+global_defs {
+    vrrp_startup_delay 10
+}
+
 vrrp_script status {
     script "/bin/killall -0 mysqlrouter"
     interval 2
@@ -10,6 +15,7 @@ vrrp_instance virtual_instance {
     virtual_router_id 51
     priority ${PRIORITY}
     advert_int 1
+    nopreempt
     track_script {
         status
     }
