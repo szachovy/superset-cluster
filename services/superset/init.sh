@@ -9,8 +9,12 @@ docker service create \
   --publish 8088:8088 \
   --constraint 'node.role!=manager' \
   --constraint 'node.labels.preferred==true' \
-  --env VIRTUAL_IP_ADDRESS="${1}" \
+  --env VIRTUAL_IP_ADDRESS="10.145.211.155" \
   ghcr.io/szachovy/superset-cluster:latest
+
+docker service update \
+  --constraint-rm 'node.labels.preferred==true' \
+  superset
 
 # PLACEMENT PREF DOES NOT WORK, FIND ALTERNATIVE
 
