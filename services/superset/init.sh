@@ -10,12 +10,13 @@ docker service create \
   --publish 8088:8088 \
   --constraint 'node.role!=manager' \
   --constraint 'node.labels.preferred==true' \
+  --no-healthcheck \
   --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
   ghcr.io/szachovy/superset-cluster:latest
 
-docker service update \
-  --constraint-rm 'node.labels.preferred==true' \
-  superset
+# docker service update \
+#   --constraint-rm 'node.labels.preferred==true' \
+#   superset
 
 # --env VIRTUAL_IP_ADDRESS="10.145.211.155" \
 

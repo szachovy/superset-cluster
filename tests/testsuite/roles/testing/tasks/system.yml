@@ -15,15 +15,15 @@
     } | tee /tmp/superset_cluster_testsuite.log
   args:
     executable: /bin/bash
+  async: 1200
+  poll: 60
 
 - name: Check superset container status
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
-    command: |
-      /bin/bash -c '
-      while [ "$(docker inspect superset | jq -r .[0].State.Health.Status)" != "healthy" ]; do
-        echo "Waiting for superset container to become healthy..."
-        exit 1
-      done'
+  ansible.builtin.shell: |
+    /bin/bash -c '
+    while [ "$(docker service ls --filter "name=superset" --format "{{.Replicas}}")" != "1/1" ]; do
+      echo "Waiting for superset container to become healthy..."
+      exit 1
+    done'
   retries: 6
   delay: 50

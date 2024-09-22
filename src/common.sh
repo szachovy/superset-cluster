@@ -54,11 +54,12 @@ clusterize_nodes() {
   cp -r "${_path_to_root_catalog}/src" "/opt/superset-cluster-service/src"  # integrate to superset service later
   # local superset_network_interface="${1}"
   # cd /opt/superset-cluster-service
-  export PYTHONPATH=${PYTHONPATH}:/opt/superset-cluster-service
+  export PYTHONPATH=${PYTHONPATH:-}/opt/superset-cluster-service
   superset_node_address=$(echo $(python3 -c "import src.interfaces; print(src.interfaces.network_interfaces(network_interface='${superset_network_interface}'))"))
   docker_swarm_token=$(eval "echo \$(docker swarm init --advertise-addr ${superset_node_address} | awk '/--token/ {print \$5}')")
   ssh superset@${mgmt_nodes[0]} "docker swarm join --token ${docker_swarm_token} ${superset_node_address}:2377"
   ssh superset@${mgmt_nodes[1]} "docker swarm join --token ${docker_swarm_token} ${superset_node_address}:2377"
+  docker pull ghcr.io/szachovy/superset-cluster:latest
 }
 
 # ssh superset@node-0 "docker swarm join --token ${docker_swarm_token} ${superset_node_address}:2377"
