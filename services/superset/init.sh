@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # docker login ghcr.io -u szachovy
+VIRTUAL_IP_ADDRESS="${1}"
 docker service create \
   --with-registry-auth \
   --detach \
@@ -9,14 +10,14 @@ docker service create \
   --publish 8088:8088 \
   --constraint 'node.role!=manager' \
   --constraint 'node.labels.preferred==true' \
-  --env VIRTUAL_IP_ADDRESS="10.145.211.155" \
+  --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
   ghcr.io/szachovy/superset-cluster:latest
 
 docker service update \
   --constraint-rm 'node.labels.preferred==true' \
   superset
 
-# PLACEMENT PREF DOES NOT WORK, FIND ALTERNATIVE
+# --env VIRTUAL_IP_ADDRESS="10.145.211.155" \
 
 # docker service create \
 #   --with-registry-auth \

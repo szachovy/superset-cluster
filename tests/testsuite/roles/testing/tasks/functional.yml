@@ -38,12 +38,12 @@
 
 - name: Disaster testing - Stop MySQL primary node
   community.docker.docker_container:
-    name: "{{ node_prefix }}-1"
+    name: "{{ node_prefix }}-2"
     state: stopped
 
 - name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-5"
+    container: "{{ node_prefix }}-1"
     command: "python3 -c
       'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(

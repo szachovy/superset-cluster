@@ -74,11 +74,11 @@ resource "docker_image" "node_image" {
 }
 
 resource "docker_container" "nodes" {
-  count      = "6"
+  count      = "5"
   name       = "${var.node_prefix}-${count.index}"
   hostname   = "${var.node_prefix}-${count.index}"
   image      = docker_image.node_image.name
-  privileged = true # nodes containers are treated as standalone virtual machines
+  privileged = true  # nodes containers are treated as standalone virtual machines
 
   ports {
     internal = 8088
@@ -156,7 +156,7 @@ resource "null_resource" "generate_ansible_group_vars" {
       DEFAULTS_FILE           = "../../src/defaults.yml"
       GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
       NODE_PREFIX             = "${var.node_prefix}"
-      VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${8}")
+      VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")
       VIRTUAL_IP_ADDRESS_MASK = cidrnetmask("${var.subnet}")
     }
   }

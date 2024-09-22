@@ -9,8 +9,6 @@
         {{ virtual_ip_address }} \
         {{ virtual_ip_address_mask }} \
         {{ virtual_network_interface }}
-      superset_node_address=$(superset_node_address)
-      docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
       clusterize_nodes
       initialize_nodes
       start_superset
@@ -20,7 +18,7 @@
 
 - name: Check superset container status
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-4"
+    container: "{{ node_prefix }}-0"
     command: |
       /bin/bash -c '
       while [ "$(docker inspect superset | jq -r .[0].State.Health.Status)" != "healthy" ]; do

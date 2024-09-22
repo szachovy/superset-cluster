@@ -1,5 +1,5 @@
 ---
-superset_network_interface: "eth0"
+superset_network_interface: "wlp4s0"
 virtual_network_interface: "eth0"
 mgmt_hostname: "mysql-mgmt"
 redis_hostname: "redis"
