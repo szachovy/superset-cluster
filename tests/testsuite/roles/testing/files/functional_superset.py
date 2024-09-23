@@ -92,13 +92,6 @@ class Superset(container_connection.ContainerUtilities, metaclass=data_structure
         test_database_connection: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --data '{payload}'")
         assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
 
-    # @data_structures.Overlay.post_init_hook
-    # def status_swarm(self) -> None | AssertionError:
-    #     swarm_info = self.info()['Swarm']
-    #     assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'
-    #     assert swarm_info['ControlAvailable'] is True, f'The testing localhost is supposed to be a Swarm manager, but it is not'
-    #     assert swarm_info['Nodes'] == 3, f'The Swarm is expected to consist of 3 nodes instead of {swarm_info["Nodes"]} in the pool.'
-
     def run_query(self) -> float | AssertionError:
         payload: str = f'{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}}'
         sqllab_run_query: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/sqllab/execute/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")

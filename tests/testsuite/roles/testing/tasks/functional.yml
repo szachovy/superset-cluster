@@ -1,4 +1,15 @@
 ---
+- name: "run host functional tests"
+  ansible.builtin.shell: |
+    python3 -c 'import functional_host; functional_host.Service()'
+  environment:
+    PYTHONPATH: "{{ role_path }}/files:{{ role_path }}/../../../../src"
+#   register: superset_container_name
+
+# - name: Print the superset container name
+#   debug:
+#     msg: "Superset container name is: {{ superset_container_name.stdout.strip() }}"
+
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
@@ -39,7 +50,7 @@
 
 - name: Wait for superset container to become healthy
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
+    container: "{{ node_prefix }}-1"
     command: |
       {% raw %}
       /bin/bash -c
@@ -49,7 +60,7 @@
       done
       echo $superset_container_name'
       {% endraw %}
-  retries: 10
+  retries: 15
   delay: 60
   register: superset_container_name
 
@@ -74,7 +85,7 @@
 
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
+    container: "{{ node_prefix }}-1"
     command: "python3 -c
       'import functional_superset;
       superset_functional = functional_superset.Superset(

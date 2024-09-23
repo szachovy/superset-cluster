@@ -11,7 +11,7 @@ import requests
 
 
 class ContainerUtilities:
-    def __init__(self, container: str) -> None:
+    def __init__(self, container: str | None) -> None:
         self.client: docker.client.DockerClient = docker.from_env()
         self.container: str = container
 
