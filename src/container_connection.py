@@ -11,15 +11,15 @@ import requests
 
 
 class ContainerUtilities:
-    def __init__(self, node: str) -> None:
+    def __init__(self, container: str) -> None:
         self.client: docker.client.DockerClient = docker.from_env()
-        self.node: str = node
+        self.container: str = container
 
     def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
         try:
-            request: docker.models.containers.ExecResult = self.client.containers.get(self.node).exec_run(command, stdout=True, stderr=True)
+            request: docker.models.containers.ExecResult = self.client.containers.get(self.container).exec_run(command, stdout=True, stderr=True)
         except (docker.errors.NotFound, docker.errors.APIError) as error:
-            raise requests.exceptions.RequestException(f'Can not run commands on the container {self.node}: {error}')
+            raise requests.exceptions.RequestException(f'Can not run commands on the container {self.container}: {error}')
         if request.exit_code != 0:
             raise requests.exceptions.RequestException(f'Command: {command} failed with exit code [{request.exit_code}] giving the following output: {request.output}')
         return request.output
@@ -32,7 +32,7 @@ class ContainerUtilities:
         with tarfile.open(fileobj=tar_stream, mode='w') as archive:
             archive.add("/opt/superset-cluster/mysql-mgmt/.mylogin.cnf", arcname=".mylogin.cnf")
         tar_stream.seek(0)
-        self.client.containers.get(self.node).put_archive("/home/superset", tar_stream.getvalue())
+        self.client.containers.get(self.container).put_archive("/home/superset", tar_stream.getvalue())
         tar_stream.close()
 
     @staticmethod
@@ -45,6 +45,14 @@ class ContainerUtilities:
         except socket.gaierror as socketerror:
             if socketerror.errno == -2:
                 raise socket.gaierror(f'Error finding IPv4 for node {node}: {socketerror}')
+
+    # def find_superset_container(self) -> str | ValueError:
+    #     if not vars(self):
+    #         self.__init__(None)
+    #     for container in self.client.containers.list():
+    #         if container.name.startswith('superset'):
+    #             return container.name
+    #     raise ValueError(f'Container not found for superset service')
     
     @staticmethod
     def extract_session_cookie(request_output: bytes) -> str | ValueError:
@@ -64,3 +72,10 @@ class ContainerUtilities:
             )
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
+
+# class A:
+#     def __init__(self) -> None:
+#         self.a = '12'
+    
+#     def c(self):
+#         print(self)

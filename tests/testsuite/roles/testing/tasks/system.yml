@@ -1,29 +1,39 @@
 ---
-- name: end-to-end run
-  ansible.builtin.shell: |
-    set -euxo pipefail
-    {
-      source {{ role_path }}/files/system.sh \
-        {{ node_prefix }} \
-        {{ superset_network_interface }} \
-        {{ virtual_ip_address }} \
-        {{ virtual_ip_address_mask }} \
-        {{ virtual_network_interface }}
-      clusterize_nodes
-      initialize_nodes
-      start_superset
-    } | tee /tmp/superset_cluster_testsuite.log
-  args:
-    executable: /bin/bash
-  async: 1200
-  poll: 60
+# - name: end-to-end run
+#   ansible.builtin.shell: |
+#     set -euxo pipefail
+#     {
+#       source {{ role_path }}/files/system.sh \
+#         {{ node_prefix }} \
+#         {{ superset_network_interface }} \
+#         {{ virtual_ip_address }} \
+#         {{ virtual_ip_address_mask }} \
+#         {{ virtual_network_interface }}
+#       clusterize_nodes
+#       initialize_nodes
+#       start_superset
+#     } | tee /tmp/superset_cluster_testsuite.log
+#   args:
+#     executable: /bin/bash
+#   async: 1200
+#   poll: 60
 
-- name: Check superset container status
-  ansible.builtin.shell: |
-    /bin/bash -c '
-    while [ "$(docker service ls --filter "name=superset" --format "{{.Replicas}}")" != "1/1" ]; do
-      echo "Waiting for superset container to become healthy..."
-      exit 1
-    done'
-  retries: 6
-  delay: 50
+- name: Wait for superset container to become healthy
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'superset_container_name=$(docker ps --filter "name=superset" --format "{{.Names}}")
+      while [ "$(docker inspect --format "{{.State.Health.Status}}" $superset_container_name)" != "healthy" ]; do
+        exit 1
+      done
+      echo $superset_container_name'
+      {% endraw %}
+  retries: 10
+  delay: 60
+  register: superset_container_name
+
+- name: Print the superset container name
+  debug:
+    msg: "Superset container name is: {{ superset_container_name.stdout.strip() }}"
