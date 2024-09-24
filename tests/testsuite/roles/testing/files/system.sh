@@ -30,8 +30,4 @@ source "${_path_to_root_catalog}/src/common.sh"
 #   ssh superset@${superset_node} "cd /opt/superset-cluster && ./services/superset/init.sh ${virtual_ip_address}"
 # }
 
-start_superset() {
-  docker network create --opt encrypted --driver overlay --attachable superset-network
-  echo $(openssl rand -base64 42) | docker secret create superset_secret_key -
-  /opt/superset-cluster-service/init.sh ${virtual_ip_address}
-}
+

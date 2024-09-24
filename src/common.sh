@@ -62,5 +62,11 @@ clusterize_nodes() {
   docker pull ghcr.io/szachovy/superset-cluster:latest
 }
 
+start_superset() {
+  docker network create --opt encrypted --driver overlay --attachable superset-network
+  echo $(openssl rand -base64 42) | docker secret create superset_secret_key -
+  /opt/superset-cluster-service/init.sh ${virtual_ip_address}
+}
+
 # ssh superset@node-0 "docker swarm join --token ${docker_swarm_token} ${superset_node_address}:2377"
 # ssh superset@node-1 "docker swarm join --token ${docker_swarm_token} ${superset_node_address}:2377"
