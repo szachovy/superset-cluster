@@ -13,6 +13,7 @@ initialize_nodes() {
   ./${_path_to_root_catalog}/store_credentials.exp ${mysql_nodes[@]} ${_path_to_root_catalog}
 
   for mysql_node in "${mysql_nodes[@]}"; do
+    ssh superset@${mysql_node} "mkdir /opt/superset-cluster"
     scp -r "${_path_to_root_catalog}/services/mysql-server" "superset@${mysql_node}:/opt/superset-cluster"
     ssh superset@${mysql_node} "/opt/superset-cluster/mysql-server/init.sh"
   done
@@ -23,6 +24,7 @@ initialize_nodes() {
   # VIRTUAL_NETWORK="10.145.208.0/22"
 
   for mgmt_node in "${mgmt_nodes[@]}"; do
+    ssh superset@${mgmt_node} "mkdir /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
       ssh superset@${mgmt_node} "/opt/superset-cluster/mysql-mgmt/init.sh primary ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"

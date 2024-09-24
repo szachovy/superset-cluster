@@ -1,6 +1,6 @@
 
 global_defs {
-    vrrp_startup_delay 10
+    vrrp_startup_delay 15
 }
 
 vrrp_script status {

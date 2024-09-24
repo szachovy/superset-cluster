@@ -10,6 +10,7 @@ docker service create \
   --publish 8088:8088 \
   --constraint 'node.role!=manager' \
   --constraint 'node.labels.preferred==true' \
+  --network superset-network \
   --health-start-period=60s \
   --health-interval=30s \
   --health-retries=10 \
