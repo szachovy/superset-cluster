@@ -9,9 +9,7 @@
         {{ virtual_ip_address }} \
         {{ virtual_ip_address_mask }} \
         {{ virtual_network_interface }}
-      clusterize_nodes
       initialize_nodes
-      start_superset
     } | tee /tmp/superset_cluster_testsuite.log
   args:
     executable: /bin/bash

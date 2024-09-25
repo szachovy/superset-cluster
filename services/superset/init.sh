@@ -8,9 +8,8 @@ docker service create \
   --name superset \
   --secret superset_secret_key \
   --publish 8088:8088 \
-  --constraint 'node.role!=manager' \
-  --constraint 'node.labels.preferred==true' \
   --network superset-network \
+  --replicas 1 \
   --health-start-period=60s \
   --health-interval=30s \
   --health-retries=10 \
@@ -18,10 +17,14 @@ docker service create \
   --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
   ghcr.io/szachovy/superset-cluster:latest
 
+
+  # --constraint 'node.role!=manager' \
+  # --constraint 'node.labels.preferred==true' \
+
 #--no-healthcheck \
-docker service update \
-  --constraint-rm 'node.labels.preferred==true' \
-  superset
+# docker service update \
+#   --constraint-rm 'node.labels.preferred==true' \
+#   superset
 
 # --env VIRTUAL_IP_ADDRESS="10.145.211.155" \
 

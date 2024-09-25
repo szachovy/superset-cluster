@@ -5,7 +5,7 @@ mgmt_nodes=("wiktor-min-deblike" "wiktor-min-rhlike")
 mysql_nodes=("wiktor-min-build" "wiktor-cli-sles" "wiktor-minssh-sles")
 superset_network_interface="enp1s0"
 
-virtual_ip_address="10.145.211.173"
+virtual_ip_address="10.145.211.180"
 virtual_network_interface="ens3"
 virtual_ip_address_mask="22"
 
@@ -29,9 +29,9 @@ source ${_path_to_root_catalog}/src/common.sh
 # ssh superset@${superset_node} "docker network create --driver overlay --attachable superset-network"
 # ssh superset@${superset_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
 # ssh superset@${superset_node} "docker node update --label-add preferred=false ${mgmt_nodes[1]}"
-clusterize_nodes
+# clusterize_nodes
 initialize_nodes
-start_superset
+# start_superset
 # --opt encrypted 
 # superset_node_address=$(get_superset_node_ip ${superset_network_interface})
 # docker_swarm_token=$(init_and_get_docker_swarm_token ${superset_node_address})

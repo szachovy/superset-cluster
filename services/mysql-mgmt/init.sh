@@ -39,10 +39,11 @@ docker run \
   --restart always \
   --name redis \
   --hostname redis \
-  --network host \
+  --network superset-network \
   redis
   #   --publish 6379:6379 \
-  # --network superset-network \
+  # --network host \
+  
 
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \
@@ -60,14 +61,3 @@ docker compose \
 # export SECONDARY_FIRST_MYSQL_NODE="wiktor-srv"
 # export SECONDARY_SECOND_MYSQL_NODE="wiktor-pxy"
 # export HEALTHCHECK_START_PERIOD=90
-
-default via 10.145.211.254 dev ens3 proto dhcp src 10.145.211.158 metric 100 
-10.144.53.53 via 10.145.211.254 dev ens3 proto dhcp src 10.145.211.158 metric 100 
-10.144.53.54 via 10.145.211.254 dev ens3 proto dhcp src 10.145.211.158 metric 100 
-10.144.55.129 via 10.145.211.254 dev ens3 proto dhcp src 10.145.211.158 metric 100 
-10.144.55.130 via 10.145.211.254 dev ens3 proto dhcp src 10.145.211.158 metric 100 
-10.145.208.0/22 dev ens3 proto kernel scope link src 10.145.211.158 metric 100 
-10.145.208.1 dev ens3 proto dhcp scope link src 10.145.211.158 metric 100 
-10.145.211.254 dev ens3 proto dhcp scope link src 10.145.211.158 metric 100 
-172.17.0.0/16 dev docker0 proto kernel scope link src 172.17.0.1 linkdown 
-172.18.0.0/16 dev docker_gwbridge proto kernel scope link src 172.18.0.1 

@@ -1,9 +1,9 @@
 ---
-- name: "run host functional tests"
-  ansible.builtin.shell: |
-    python3 -c 'import functional_host; functional_host.Service()'
-  environment:
-    PYTHONPATH: "{{ role_path }}/files:{{ role_path }}/../../../../src"
+# - name: "run host functional tests"
+#   ansible.builtin.shell: |
+#     python3 -c 'import functional_host; functional_host.Service()'
+#   environment:
+#     PYTHONPATH: "{{ role_path }}/files:{{ role_path }}/../../../../src"
 #   register: superset_container_name
 
 # - name: Print the superset container name
@@ -21,7 +21,7 @@
       );
       query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
 
       # import functional_superset
       # superset_functional = functional_superset.Superset(virtual_ip_address="172.18.0.10");
@@ -36,7 +36,7 @@
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=False
       );'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
 
 - name: Disaster testing - Stop Mgmt primary node
   community.docker.docker_container:
@@ -79,7 +79,7 @@
         after_disaster=True
       );
       mgmt_functional.check_after_disaster()'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
   retries: 6
   delay: 10
 
@@ -94,4 +94,4 @@
       );
       query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"

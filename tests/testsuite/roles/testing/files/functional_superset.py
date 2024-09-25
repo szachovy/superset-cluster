@@ -8,26 +8,25 @@ import data_structures
 
 
 class Redis(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, container: str, virtual_ip_address: str) -> None:
+    def __init__(self, container: str) -> None:
         super().__init__(container=container)
-        self.virtual_ip_address = virtual_ip_address
 
     @data_structures.Overlay.post_init_hook
     def status(self) -> None | AssertionError:
-        test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"{self.virtual_ip_address}\", port=6379).ping())'")
+        test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).ping())'")
         assert self.find_in_the_output(test_connection, b'True'), f'The redis container is not responding'
 
     def fetch_query_result(self, results_key: float) -> bool | AssertionError:
-        query_result: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"{self.virtual_ip_address}\", port=6379).get(\"{results_key}\"))'")
+        query_result: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).get(\"{results_key}\"))'")
         assert not self.find_in_the_output(query_result, b"None"), f'Query results given key {results_key} not found in Redis'
         return True
 
 
 class Celery(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, container: str, virtual_ip_address: str) -> None:
+    def __init__(self, container: str) -> None:
         super().__init__(container=container)
         self.superset_container: str = container
-        self.celery_broker: str = f"redis://{virtual_ip_address}:6379/0"
+        self.celery_broker: str = f"redis://redis:6379/0"
         self.celery_sql_lab_task_annotations: str = "sql_lab.get_sql_results"
 
     @data_structures.Overlay.post_init_hook
@@ -56,8 +55,8 @@ class Celery(container_connection.ContainerUtilities, metaclass=data_structures.
 class Superset(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
     def __init__(self, superset_container: str, virtual_ip_address: str) -> None:
         super().__init__(container=superset_container)
-        self.redis: typing.Type = Redis(container=superset_container, virtual_ip_address=virtual_ip_address)
-        self.celery: typing.Type = Celery(container=superset_container, virtual_ip_address=virtual_ip_address)
+        self.redis: typing.Type = Redis(container=superset_container)
+        self.celery: typing.Type = Celery(container=superset_container)
         self.virtual_ip_address: str = virtual_ip_address
         self.api_default_url: str = "http://localhost:8088/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
@@ -91,6 +90,12 @@ class Superset(container_connection.ContainerUtilities, metaclass=data_structure
         payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:cluster@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
         test_database_connection: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --data '{payload}'")
         assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
+
+    @data_structures.Overlay.post_init_hook
+    def status_swarm(self) -> None | AssertionError:
+        swarm_info = self.info()['Swarm']
+        assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'
+        assert swarm_info['ControlAvailable'] is True, f'The testing localhost is supposed to be a Swarm manager, but it is not'
 
     def run_query(self) -> float | AssertionError:
         payload: str = f'{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}}'
