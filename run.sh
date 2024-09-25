@@ -13,6 +13,7 @@ _path_to_root_catalog="."
 
 source ${_path_to_root_catalog}/src/common.sh
 
+# ALTER USER 'superset'@'10.145.211.180' IDENTIFIED BY 'test';
 # docker_swarm_token() {
 #   local superset_node_address="${1}"
 #   ssh superset@${superset_node} "$(typeset -f init_and_get_docker_swarm_token); init_and_get_docker_swarm_token ${superset_node_address}"

@@ -1,18 +1,19 @@
 #!/bin/bash
 
-superset fab create-admin \
+if superset test_db \
+    "mysql+mysqlconnector://superset:cluster@${VIRTUAL_IP_ADDRESS}:6446/superset" \
+    --connect-args {}; then
+  
+  superset fab create-admin \
   --username "superset" \
   --firstname "superset" \
   --lastname "superset" \
   --email "superset@cluster.com" \
   --password "cluster"
 
-superset db upgrade
-superset init
-
-if superset test_db \
-    "mysql+mysqlconnector://superset:cluster@${VIRTUAL_IP_ADDRESS}:6446/superset" \
-    --connect-args {}; then
+  superset db upgrade
+  superset init
+  
   /app/set-database-uri.exp
 fi
 

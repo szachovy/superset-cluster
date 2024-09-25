@@ -7,6 +7,7 @@ docker service create \
   --detach \
   --name superset \
   --secret superset_secret_key \
+  --secret superset_database_key \
   --publish 8088:8088 \
   --network superset-network \
   --replicas 1 \

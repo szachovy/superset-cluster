@@ -20,13 +20,14 @@ initialize_nodes() {
 
   # export PYTHONPATH="${PYTHONPATH}:${_path_to_root_catalog}"  # Delete it later
   # VIRTUAL_NETWORK=$(python3 -c "import interfaces; print(interfaces.virtual_network('${virtual_ip_address}','${virtual_ip_address_mask}'))")
-  VIRTUAL_NETWORK="172.18.0.0/16"
-  # VIRTUAL_NETWORK="10.145.208.0/22"
+  # VIRTUAL_NETWORK="172.18.0.0/16"
+  VIRTUAL_NETWORK="10.145.208.0/22"
 
   for mgmt_node in "${mgmt_nodes[@]}"; do
     ssh superset@${mgmt_node} "mkdir /opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/mysql-mgmt "superset@${mgmt_node}:/opt/superset-cluster"
     scp -r ${_path_to_root_catalog}/services/superset "superset@${mgmt_node}:/opt/superset-cluster"
+    superset_database_key=$(openssl rand -base64 12)
     if [ "${mgmt_node}" = "${mgmt_nodes[0]}" ]; then
       ssh superset@${mgmt_node} "docker swarm init --advertise-addr ${virtual_ip_address}"
       ssh superset@${mgmt_node} "docker network create --driver overlay --attachable superset-network"
@@ -37,7 +38,9 @@ initialize_nodes() {
       ssh superset@${mgmt_node} "docker login ghcr.io -u szachovy -p ..."
       ssh superset@${mgmt_node} "docker pull ghcr.io/szachovy/superset-cluster:latest"
       # ssh superset@${mgmt_node} "docker network create --opt encrypted --driver overlay --attachable superset-network"
+      ssh superset@${mgmt_node} "echo ${superset_database_key} | docker secret create superset_database_key -"
       ssh superset@${mgmt_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
+      sleep 60  # fails if mysql-mgmt not ready, sleep some time
       ssh superset@${mgmt_node} "/opt/superset-cluster/superset/init.sh ${virtual_ip_address}"
     else
       ssh superset@${mgmt_node} "docker swarm init --advertise-addr ${virtual_ip_address}"
@@ -47,8 +50,10 @@ initialize_nodes() {
       # ssh superset@${mgmt_nodes[0]} "docker node promote ${mgmt_nodes[1]}"
       ssh superset@${mgmt_node} "docker login ghcr.io -u szachovy -p ..."
       ssh superset@${mgmt_node} "docker pull ghcr.io/szachovy/superset-cluster:latest"
+      ssh superset@${mgmt_node} "echo ${superset_database_key} | docker secret create superset_database_key -"
       ssh superset@${mgmt_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
-      ssh superset@${mgmt_node} "/opt/superset-cluster/superset/init.sh ${virtual_ip_address} || true"
+      sleep 60  # fails if mysql-mgmt not ready, sleep some time
+      ssh superset@${mgmt_node} "/opt/superset-cluster/superset/init.sh ${virtual_ip_address}"
     fi
   done
 }
