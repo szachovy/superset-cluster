@@ -7,24 +7,27 @@
         {{ node_prefix }} \
         {{ superset_network_interface }} \
         {{ virtual_ip_address }} \
+        {{ virtual_ip_address_mask }} \
         {{ virtual_network_interface }}
       initialize_nodes
-      superset_node_address=$(superset_node_address)
-      docker_swarm_token=$(docker_swarm_token "${superset_node_address}")
-      clusterize_nodes
-      start_superset
     } | tee /tmp/superset_cluster_testsuite.log
   args:
     executable: /bin/bash
+  async: 1200
+  poll: 60
 
-- name: Check superset container status
+- name: Wait for superset container to become healthy
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-4"
+    container: "{{ node_prefix }}-0"
     command: |
-      /bin/bash -c '
-      while [ "$(docker inspect superset | jq -r .[0].State.Health.Status)" != "healthy" ]; do
-          echo "Waiting for superset container to become healthy..."
-          exit 1
-      done'
-  retries: 6
-  delay: 50
+      {% raw %}
+      /bin/bash -c
+      'superset_container_name=$(docker ps --filter "name=superset" --format "{{.Names}}")
+      while [ "$(docker inspect --format "{{.State.Health.Status}}" $superset_container_name)" != "healthy" ]; do
+        exit 1
+      done
+      echo $superset_container_name'
+      {% endraw %}
+  retries: 15
+  delay: 60
+  register: superset_container_name

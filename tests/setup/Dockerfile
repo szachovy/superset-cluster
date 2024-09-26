@@ -59,12 +59,9 @@ RUN \
     700 \
       "/home/superset/.ssh" \
   && \
-  mkdir \
-    "/opt/superset-cluster" \
-  && \
   chown \
     superset:superset \
-      "/opt/superset-cluster" \
+      "/opt" \
       "/home/superset/.ssh" \
   && \
   apt \

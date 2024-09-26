@@ -1,6 +1,6 @@
 FROM ubuntu:22.04
 
-COPY . "/opt"
+COPY --chown=superset:superset . "/opt"
 
 RUN \
   apt \
@@ -14,6 +14,7 @@ RUN \
       xz-utils \
       keepalived \
       mysql-client \
+      ifmetric \
       sudo \
   && \
   groupadd \

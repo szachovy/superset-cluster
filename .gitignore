@@ -15,3 +15,5 @@ __pycache__/
 # MySQL login files
 **/.mylogin.cnf
 **/mysql_root_password.txt
+**/superset_cluster_ca_certificate.pem
+**/superset_cluster_ca_key.pem

@@ -38,10 +38,10 @@
       'import introspect;
       introspect.ContainerChecks(
         node_prefix=\"{{ node_prefix }}\",
-        superset_network_interface=\"{{ superset_network_interface }}\"
+        virtual_network_interface=\"{{ virtual_network_interface }}\"
       )
       '"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"

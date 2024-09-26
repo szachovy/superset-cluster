@@ -38,6 +38,8 @@ class Overlay(type):
 
     @staticmethod
     def post_init_hook(method: typing.Callable) -> typing.Callable:
+        # Logging what container on what node
+        # {component} STATUS output after {command} is {output} ...
         method._is_post_init_hook = True
         @functools.wraps(method)
         def method_wrapper(self, *args, **kwargs) -> typing.Callable:

@@ -30,9 +30,11 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` runner with 1 core of AMD EPYC 7773X x86_64 CPU and 8GiB of RAM with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
+Testing host is the `ubuntu:24.04` runner with 1 core of AMD EPYC 7773X x86_64 CPU and 8GiB of RAM with the [software installed](../README.md#installed-software) meeting the [required criteria](../README.md/#hosts-specification) with the following software installed for testing:
 
 * `terraform v1.0.10`
+* `expect v5.45.4` _(executable from `/usr/bin/`)_
+* `mysql-client v8.0.39-0ubuntu0.24.04.2` _(with `mysql_config_editor`)_
 * `python v3.10.12` with the following third party packages:
   * `ansible v9.5.1`
 
@@ -55,7 +57,7 @@ Testing does not require any additional modules unpresent in the terraform initi
 
 Being in the `setup` catalog run `terraform` commands to initialize infrastructure:
 
-```
+```bash
 terraform init
 terraform apply --auto-approve
 ```
@@ -83,16 +85,9 @@ Ansible group variables is a dynamically modified file consisting of pre-populat
 
 | Variable Name                     | Origin                                 |
 |-----------------------------------|----------------------------------------|
-| `celery_broker`                   | [defaults.yml](../src/defaults.yml)    |
-| `celery_sql_lab_task_annotations` | [defaults.yml](../src/defaults.yml)    |
-| `database_name`                   | [defaults.yml](../src/defaults.yml)    |
-| `mgmt_hostname`                   | [defaults.yml](../src/defaults.yml)    |
 | `superset_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `virtual_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `node_prefix`                     | [variables.tf](./setup/variables.tf)   |
-| `redis_hostname`                  | [defaults.yml](../src/defaults.yml)    |
-| `redis_port`                      | [defaults.yml](../src/defaults.yml)    |
-| `superset_hostname`               | [defaults.yml](../src/defaults.yml)    |
 
 ### Additional resources
 

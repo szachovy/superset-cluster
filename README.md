@@ -4,7 +4,7 @@
 
 # superset-cluster
 
-Apache Superset against MySQL InnoDB cluster.
+Resilent Business Intelligence.
 [That's how it works](docs/ARCHITECTURE.md).
 
 ## Requirements
@@ -17,14 +17,15 @@ _[See how to do it with `systemctl`](https://documentation.suse.com/smart/system
 * Nodes must be able to resolve DNS names between each other.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
 * There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
-* Ability to read/write to the `/opt` directory on the nodes.
+* Ability to read/write to the `/opt` directory on the nodes as well as in the user's host.
 * On the MySQL nodes port `3306` should be open for communication within the nodes.
 * On the Management nodes port `6446` should be open for communication within the nodes.
+* ... `2377` port for swarm cluster ...
 * For production setups follow [SECURITY.md](docs/SECURITY.md).
 
 ### Installed software
 
-The following software needs to be installed on both the user's host and external nodes. The setup has been tested on [`ubuntu:22.04`](tests/setup/Dockerfile) with the following versions:
+The following software needs to be installed on both the user's host and external nodes. The setup has been tested on [`ubuntu:24.04`](tests/setup/Dockerfile) with the following versions:
 
 * `ca-certificates v20230311ubuntu0.22.04.1`
 * `containerd.io v1.6.31-1`
@@ -33,6 +34,8 @@ The following software needs to be installed on both the user's host and externa
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
 * `openssh-server v1:8.9p1-3ubuntu0.10`
+
+...python packages... docker
 
 ## Installation & Usage
 
@@ -75,6 +78,10 @@ For development purposes, you can set up and run end-to-end tests from the test 
 ## Contributing
 
 If you notice anything missing, spot a bug, or have an enhancement proposal, feel free to open an issue with the appropriate label. Pull requests are welcome. Please ensure that the tests are updated as necessary.
+
+## Personal contact information
+
+In case of any inquiries, please write to email: wjmaj98@gmail.com
 
 ## Additional resources
 

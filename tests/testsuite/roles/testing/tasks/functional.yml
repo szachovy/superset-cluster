@@ -1,22 +1,16 @@
 ---
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-4"
+    container: "{{ node_prefix }}-0"
     command: "python3 -c
       'import functional_superset;
-      superset_functional = functional_superset.SupersetNodeFunctionalTests(
-        node_prefix=\"{{ node_prefix }}\",
-        redis_hostname=\"{{ redis_hostname }}\",
-        redis_port={{ redis_port }},
-        celery_sql_lab_task_annotations=\"{{ celery_sql_lab_task_annotations }}\",
-        celery_broker=\"{{ celery_broker }}\",
-        superset_hostname=\"{{ superset_hostname }}\",
-        database_name=\"{{ database_name }}\",
-        virtual_ip_address=\"{{ virtual_ip_address }}\",
+      superset_functional = functional_superset.Superset(
+        superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+        virtual_ip_address=\"{{ virtual_ip_address }}\"
       );
       query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
 
 - name: "run mgmt functional tests"
   community.docker.docker_container_exec:
@@ -24,12 +18,11 @@
     command: "python3 -c
       'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
-        mgmt_hostname=\"{{ mgmt_hostname }}\",
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=False
       );'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
 
 - name: Disaster testing - Stop Mgmt primary node
   community.docker.docker_container:
@@ -38,21 +31,49 @@
 
 - name: Disaster testing - Stop MySQL primary node
   community.docker.docker_container:
-    name: "{{ node_prefix }}-1"
+    name: "{{ node_prefix }}-2"
     state: stopped
+
+- name: Wait for superset container to become healthy
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-1"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'superset_container_name=$(docker ps --filter "name=superset" --format "{{.Names}}")
+      while [ "$(docker inspect --format "{{.State.Health.Status}}" $superset_container_name)" != "healthy" ]; do
+        exit 1
+      done
+      echo $superset_container_name'
+      {% endraw %}
+  retries: 15
+  delay: 60
+  register: superset_container_name
 
 - name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-5"
+    container: "{{ node_prefix }}-1"
     command: "python3 -c
       'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
-        mgmt_hostname=\"{{ mgmt_hostname }}\",
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=True
       );
       mgmt_functional.check_after_disaster()'"
-    chdir: "/opt/superset-cluster/src"
+    chdir: "/opt/superset-testing"
   retries: 6
   delay: 10
+
+- name: "run superset functional tests"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-1"
+    command: "python3 -c
+      'import functional_superset;
+      superset_functional = functional_superset.Superset(
+        superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+        virtual_ip_address=\"{{ virtual_ip_address }}\"
+      );
+      query_dttm = superset_functional.run_query();
+      superset_functional.get_query_results(query_dttm)'"
+    chdir: "/opt/superset-testing"

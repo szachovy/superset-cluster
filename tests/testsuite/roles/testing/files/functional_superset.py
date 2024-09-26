@@ -8,36 +8,32 @@ import data_structures
 
 
 class Redis(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, superset_hostname: str, redis_hostname: str, redis_port: int, node_prefix: str) -> None:
-        super().__init__(node=superset_hostname)
-        self.redis_hostname: str = redis_hostname
-        self.redis_port: int = redis_port
-        self.superset_node: str = f"{node_prefix}-4"
+    def __init__(self, container: str) -> None:
+        super().__init__(container=container)
 
     @data_structures.Overlay.post_init_hook
     def status(self) -> None | AssertionError:
-        test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"{self.redis_hostname}\", port={self.redis_port}).ping())'")
-        assert self.find_in_the_output(test_connection, b'True'), f'The Redis container {self.redis_hostname} on {self.superset_node} node is not responding or not working properly'
+        test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).ping())'")
+        assert self.find_in_the_output(test_connection, b'True'), f'The redis container is not responding'
 
     def fetch_query_result(self, results_key: float) -> bool | AssertionError:
-        query_result: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"{self.redis_hostname}\", port={self.redis_port}).get(\"{results_key}\"))'")
+        query_result: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).get(\"{results_key}\"))'")
         assert not self.find_in_the_output(query_result, b"None"), f'Query results given key {results_key} not found in Redis'
         return True
 
 
 class Celery(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, superset_hostname: str, celery_broker: str, celery_sql_lab_task_annotations: str, node_prefix: str) -> None:
-        super().__init__(node=superset_hostname)
-        self.superset_hostname: str = superset_hostname
-        self.celery_broker: str = celery_broker
-        self.celery_sql_lab_task_annotations: str = celery_sql_lab_task_annotations
-        self.superset_node: str = f"{node_prefix}-4"
+    def __init__(self, container: str) -> None:
+        super().__init__(container=container)
+        self.superset_container: str = container
+        self.celery_broker: str = f"redis://redis:6379/0"
+        self.celery_sql_lab_task_annotations: str = "sql_lab.get_sql_results"
 
     @data_structures.Overlay.post_init_hook
     def status(self) -> None | AssertionError:
         command: str = f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'"
         test_connection: bytes = self.run_command_on_the_container(command)
-        assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_hostname} container on {self.superset_node} node is not responding or not working properly, output after {command} is {test_connection}'
+        assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_container} container on is not responding, output after {command} is {test_connection}'
 
     @data_structures.Overlay.post_init_hook
     def status_cache(self) -> None | AssertionError:
@@ -52,19 +48,16 @@ class Celery(container_connection.ContainerUtilities, metaclass=data_structures.
             self.run_command_on_the_container(f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().stats())'")
         )
         celery_worker_id: str = next(iter(celery_workers_stats))
-        assert celery_workers_stats[celery_worker_id]['total'][self.celery_sql_lab_task_annotations] > 0, f'Executed SQL Lab queries are not processed or registered by Celery on {self.superset_node}, check the Celery worker process on the {self.superset_hostname}'
+        assert celery_workers_stats[celery_worker_id]['total'][self.celery_sql_lab_task_annotations] > 0, f'Executed SQL Lab queries are not processed or registered by Celery, check the Celery worker process on the {self.superset_container}'
         return True
 
 
-class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
-    def __init__(self, node_prefix: str, redis_hostname: str, redis_port: int, celery_sql_lab_task_annotations: str, celery_broker: str, superset_hostname: str, database_name: str, virtual_ip_address: str) -> None:
-        super().__init__(node=superset_hostname)
-        self.celery: typing.Type = Celery(superset_hostname, celery_broker, celery_sql_lab_task_annotations, node_prefix)
-        self.redis: typing.Type = Redis(superset_hostname, redis_hostname, redis_port, node_prefix)
-        self.superset_hostname: str = superset_hostname
-        self.database_name: str = database_name
+class Superset(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
+    def __init__(self, superset_container: str, virtual_ip_address: str) -> None:
+        super().__init__(container=superset_container)
+        self.redis: typing.Type = Redis(container=superset_container)
+        self.celery: typing.Type = Celery(container=superset_container)
         self.virtual_ip_address: str = virtual_ip_address
-        self.superset_node: str = f"{node_prefix}-4"
         self.api_default_url: str = "http://localhost:8088/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
         self.api_csrf_header: str = f"X-CSRFToken: {self.login_to_superset()['csrf_token']}"
@@ -94,30 +87,29 @@ class SupersetNodeFunctionalTests(container_connection.ContainerUtilities, metac
 
     @data_structures.Overlay.post_init_hook
     def status_database(self) -> None | AssertionError:
-        payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:cluster@{self.virtual_ip_address}:6446/{self.database_name}", "impersonate_user": false}}'
+        payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:cluster@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
         test_database_connection: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --data '{payload}'")
-        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the {self.database_name} on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
+        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI'
 
     @data_structures.Overlay.post_init_hook
     def status_swarm(self) -> None | AssertionError:
         swarm_info = self.info()['Swarm']
         assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'
-        assert swarm_info['ControlAvailable'] is True, f'The {self.superset_node} is supposed to be a Swarm manager, but it is not'
-        assert swarm_info['Nodes'] == 3, f'The Swarm is expected to consist of 3 nodes instead of {swarm_info["Nodes"]} in the pool.'
+        assert swarm_info['ControlAvailable'] is True, f'The testing localhost is supposed to be a Swarm manager, but it is not'
 
     def run_query(self) -> float | AssertionError:
-        payload: str = f'{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM {self.database_name}.logs;"}}'
+        payload: str = f'{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}}'
         sqllab_run_query: bytes = self.run_command_on_the_container(f"curl --silent {self.api_default_url}/sqllab/execute/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}' --data '{payload}'")
         assert not self.find_in_the_output(sqllab_run_query, b'"msg"'), f'SQL query execution failed with the following message: {sqllab_run_query}'
-        assert not self.find_in_the_output(sqllab_run_query, b'"message"'), f'Could not execute query on: {self.database_name}'
+        assert not self.find_in_the_output(sqllab_run_query, b'"message"'), f'Could not execute query on: superset'
         dttm_time_query_identifier: float = self.decode_command_output(sqllab_run_query).get("query").get("startDttm")
         return dttm_time_query_identifier
     
     def get_query_results(self, dttm_time_query_identifier: float):
-        time.sleep(2)  # state refreshing
+        time.sleep(22)  # state refreshing
         query_result: dict = self.decode_command_output(
             self.run_command_on_the_container(f"curl --silent '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' --header 'Accept: application/json' --header '{self.api_authorization_header}' --header '{self.api_session_header}' --header '{self.api_csrf_header}'")
-        )
+        ) 
         assert query_result.get("result")[0]['state'] == 'success', f'Could not find query state or returned unsuccessful: {query_result}'
         results_key: str = f"superset_results{query_result.get('result')[0]['resultsKey']}"
         assert self.redis.fetch_query_result(results_key), f'Query result with the {results_key} key can not be found in Redis'
