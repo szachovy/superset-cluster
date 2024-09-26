@@ -41,9 +41,6 @@ docker run \
   --hostname redis \
   --network superset-network \
   redis
-  #   --publish 6379:6379 \
-  # --network host \
-  
 
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \
@@ -51,13 +48,3 @@ docker compose \
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up maincontainer \
   --detach
-
-# export MGMT_NODE_TYPE="primary"
-# export VIRTUAL_IP_ADDRESS="10.145.211.155"
-# export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
-# export VIRTUAL_NETWORK_INTERFACE="ens3"
-# export VIRTUAL_NETWORK="10.145.208.0/22"
-# export PRIMARY_MYSQL_NODE="wiktor-min-build"
-# export SECONDARY_FIRST_MYSQL_NODE="wiktor-srv"
-# export SECONDARY_SECOND_MYSQL_NODE="wiktor-pxy"
-# export HEALTHCHECK_START_PERIOD=90

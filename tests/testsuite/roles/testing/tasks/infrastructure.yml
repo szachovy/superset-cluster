@@ -45,5 +45,3 @@
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
-
-# introspect.ContainerChecks(node_prefix="node", superset_network_interface="eth0")

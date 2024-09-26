@@ -1,10 +1,3 @@
 ---
 superset_network_interface: "wlp4s0"
 virtual_network_interface: "eth0"
-mgmt_hostname: "mysql-mgmt"
-redis_hostname: "redis"
-redis_port: 6379
-celery_sql_lab_task_annotations: "sql_lab.get_sql_results"
-celery_broker: "redis://{{ redis_hostname }}:{{ redis_port }}/0"
-superset_hostname: "superset"
-database_name: "superset"

@@ -1,15 +1,4 @@
 ---
-# - name: "run host functional tests"
-#   ansible.builtin.shell: |
-#     python3 -c 'import functional_host; functional_host.Service()'
-#   environment:
-#     PYTHONPATH: "{{ role_path }}/files:{{ role_path }}/../../../../src"
-#   register: superset_container_name
-
-# - name: Print the superset container name
-#   debug:
-#     msg: "Superset container name is: {{ superset_container_name.stdout.strip() }}"
-
 - name: "run superset functional tests"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
@@ -22,9 +11,6 @@
       query_dttm = superset_functional.run_query();
       superset_functional.get_query_results(query_dttm)'"
     chdir: "/opt/superset-testing"
-
-      # import functional_superset
-      # superset_functional = functional_superset.Superset(virtual_ip_address="172.18.0.10");
 
 - name: "run mgmt functional tests"
   community.docker.docker_container_exec:
@@ -63,10 +49,6 @@
   retries: 15
   delay: 60
   register: superset_container_name
-
-- name: Print the superset container name
-  debug:
-    msg: "Superset container name is: {{ superset_container_name.stdout.strip() }}"
 
 - name: "run mgmt functional tests after primary nodes disaster"
   community.docker.docker_container_exec:

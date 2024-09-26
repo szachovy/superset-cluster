@@ -31,7 +31,3 @@
   retries: 15
   delay: 60
   register: superset_container_name
-
-- name: Print the superset container name
-  debug:
-    msg: "Superset container name is: {{ superset_container_name.stdout.strip() }}"

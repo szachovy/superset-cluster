@@ -45,14 +45,6 @@ class ContainerUtilities:
         except socket.gaierror as socketerror:
             if socketerror.errno == -2:
                 raise socket.gaierror(f'Error finding IPv4 for node {node}: {socketerror}')
-
-    # def find_superset_container(self) -> str | ValueError:
-    #     if not vars(self):
-    #         self.__init__(None)
-    #     for container in self.client.containers.list():
-    #         if container.name.startswith('superset'):
-    #             return container.name
-    #     raise ValueError(f'Container not found for superset service')
     
     @staticmethod
     def extract_session_cookie(request_output: bytes) -> str | ValueError:
@@ -72,10 +64,3 @@ class ContainerUtilities:
             )
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
-
-# class A:
-#     def __init__(self) -> None:
-#         self.a = '12'
-    
-#     def c(self):
-#         print(self)
