@@ -12,6 +12,7 @@ RUN \
     install \
       --yes \
         expect \
+        nginx \
   && \
   chmod \
     500 \
@@ -24,7 +25,12 @@ RUN \
       superset_config.py \
   && \
   apt \
-    clean
+    clean \
+  && \
+  rm \
+    --recursive \
+    --force \
+      /var/lib/apt/lists/*
 
 USER superset
 

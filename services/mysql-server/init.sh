@@ -4,7 +4,7 @@
 # docker tag superset-cluster-mysql-server:latest ghcr.io/szachovy/superset-cluster-mysql-server:latest
 # docker push ghcr.io/szachovy/superset-cluster-mysql-server:latest
 
-HEALTHCHECK_START_PERIOD=15
+HEALTHCHECK_START_PERIOD=60
 
 openssl \
   genpkey \
@@ -28,6 +28,11 @@ openssl \
     -req \
     -days 365
 
+# temporary
+docker build \
+  --tag mysql-server \
+  /opt/superset-cluster/mysql-server
+
 docker run \
   --detach \
   --name mysql \
@@ -49,7 +54,8 @@ docker run \
   --volume "/opt/superset-cluster/mysql-server/mysql_server_certificate.pem:/etc/mysql/ssl/mysql_server_certificate.pem" \
   --volume "/opt/superset-cluster/mysql-server/mysql_server_key.pem:/etc/mysql/ssl/mysql_server_key.pem" \
   --volume "/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem:/etc/mysql/ssl/superset_cluster_ca_certificate.pem" \
-  ghcr.io/szachovy/superset-cluster-mysql-server:latest
+  mysql-server
+  #ghcr.io/szachovy/superset-cluster-mysql-server:latest
   
   #mysql-server
 

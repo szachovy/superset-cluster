@@ -20,7 +20,9 @@ class CeleryConfig(object):
 with open('/run/secrets/superset_secret_key', 'r') as superset_secret_key:
     SECRET_KEY = superset_secret_key.read().strip()
 
-SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:cluster@{os.environ.get('VIRTUAL_IP_ADDRESS')}:6446/superset"
+with open('/run/secrets/mysql_superset_password', 'r') as mysql_superset_password:
+    SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{os.environ.get('VIRTUAL_IP_ADDRESS')}:6446/superset"
+
 CELERY_CONFIG = CeleryConfig
 RESULTS_BACKEND = flask_caching.backends.rediscache.RedisCache(host="redis", port=6379, key_prefix='superset_results')
 FILTER_STATE_CACHE_CONFIG = {

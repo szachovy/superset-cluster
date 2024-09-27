@@ -1,11 +1,34 @@
 #!/bin/bash
 
+openssl \
+  genpkey \
+    -algorithm RSA \
+    -out "superset_cluster_key.pem"
+
+openssl \
+  req \
+    -new \
+    -key "superset_cluster_key.pem" \
+    -out "superset_cluster_certificate_signing_request.pem" \
+    -subj "/CN=Superset-Cluster-MySQL-Server-${HOSTNAME}"
+
+openssl \
+  x509 \
+    -in "superset_cluster_certificate_signing_request.pem" \
+    -CA "superset_cluster_ca_certificate.pem" \
+    -CAkey "superset_cluster_ca_key.pem" \
+    -CAcreateserial \
+    -out "superset_cluster_certificate.pem" \
+    -req \
+    -days 365
+
 docker service create \
   --with-registry-auth \
   --detach \
   --name superset \
   --secret superset_secret_key \
-  --publish 8088:8088 \
+  --secret mysql_superset_password \
+  --publish 443:443 \
   --network superset-network \
   --replicas 1 \
   --health-start-period=60s \
@@ -14,3 +37,5 @@ docker service create \
   --health-timeout=5s \
   --env VIRTUAL_IP_ADDRESS="${1}" \
   ghcr.io/szachovy/superset-cluster:latest
+
+# --publish 8088:8088 \
