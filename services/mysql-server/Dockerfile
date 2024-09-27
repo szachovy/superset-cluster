@@ -1,18 +1,6 @@
 FROM mysql:8.0-debian
 
-ARG SERVER_ID
-ENV SERVER_ID="${SERVER_ID}"
-
-COPY \
-  "mysql_root_password.txt" \
-  "mysql_config.cnf.tpl" \
-    "/opt/"
-
-COPY \
-  "mysql_server_${SERVER_ID}_certificate.pem" \
-  "mysql_server_${SERVER_ID}_key.pem" \
-  "superset_cluster_ca_certificate.pem" \
-    "/etc/mysql/ssl/"
+COPY "mysql_config.cnf.tpl" "/opt/"
 
 RUN \
   apt \
@@ -22,6 +10,7 @@ RUN \
     install \
       --yes \
       curl \
+      gosu \
   && \
   curl \
     --location \
@@ -30,23 +19,38 @@ RUN \
         "https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-Linux-x86_64" \
   && \
   chmod \
-    500 \
+    555 \
       envsubst \
   && \
-    ./envsubst \
-      -no-unset \
-      -no-empty \
-        < "/opt/mysql_config.cnf.tpl" > "/etc/mysql/conf.d/mysql_config.cnf" \
+  mkdir \
+    "/etc/mysql/ssl" \
   && \
   chown \
     --recursive \
       mysql:mysql \
         "/opt" \
-        "/etc/mysql/ssl" \
+        "/etc/mysql/conf.d/" \
   && \
   rm \
     --recursive \
     --force \
       "/var/lib/apt/lists/*"
 
-USER mysql
+# USER mysql
+
+# ENTRYPOINT sh -c "./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && exec docker-entrypoint.sh mysqld"
+
+# ENTRYPOINT sh -c "chmod 444 /var/run/mysqld/mysql_root_password.txt && gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && exec gosu mysql docker-entrypoint.sh mysqld & sleep 30 && chmod 400 /var/run/mysqld/mysql_root_password.txt && chown --recursive root:root /opt /var/run/mysqld /etc/mysql/ssl"
+# ENTRYPOINT sh -c "chmod 444 /opt/mysql_root_password.txt /etc/mysql/ssl && gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && exec gosu mysql docker-entrypoint.sh mysqld & sleep 30 && chmod 400 /opt/mysql_root_password.txt && chown --recursive root:root /opt /var/run/mysqld /etc/mysql/ssl"
+# ENTRYPOINT sh -c "chmod 444 /opt/mysql_root_password.txt && chown --recursive mysql:mysql /etc/mysql/ssl && gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && exec gosu mysql docker-entrypoint.sh mysqld & sleep 30 && chmod 400 /opt/mysql_root_password.txt && chown --recursive root:root /opt /etc/mysql/ssl && tail -f /dev/null"
+# ENTRYPOINT sh -c "chmod 444 /run/secrets/superset_database_root /etc/mysql/ssl && gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && exec gosu mysql docker-entrypoint.sh mysqld & sleep 30 && chmod 400 /run/secrets/superset_database_root && chown --recursive root:root /opt /var/run/mysqld /etc/mysql/ssl"
+
+ENTRYPOINT sh -c " \
+  chmod 444 /var/run/mysqld/mysql_root_password && \
+  chown --recursive mysql:mysql /etc/mysql/ssl && \
+  gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && \
+  exec gosu mysql docker-entrypoint.sh mysqld & \
+  sleep 15 && \
+  chmod 400 /var/run/mysqld/mysql_root_password && \
+  chown --recursive root:root /opt /etc/mysql/ssl && \
+  tail -f /dev/null"

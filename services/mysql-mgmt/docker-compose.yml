@@ -23,7 +23,7 @@ services:
         if [ "${MGMT_NODE_TYPE}" = "primary" ]; then
           export STATE="MASTER"
           export PRIORITY="100"
-          export NODE_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
+          export NODE_IP_ADDRESS=$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_FIRST_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_FIRST_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_SECOND_MYSQL_NODE}')"
@@ -33,6 +33,10 @@ services:
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --sql --execute="RESET MASTER;"
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${SECONDARY_SECOND_MYSQL_NODE}',{recoveryMethod:'incremental'});"
           /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
+          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
+          mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets --client-ssl-mode="REQUIRED" --server-ssl-mode="REQUIRED" --ssl-ca="/opt/default/superset_cluster_ca_certificate.pem" --client-ssl-cert="/opt/default/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" --client-ssl-key="/opt/default/mysql_router_${MGMT_NODE_TYPE}_key.pem"
+          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --execute="DROP USER 'superset'@'$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)';"
+          export NODE_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
         else
           export STATE="BACKUP"
@@ -61,9 +65,6 @@ services:
         set -euo pipefail
         sudo keepalived --use-file "/opt/default/keepalived.conf"
         sleep ${HEALTHCHECK_START_PERIOD}
-        if [ ! -d "/opt/default/mysql_router/" ]; then
-          mysqlrouter --user "superset" --bootstrap "superset:cluster@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets --client-ssl-mode="REQUIRED" --server-ssl-mode="REQUIRED" --ssl-ca="/opt/default/superset_cluster_ca_certificate.pem" --client-ssl-cert="/opt/default/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" --client-ssl-key="/opt/default/mysql_router_${MGMT_NODE_TYPE}_key.pem"
-        fi
         mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
     container_name: "mysql-mgmt"
     restart: "always"
