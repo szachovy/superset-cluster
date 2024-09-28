@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# docker build --tag superset-cluster-service:latest .
+# docker tag superset-cluster-service:latest ghcr.io/szachovy/superset-cluster-service:latest
+# docker push ghcr.io/szachovy/superset-cluster-service:latest
+
 openssl \
   genpkey \
     -algorithm RSA \
@@ -35,7 +39,7 @@ docker service create \
   --health-interval=30s \
   --health-retries=10 \
   --health-timeout=5s \
-  --env VIRTUAL_IP_ADDRESS="${1}" \
-  ghcr.io/szachovy/superset-cluster:latest
+  --env VIRTUAL_IP_ADDRESS="172.18.0.10" \
+  ghcr.io/szachovy/superset-cluster-service:latest
 
 # --publish 8088:8088 \

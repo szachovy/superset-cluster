@@ -4,7 +4,7 @@
 # docker tag superset-cluster-mysql-server:latest ghcr.io/szachovy/superset-cluster-mysql-server:latest
 # docker push ghcr.io/szachovy/superset-cluster-mysql-server:latest
 
-HEALTHCHECK_START_PERIOD=60
+HEALTHCHECK_START_PERIOD=90
 
 openssl \
   genpkey \
@@ -59,7 +59,6 @@ docker run \
   
   #mysql-server
 
-sleep 15
 # sleep ${HEALTHCHECK_START_PERIOD}
 
 # for _ in $(seq 1 ${HEALTHCHECK_RETRIES}); do

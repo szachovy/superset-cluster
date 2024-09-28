@@ -20,11 +20,11 @@ services:
         export STATE="${STATE}"
         export PRIORITY="${PRIORITY}"
         export MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
-        mv "/opt/superset_cluster_ca_certificate.pem" "/opt/default/superset_cluster_ca_certificate.pem"
-        mv "/opt/mysql_router_certificate.pem" "/opt/default/mysql_router_certificate.pem"
-        mv "/opt/mysql_router_key.pem" "/opt/default/mysql_router_key.pem"
+        cp "/opt/superset_cluster_ca_certificate.pem" "/opt/default/superset_cluster_ca_certificate.pem"
+        cp "/opt/mysql_router_certificate.pem" "/opt/default/mysql_router_certificate.pem"
+        cp "/opt/mysql_router_key.pem" "/opt/default/mysql_router_key.pem"
         /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
-        if mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="var cluster = dba.getCluster(); if (cluster == null) { print('not_in_cluster'); } else { print('in_cluster'); }" | grep --quiet "not_in_cluster"; then
+        if ! mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster();"; then
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_FIRST_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_FIRST_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_SECOND_MYSQL_NODE}')"

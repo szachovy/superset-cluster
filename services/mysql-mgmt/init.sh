@@ -41,8 +41,6 @@ docker run \
   --network superset-network \
   redis
 
-source ~/.bashrc \
-&& \
 docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker-compose.yml up initcontainer \
 && \
