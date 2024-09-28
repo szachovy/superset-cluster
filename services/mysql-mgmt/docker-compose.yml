@@ -7,6 +7,7 @@ services:
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"
+    pull_policy: "always"
     entrypoint:
       - "/bin/bash"
       - "-c"
@@ -16,14 +17,14 @@ services:
         export VIRTUAL_IP_ADDRESS_MASK="${VIRTUAL_IP_ADDRESS_MASK}"
         export VIRTUAL_NETWORK_INTERFACE="${VIRTUAL_NETWORK_INTERFACE}"
         export VIRTUAL_NETWORK="${VIRTUAL_NETWORK}"
+        export STATE="${STATE}"
+        export PRIORITY="${PRIORITY}"
         export MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
         mv "/opt/superset_cluster_ca_certificate.pem" "/opt/default/superset_cluster_ca_certificate.pem"
-        mv "/opt/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" "/opt/default/mysql_router_${MGMT_NODE_TYPE}_certificate.pem"
-        mv "/opt/mysql_router_${MGMT_NODE_TYPE}_key.pem" "/opt/default/mysql_router_${MGMT_NODE_TYPE}_key.pem"
-        if [ "${MGMT_NODE_TYPE}" = "primary" ]; then
-          export STATE="MASTER"
-          export PRIORITY="100"
-          export NODE_IP_ADDRESS=$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)
+        mv "/opt/mysql_router_certificate.pem" "/opt/default/mysql_router_certificate.pem"
+        mv "/opt/mysql_router_key.pem" "/opt/default/mysql_router_key.pem"
+        /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
+        if mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="var cluster = dba.getCluster(); if (cluster == null) { print('not_in_cluster'); } else { print('in_cluster'); }" | grep --quiet "not_in_cluster"; then
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_FIRST_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_FIRST_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_SECOND_MYSQL_NODE}')"
@@ -32,21 +33,14 @@ services:
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${SECONDARY_FIRST_MYSQL_NODE}',{recoveryMethod:'incremental'});"
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --sql --execute="RESET MASTER;"
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${SECONDARY_SECOND_MYSQL_NODE}',{recoveryMethod:'incremental'});"
-          /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
-          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
-          mysqlrouter --user "superset" --bootstrap "superset:$(cat /opt/mysql_superset_password)@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets --client-ssl-mode="REQUIRED" --server-ssl-mode="REQUIRED" --ssl-ca="/opt/default/superset_cluster_ca_certificate.pem" --client-ssl-cert="/opt/default/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" --client-ssl-key="/opt/default/mysql_router_${MGMT_NODE_TYPE}_key.pem"
-          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --execute="DROP USER 'superset'@'$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)';"
           export NODE_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
-        else
-          export STATE="BACKUP"
-          export PRIORITY="90"
-          export NODE_IP_ADDRESS=$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)
-          /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
-          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
-          mysqlrouter --user "superset" --bootstrap "superset:$(cat /opt/mysql_superset_password)@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets --client-ssl-mode="REQUIRED" --server-ssl-mode="REQUIRED" --ssl-ca="/opt/default/superset_cluster_ca_certificate.pem" --client-ssl-cert="/opt/default/mysql_router_${MGMT_NODE_TYPE}_certificate.pem" --client-ssl-key="/opt/default/mysql_router_${MGMT_NODE_TYPE}_key.pem"
-          mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --execute="DROP USER 'superset'@'$(ip -oneline -4 addr show ${VIRTUAL_NETWORK_INTERFACE} | awk '{print $4}' | cut --delimiter=/ --fields=1 | head --lines=1)';"
         fi
+        export NODE_IP_ADDRESS=$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")
+        /opt/envsubst-Linux-x86_64 < "/opt/superset-user.sql.tpl" > "/opt/superset-user.sql"
+        mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset-user.sql"
+        mysqlrouter --user "superset" --bootstrap "superset:$(cat /run/secrets/mysql_superset_password)@${PRIMARY_MYSQL_NODE}:3306" --directory "/opt/default/mysql_router" --conf-use-sockets --client-ssl-mode="REQUIRED" --server-ssl-mode="REQUIRED" --ssl-ca="/opt/default/superset_cluster_ca_certificate.pem" --client-ssl-cert="/opt/default/mysql_router_certificate.pem" --client-ssl-key="/opt/default/mysql_router_key.pem"
+        mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --execute="DROP USER 'superset'@'$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")';"
         ifmetric ${VIRTUAL_NETWORK_INTERFACE} 2
         /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/default/keepalived.conf";
         chown --recursive superset:superset "/opt/default"
@@ -82,4 +76,4 @@ volumes:
 
 secrets:
   mysql_superset_password:
-    file: /opt/mysql_superset_password
+    file: /opt/superset-cluster/mysql-mgmt/mysql_superset_password

@@ -1,6 +1,7 @@
 FROM mysql:8.0-debian
 
 COPY --chown=mysql "mysql_config.cnf.tpl" "/opt/"
+COPY "store_credentials.exp" "/opt/"
 
 RUN \
   apt \
@@ -10,6 +11,7 @@ RUN \
     install \
       --yes \
       curl \
+      expect \
       gosu \
   && \
   curl \

@@ -1,0 +1,6 @@
+#!/usr/bin/expect -f
+
+log_user 0
+
+set mysql_root_password [exec cat "mysql_root_password"]
+puts "$mysql_root_password"

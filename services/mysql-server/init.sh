@@ -59,6 +59,7 @@ docker run \
   
   #mysql-server
 
+sleep 15
 # sleep ${HEALTHCHECK_START_PERIOD}
 
 # for _ in $(seq 1 ${HEALTHCHECK_RETRIES}); do
