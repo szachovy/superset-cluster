@@ -7,7 +7,7 @@ import data_structures
 class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
     def __init__(self, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(container='mysql-mgmt')
-        self.copy_mysql_login_configuration_to_the_container()
+        self.copy_file_to_the_container(host_filepath='/opt/superset-cluster/mysql-mgmt/.mylogin.cnf', container_dirpath='/home/superset')
         self.virtual_ip_address: str = virtual_ip_address
         self.mgmt_primary_node: str = f"{node_prefix}-0"
         self.mgmt_secondary_node: str = f"{node_prefix}-1"

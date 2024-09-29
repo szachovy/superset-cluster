@@ -14,7 +14,7 @@ if superset test_db \
   superset db upgrade
   superset init
   
-  /app/set-database-uri.exp
+  /app/set_database_uri.exp
   /usr/bin/run-server.sh &
 
   celery \

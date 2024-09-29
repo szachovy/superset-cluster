@@ -5,6 +5,7 @@ import ipaddress
 import re
 import socket
 import tarfile
+import os
 
 import docker
 import requests
@@ -27,12 +28,12 @@ class ContainerUtilities:
     def info(self) -> dict:
         return self.client.info()
     
-    def copy_mysql_login_configuration_to_the_container(self) -> None:
+    def copy_file_to_the_container(self, host_filepath: str, container_dirpath: str) -> None:
         tar_stream = io.BytesIO()
         with tarfile.open(fileobj=tar_stream, mode='w') as archive:
-            archive.add("/opt/superset-cluster/mysql-mgmt/.mylogin.cnf", arcname=".mylogin.cnf")
+            archive.add(host_filepath, arcname=os.path.basename(host_filepath))
         tar_stream.seek(0)
-        self.client.containers.get(self.container).put_archive("/home/superset", tar_stream.getvalue())
+        self.client.containers.get(self.container).put_archive(container_dirpath, tar_stream.getvalue())
         tar_stream.close()
 
     @staticmethod

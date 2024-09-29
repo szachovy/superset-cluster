@@ -16,7 +16,7 @@ openssl \
     -new \
     -key "/opt/superset-cluster/mysql-server/mysql_server_key.pem" \
     -out "/opt/superset-cluster/mysql-server/mysql_server_certificate_signing_request.pem" \
-    -subj "/CN=Superset-Cluster-MySQL-Server-${HOSTNAME}"
+    -subj "/CN=${HOSTNAME}-mysql-server"
 
 openssl \
   x509 \

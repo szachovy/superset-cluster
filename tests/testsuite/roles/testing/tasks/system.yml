@@ -5,7 +5,6 @@
     {
       source {{ role_path }}/files/system.sh \
         {{ node_prefix }} \
-        {{ superset_network_interface }} \
         {{ virtual_ip_address }} \
         {{ virtual_ip_address_mask }} \
         {{ virtual_network_interface }}
@@ -15,19 +14,3 @@
     executable: /bin/bash
   async: 1200
   poll: 60
-
-- name: Wait for superset container to become healthy
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
-    command: |
-      {% raw %}
-      /bin/bash -c
-      'superset_container_name=$(docker ps --filter "name=superset" --format "{{.Names}}")
-      while [ "$(docker inspect --format "{{.State.Health.Status}}" $superset_container_name)" != "healthy" ]; do
-        exit 1
-      done
-      echo $superset_container_name'
-      {% endraw %}
-  retries: 15
-  delay: 60
-  register: superset_container_name

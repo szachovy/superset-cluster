@@ -85,7 +85,6 @@ Ansible group variables is a dynamically modified file consisting of pre-populat
 
 | Variable Name                     | Origin                                 |
 |-----------------------------------|----------------------------------------|
-| `superset_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `virtual_network_interface`               | [defaults.yml](../src/defaults.yml)    |
 | `node_prefix`                     | [variables.tf](./setup/variables.tf)   |
 

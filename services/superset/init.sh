@@ -1,28 +1,30 @@
 #!/bin/bash
 
-docker build --tag superset-cluster-service:latest .
-docker tag superset-cluster-service:latest ghcr.io/szachovy/superset-cluster-service:latest
-docker push ghcr.io/szachovy/superset-cluster-service:latest
+# docker build --tag superset-cluster-service:latest .
+# docker tag superset-cluster-service:latest ghcr.io/szachovy/superset-cluster-service:latest
+# docker push ghcr.io/szachovy/superset-cluster-service:latest
+
+VIRTUAL_IP_ADDRESS="${1}"
 
 openssl \
   genpkey \
     -algorithm RSA \
-    -out "superset_cluster_key.pem"
+    -out "/opt/superset-cluster/superset/superset_cluster_key.pem"
 
 openssl \
   req \
     -new \
-    -key "superset_cluster_key.pem" \
-    -out "superset_cluster_certificate_signing_request.pem" \
-    -subj "/CN=Superset-Cluster-MySQL-Server-${HOSTNAME}"
+    -key "/opt/superset-cluster/superset/superset_cluster_key.pem" \
+    -out "/opt/superset-cluster/superset/superset_cluster_certificate_signing_request.pem" \
+    -subj "/CN=${VIRTUAL_IP_ADDRESS}"
 
 openssl \
   x509 \
-    -in "superset_cluster_certificate_signing_request.pem" \
-    -CA "superset_cluster_ca_certificate.pem" \
-    -CAkey "superset_cluster_ca_key.pem" \
+    -in "/opt/superset-cluster/superset/superset_cluster_certificate_signing_request.pem" \
+    -CA "/opt/superset-cluster/superset/superset_cluster_ca_certificate.pem" \
+    -CAkey "/opt/superset-cluster/superset/superset_cluster_ca_key.pem" \
     -CAcreateserial \
-    -out "superset_cluster_certificate.pem" \
+    -out "/opt/superset-cluster/superset/superset_cluster_certificate.pem" \
     -req \
     -days 365
 
@@ -39,7 +41,7 @@ docker service create \
   --health-interval=30s \
   --health-retries=10 \
   --health-timeout=5s \
-  --env VIRTUAL_IP_ADDRESS="172.18.0.10" \
+  --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
   --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_certificate.pem,target=/etc/ssl/certs/superset_cluster_certificate.pem \
   --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_key.pem,target=/etc/ssl/certs/superset_cluster_key.pem \
   ghcr.io/szachovy/superset-cluster-service:latest

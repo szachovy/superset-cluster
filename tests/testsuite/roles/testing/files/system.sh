@@ -1,10 +1,9 @@
 #!/bin/bash
 
 node_prefix="${1}"
-superset_network_interface="${2}"
-virtual_ip_address="${3}"
-virtual_ip_address_mask="${4}"
-virtual_network_interface="${5}"
+virtual_ip_address="${2}"
+virtual_ip_address_mask="${3}"
+virtual_network_interface="${4}"
 
 VIRTUAL_NETWORK="172.18.0.0/16"  # do it in common via python
 

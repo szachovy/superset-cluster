@@ -18,7 +18,7 @@ RUN \
   chmod \
     500 \
       entrypoint.sh \
-      set-database-uri.exp \
+      set_database_uri.exp \
   && \
   chmod \
     400 \

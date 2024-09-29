@@ -106,7 +106,8 @@ resource "docker_container" "nodes" {
       docker cp ../../src $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
       docker exec $HOSTNAME /bin/bash -c \
-        "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
+        "chown --recursive superset:superset /opt/superset-testing \
+        && wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
         && python3 /tmp/get-pip.py > /dev/null 2>&1 \
         && python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
       docker exec --user=root $HOSTNAME /bin/bash -c \
