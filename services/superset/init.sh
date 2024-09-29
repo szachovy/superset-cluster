@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# docker build --tag superset-cluster-service:latest .
-# docker tag superset-cluster-service:latest ghcr.io/szachovy/superset-cluster-service:latest
-# docker push ghcr.io/szachovy/superset-cluster-service:latest
+docker build --tag superset-cluster-service:latest .
+docker tag superset-cluster-service:latest ghcr.io/szachovy/superset-cluster-service:latest
+docker push ghcr.io/szachovy/superset-cluster-service:latest
 
 openssl \
   genpkey \
@@ -40,6 +40,9 @@ docker service create \
   --health-retries=10 \
   --health-timeout=5s \
   --env VIRTUAL_IP_ADDRESS="172.18.0.10" \
+  --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_certificate.pem,target=/etc/ssl/certs/superset_cluster_certificate.pem \
+  --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_key.pem,target=/etc/ssl/certs/superset_cluster_key.pem \
   ghcr.io/szachovy/superset-cluster-service:latest
+
 
 # --publish 8088:8088 \

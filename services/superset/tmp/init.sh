@@ -19,3 +19,6 @@ openssl \
     -out "superset_cluster_certificate.pem" \
     -req \
     -days 365
+
+# docker build . -t superset-nginx
+# docker run --name superset-nginx -p 443:443 superset-nginx

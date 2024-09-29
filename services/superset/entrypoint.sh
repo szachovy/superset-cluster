@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 if superset test_db \
     "mysql+mysqlconnector://superset:$(cat /run/secrets/mysql_superset_password)@${VIRTUAL_IP_ADDRESS}:6446/superset" \
     --connect-args {}; then
@@ -16,12 +15,14 @@ if superset test_db \
   superset init
   
   /app/set-database-uri.exp
+  /usr/bin/run-server.sh &
+
+  celery \
+    --app superset.tasks.celery_app:app worker \
+    --pool prefork \
+    --concurrency 4 \
+    -O fair
+else
+  echo "Could not connect to the MySQL database"
+  exit 1
 fi
-
-/usr/bin/run-server.sh &
-
-celery \
-  --app superset.tasks.celery_app:app worker \
-  --pool prefork \
-  --concurrency 4 \
-  -O fair

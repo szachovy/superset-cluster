@@ -12,6 +12,7 @@ RUN \
     install \
       --yes \
         expect \
+        gosu \
         nginx \
   && \
   chmod \
@@ -24,6 +25,13 @@ RUN \
       mysql_connect.py \
       superset_config.py \
   && \
+  chown \
+    --recursive \
+      superset:superset \
+        /var/lib/nginx \
+        /var/log/nginx \
+        /app \
+  && \
   apt \
     clean \
   && \
@@ -34,6 +42,8 @@ RUN \
 
 USER superset
 
+COPY --chown=superset "nginx.conf" "/etc/nginx/nginx.conf"
+
 ENV SUPERSET_CONFIG_PATH="/app/superset_config.py"
 
 RUN \
@@ -42,4 +52,6 @@ RUN \
       redis \
       mysql-connector-python
 
-ENTRYPOINT [ "/app/entrypoint.sh" ]
+USER root
+
+ENTRYPOINT sh -c "chown --recursive superset:superset /etc/ssl/certs && gosu superset nginx & exec gosu superset /app/entrypoint.sh"
