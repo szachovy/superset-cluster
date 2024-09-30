@@ -12,5 +12,5 @@
     } | tee /tmp/superset_cluster_testsuite.log
   args:
     executable: /bin/bash
-  async: 1200
+  async: 1800
   poll: 60

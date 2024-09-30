@@ -39,12 +39,22 @@ docker service create \
   --replicas 1 \
   --health-start-period=60s \
   --health-interval=30s \
-  --health-retries=10 \
+  --health-retries=20 \
   --health-timeout=5s \
   --env VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}" \
   --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_certificate.pem,target=/etc/ssl/certs/superset_cluster_certificate.pem \
   --mount type=bind,source=/opt/superset-cluster/superset/superset_cluster_key.pem,target=/etc/ssl/certs/superset_cluster_key.pem \
   ghcr.io/szachovy/superset-cluster-service:latest
 
+sleep 60
 
-# --publish 8088:8088 \
+for attempt in {1..20}; do
+  if [ $(docker service ls --filter "name=superset" --format "{{.Replicas}}") == "1/1" ]; then
+    exit 0
+  else
+    echo "Waiting for the service to become healthy... (Attempt $attempt/20)"
+    sleep 30
+  fi
+done
+
+exit 1

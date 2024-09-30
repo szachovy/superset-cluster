@@ -13,13 +13,6 @@ services:
       - "-c"
       - |
         set -euo pipefail
-        export VIRTUAL_IP_ADDRESS="${VIRTUAL_IP_ADDRESS}"
-        export VIRTUAL_IP_ADDRESS_MASK="${VIRTUAL_IP_ADDRESS_MASK}"
-        export VIRTUAL_NETWORK_INTERFACE="${VIRTUAL_NETWORK_INTERFACE}"
-        export VIRTUAL_NETWORK="${VIRTUAL_NETWORK}"
-        export STATE="${STATE}"
-        export PRIORITY="${PRIORITY}"
-        export MYSQL_TEST_LOGIN_FILE="/opt/.mylogin.cnf"
         /opt/envsubst-Linux-x86_64 < "/opt/superset_user.sql.tpl" > "/opt/superset_user.sql"
         if ! mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster();"; then
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
@@ -43,6 +36,14 @@ services:
         chown --recursive superset:superset "/opt/default"
     cap_add:
       - "NET_ADMIN"
+    environment:
+      - VIRTUAL_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
+      - VIRTUAL_IP_ADDRESS_MASK=${VIRTUAL_IP_ADDRESS_MASK}
+      - VIRTUAL_NETWORK_INTERFACE=${VIRTUAL_NETWORK_INTERFACE}
+      - VIRTUAL_NETWORK=${VIRTUAL_NETWORK}
+      - STATE=${STATE}
+      - PRIORITY=${PRIORITY}
+      - MYSQL_TEST_LOGIN_FILE=/opt/.mylogin.cnf
     volumes:
       - "default_generated:/opt/default"
       - "/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_certificate.pem:/opt/default/superset_cluster_ca_certificate.pem"

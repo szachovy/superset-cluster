@@ -106,8 +106,7 @@ resource "docker_container" "nodes" {
       docker cp ../../src $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
       docker exec $HOSTNAME /bin/bash -c \
-        "chown --recursive superset:superset /opt/superset-testing \
-        && wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
+        "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
         && python3 /tmp/get-pip.py > /dev/null 2>&1 \
         && python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
       docker exec --user=root $HOSTNAME /bin/bash -c \
@@ -115,7 +114,7 @@ resource "docker_container" "nodes" {
         && service docker start \
         && echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf \
         && usermod --append --groups docker superset \
-        && apt install --yes jq"
+        && chown --recursive superset:superset /opt/superset-testing"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no

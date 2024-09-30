@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# paramiko env remote node
 export VIRTUAL_IP_ADDRESS="${1}"
 export VIRTUAL_IP_ADDRESS_MASK="${2}"
 export VIRTUAL_NETWORK_INTERFACE="${3}"
