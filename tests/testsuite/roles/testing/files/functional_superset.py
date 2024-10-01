@@ -69,8 +69,6 @@ class Superset(container_connection.ContainerUtilities, metaclass=data_structure
     def login_to_superset_api(self) -> str | AssertionError:
         headers: str = "Content-Type: application/json"
         payload: str = f'{{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}}'
-        #server_certificate: bytes = self.run_command_on_the_container(f"echo quit | openssl s_client -showcerts -servername {self.virtual_ip_address} -connect {self.virtual_ip_address}:443 > /app/server_certificate.pem")
-        #assert self.find_in_the_output(server_certificate, b'"DONE"'), f'Could not get certificate from the server at {self.virtual_ip_address}:443'
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
