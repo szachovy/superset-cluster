@@ -1,18 +1,7 @@
 FROM mysql:8.0-debian
 
-ARG SERVER_ID
-ENV SERVER_ID="${SERVER_ID}"
-
-COPY \
-  "mysql_root_password.txt" \
-  "mysql_config.cnf.tpl" \
-    "/opt/"
-
-COPY \
-  "mysql_server_${SERVER_ID}_certificate.pem" \
-  "mysql_server_${SERVER_ID}_key.pem" \
-  "superset_cluster_ca_certificate.pem" \
-    "/etc/mysql/ssl/"
+COPY --chown=mysql "mysql_config.cnf.tpl" "/opt/"
+COPY "store_credentials.exp" "/opt/"
 
 RUN \
   apt \
@@ -22,6 +11,8 @@ RUN \
     install \
       --yes \
       curl \
+      expect \
+      gosu \
   && \
   curl \
     --location \
@@ -30,23 +21,23 @@ RUN \
         "https://github.com/a8m/envsubst/releases/download/v1.2.0/envsubst-Linux-x86_64" \
   && \
   chmod \
-    500 \
+    555 \
       envsubst \
   && \
-    ./envsubst \
-      -no-unset \
-      -no-empty \
-        < "/opt/mysql_config.cnf.tpl" > "/etc/mysql/conf.d/mysql_config.cnf" \
-  && \
-  chown \
-    --recursive \
-      mysql:mysql \
-        "/opt" \
-        "/etc/mysql/ssl" \
+  mkdir \
+    "/etc/mysql/ssl" \
   && \
   rm \
     --recursive \
     --force \
       "/var/lib/apt/lists/*"
 
-USER mysql
+ENTRYPOINT sh -c " \
+  chmod 444 /var/run/mysqld/mysql_root_password && \
+  chown --recursive mysql:mysql /etc/mysql/ssl /etc/mysql/conf.d /var/run/mysqld && \
+  gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && \
+  exec gosu mysql docker-entrypoint.sh mysqld & \
+  sleep ${HEALTHCHECK_START_PERIOD} && \
+  chmod 400 /var/run/mysqld/mysql_root_password && \
+  chown --recursive root:root /var/run/mysqld && \
+  tail -f /dev/null"

@@ -7,7 +7,7 @@ import data_structures
 class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
     def __init__(self, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(container='mysql-mgmt')
-        self.copy_mysql_login_configuration_to_the_container()
+        self.copy_file_to_the_container(host_filepath='/opt/superset-cluster/mysql-mgmt/.mylogin.cnf', container_dirpath='/home/superset')
         self.virtual_ip_address: str = virtual_ip_address
         self.mgmt_primary_node: str = f"{node_prefix}-0"
         self.mgmt_secondary_node: str = f"{node_prefix}-1"
@@ -30,10 +30,11 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
         assert (self.find_in_the_output(routers_status_output, f'{self.mgmt_primary_node}'.encode()) and self.find_in_the_output(routers_status_output, f'{self.mgmt_secondary_node}'.encode())), f'MySQL Mgmt routers are offline or not attached, expected {self.mgmt_primary_node} and {self.mgmt_secondary_node} to be visible from the superset cluster'
 
     def check_after_disaster(self):
-        try:
-            new_mysql_primary_node: bytes = self.run_command_on_the_container(f"mysqlsh --interactive --uri superset:cluster@{self.virtual_ip_address}:6446 --sql --execute \"SELECT @@hostname;\"")
-            if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[0].encode('utf-8')):
-                if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[1].encode('utf-8')):
-                    raise AssertionError(f'After stopping {self.mysql_primary_node}, one of {self.mysql_secondary_nodes} was expected to be selected as the new primary. Selection process failed with the output: {new_mysql_primary_node}')
-        except requests.exceptions.RequestException:
-            raise AssertionError(f'After stopping {self.mgmt_primary_node} {self.mgmt_secondary_node} was expected to be selected as the new primary. Selection process failed')
+        with open('/opt/superset-cluster/mysql-mgmt/mysql_superset_password', 'r') as mysql_superset_password:
+            try:
+                new_mysql_primary_node: bytes = self.run_command_on_the_container(f"mysqlsh --interactive --uri superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446 --sql --execute \"SELECT @@hostname;\"")
+                if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[0].encode('utf-8')):
+                    if not self.find_in_the_output(new_mysql_primary_node, self.mysql_secondary_nodes[1].encode('utf-8')):
+                        raise AssertionError(f'After stopping {self.mysql_primary_node}, one of {self.mysql_secondary_nodes} was expected to be selected as the new primary. Selection process failed with the output: {new_mysql_primary_node}')
+            except requests.exceptions.RequestException:
+                raise AssertionError(f'After stopping {self.mgmt_primary_node} {self.mgmt_secondary_node} was expected to be selected as the new primary. Selection process failed')
