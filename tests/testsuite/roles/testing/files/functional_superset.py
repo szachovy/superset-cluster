@@ -99,9 +99,10 @@ class Superset(container_connection.ContainerUtilities, metaclass=data_structure
 
     @data_structures.Overlay.post_init_hook
     def status_database(self) -> None | AssertionError:
-        payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:cluster@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
-        test_database_connection: bytes = self.run_command_on_the_container(f"curl --location --cacert /app/server_certificate.pem --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --header 'Referer: https://{self.virtual_ip_address}' --data '{payload}'")
-        assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI, {test_database_connection}'
+        with open('/opt/superset-cluster/mysql-mgmt/mysql_superset_password', 'r') as mysql_superset_password:
+            payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
+            test_database_connection: bytes = self.run_command_on_the_container(f"curl --location --cacert /app/server_certificate.pem --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --header 'Referer: https://{self.virtual_ip_address}' --data '{payload}'")
+            assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI, {test_database_connection}'
 
     @data_structures.Overlay.post_init_hook
     def status_swarm(self) -> None | AssertionError:

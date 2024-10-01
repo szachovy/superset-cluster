@@ -13,7 +13,7 @@ services:
       - "-c"
       - |
         set -euo pipefail
-        /opt/envsubst-Linux-x86_64 < "/opt/superset_user.sql.tpl" > "/opt/superset_user.sql"
+        export MYSQL_SUPERSET_PASSWORD=$(</run/secrets/mysql_superset_password)
         if ! mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster();"; then
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
           mysqlsh --login-path="${SECONDARY_FIRST_MYSQL_NODE}" --execute="dba.configureInstance('${SECONDARY_FIRST_MYSQL_NODE}')"
@@ -24,6 +24,7 @@ services:
           mysqlsh --login-path="${SECONDARY_SECOND_MYSQL_NODE}" --sql --execute="RESET MASTER;"
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --execute="dba.getCluster('superset').addInstance('${SECONDARY_SECOND_MYSQL_NODE}',{recoveryMethod:'incremental'});"
           export NODE_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
+          /opt/envsubst-Linux-x86_64 < "/opt/superset_user.sql.tpl" > "/opt/superset_user.sql"
           mysqlsh --login-path="${PRIMARY_MYSQL_NODE}" --sql --file="/opt/superset_user.sql"
         fi
         export NODE_IP_ADDRESS=$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")

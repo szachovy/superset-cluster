@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# paramiko env remote node
 export VIRTUAL_IP_ADDRESS="${1}"
 export VIRTUAL_IP_ADDRESS_MASK="${2}"
 export VIRTUAL_NETWORK_INTERFACE="${3}"
@@ -49,13 +48,13 @@ docker compose \
   --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up maincontainer \
   --detach
 
-export VIRTUAL_IP_ADDRESS="172.18.0.10"
-export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
-export VIRTUAL_NETWORK_INTERFACE="eth0"
-export VIRTUAL_NETWORK="172.18.0.0/16"
-export PRIMARY_MYSQL_NODE="node-2"
-export SECONDARY_FIRST_MYSQL_NODE="node-3"
-export SECONDARY_SECOND_MYSQL_NODE="node-4"
-export HEALTHCHECK_START_PERIOD=25
-export HEALTHCHECK_INTERVAL=5
-export HEALTHCHECK_RETRIES=3
+# export VIRTUAL_IP_ADDRESS="172.18.0.10"
+# export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
+# export VIRTUAL_NETWORK_INTERFACE="eth0"
+# export VIRTUAL_NETWORK="172.18.0.0/16"
+# export PRIMARY_MYSQL_NODE="node-2"
+# export SECONDARY_FIRST_MYSQL_NODE="node-3"
+# export SECONDARY_SECOND_MYSQL_NODE="node-4"
+# export HEALTHCHECK_START_PERIOD=25
+# export HEALTHCHECK_INTERVAL=5
+# export HEALTHCHECK_RETRIES=3
