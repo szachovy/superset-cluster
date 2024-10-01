@@ -56,7 +56,7 @@ initialize_nodes() {
     ssh superset@${mgmt_node} "echo cluster | docker secret create mysql_superset_password -"
     # ssh superset@${mgmt_node} "printf '%s\n' '${superset_cluster_key}' > /opt/superset-cluster/superset/superset_cluster_key.pem"
     # ssh superset@${mgmt_node} "printf '%s\n' '${superset_cluster_cert}' > /opt/superset-cluster/superset/superset_cluster_certificate.pem"
-    ssh superset@${mgmt_node} "/opt/superset-cluster/superset/init.sh ${virtual_ip_address} || true"
+    ssh superset@${mgmt_node} "/opt/superset-cluster/superset/init.sh ${virtual_ip_address}"
     STATE="BACKUP"
     PRIORITY="90"
   done
