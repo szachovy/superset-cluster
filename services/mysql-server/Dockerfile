@@ -34,7 +34,7 @@ RUN \
 
 ENTRYPOINT sh -c " \
   chmod 444 /var/run/mysqld/mysql_root_password && \
-  chown --recursive mysql:mysql /etc/mysql/ssl /etc/mysql/conf.d/ && \
+  chown --recursive mysql:mysql /etc/mysql/ssl /etc/mysql/conf.d /var/run/mysqld && \
   gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && \
   exec gosu mysql docker-entrypoint.sh mysqld & \
   sleep ${HEALTHCHECK_START_PERIOD} && \
