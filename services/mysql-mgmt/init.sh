@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export VIRTUAL_IP_ADDRESS="${1}"
-export VIRTUAL_IP_ADDRESS_MASK="${2}"
+export VIRTUAL_NETWORK_MASK="${2}"
 export VIRTUAL_NETWORK_INTERFACE="${3}"
 export VIRTUAL_NETWORK="${4}"
 export PRIMARY_MYSQL_NODE="${5}"
@@ -49,7 +49,7 @@ docker compose \
   --detach
 
 # export VIRTUAL_IP_ADDRESS="172.18.0.10"
-# export VIRTUAL_IP_ADDRESS_MASK="255.255.0.0"
+# export VIRTUAL_NETWORK_MASK="255.255.0.0"
 # export VIRTUAL_NETWORK_INTERFACE="eth0"
 # export VIRTUAL_NETWORK="172.18.0.0/16"
 # export PRIMARY_MYSQL_NODE="node-2"

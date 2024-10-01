@@ -6,7 +6,7 @@
       source {{ role_path }}/files/system.sh \
         {{ node_prefix }} \
         {{ virtual_ip_address }} \
-        {{ virtual_ip_address_mask }} \
+        {{ virtual_network_mask }} \
         {{ virtual_network_interface }}
       initialize_nodes
     } | tee /tmp/superset_cluster_testsuite.log

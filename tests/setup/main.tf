@@ -147,7 +147,7 @@ resource "null_resource" "generate_ansible_group_vars" {
       cp $DEFAULTS_FILE $GROUP_VARS_FILE
       {
         echo "virtual_ip_address: \"$VIRTUAL_IP_ADDRESS\""
-        echo "virtual_ip_address_mask: \"$VIRTUAL_IP_ADDRESS_MASK\""
+        echo "virtual_network_mask: \"$VIRTUAL_NETWORK_MASK\""
         echo "node_prefix: \"$NODE_PREFIX\""
       } >> $GROUP_VARS_FILE
     EOT
@@ -157,7 +157,7 @@ resource "null_resource" "generate_ansible_group_vars" {
       GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
       NODE_PREFIX             = "${var.node_prefix}"
       VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")
-      VIRTUAL_IP_ADDRESS_MASK = cidrnetmask("${var.subnet}")
+      VIRTUAL_NETWORK_MASK = cidrnetmask("${var.subnet}")
     }
   }
 

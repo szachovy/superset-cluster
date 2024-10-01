@@ -13,7 +13,7 @@ class Redis(container_connection.ContainerUtilities, metaclass=data_structures.O
     def __init__(self, container: str) -> None:
         super().__init__(container=container)
 
-    @data_structures.Overlay.post_init_hook
+    @data_structures.Overlay.run_selected_methods
     def status(self) -> None | AssertionError:
         test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).ping())'")
         assert self.find_in_the_output(test_connection, b'True'), f'The redis container is not responding'
@@ -31,13 +31,13 @@ class Celery(container_connection.ContainerUtilities, metaclass=data_structures.
         self.celery_broker: str = f"redis://redis:6379/0"
         self.celery_sql_lab_task_annotations: str = "sql_lab.get_sql_results"
 
-    @data_structures.Overlay.post_init_hook
+    @data_structures.Overlay.run_selected_methods
     def status(self) -> None | AssertionError:
         command: str = f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'"
         test_connection: bytes = self.run_command_on_the_container(command)
         assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_container} container on is not responding, output after {command} is {test_connection}'
 
-    @data_structures.Overlay.post_init_hook
+    @data_structures.Overlay.run_selected_methods
     def status_cache(self) -> None | AssertionError:
         celery_workers_configuration: dict = self.decode_command_output(
             self.run_command_on_the_container(f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().conf())'")
@@ -95,14 +95,14 @@ class Superset(container_connection.ContainerUtilities, metaclass=data_structure
             "session_token": superset_login_session_cookie
         }
 
-    @data_structures.Overlay.post_init_hook
+    @data_structures.Overlay.run_selected_methods
     def status_database(self) -> None | AssertionError:
         with open('/opt/superset-cluster/mysql-mgmt/mysql_superset_password', 'r') as mysql_superset_password:
             payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
             test_database_connection: bytes = self.run_command_on_the_container(f"curl --location --cacert /app/server_certificate.pem --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --header 'Referer: https://{self.virtual_ip_address}' --data '{payload}'")
             assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI, {test_database_connection}'
 
-    @data_structures.Overlay.post_init_hook
+    @data_structures.Overlay.run_selected_methods
     def status_swarm(self) -> None | AssertionError:
         swarm_info = self.info()['Swarm']
         assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'

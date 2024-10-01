@@ -52,8 +52,8 @@ def network_interfaces(network_interface: str) -> str | StopIteration:
             current_interface = current_interface.next_network_interface.contents
 
 
-def virtual_network(virtual_ip_address: str, virtual_ip_address_mask: str) -> str:
-    return ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_ip_address_mask}").network
+def virtual_network(virtual_ip_address: str, virtual_network_mask: str) -> str:
+    return ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_network_mask}").network
 
 if __name__ == "__main__":
     print(network_interfaces(network_interface=os.environ['VIRTUAL_NETWORK_INTERFACE']))

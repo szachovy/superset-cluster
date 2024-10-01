@@ -4,7 +4,12 @@ import ctypes.util
 import functools
 import threading
 import typing
+import logging
+import sys
 
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 class socket_address(ctypes.Structure):
     _fields_ = [
@@ -32,15 +37,24 @@ class Overlay(type):
             if class_attribute.startswith('_'):
                 continue
             attribute = getattr(instance, class_attribute)
-            if callable(attribute) and getattr(attribute, '_is_post_init_hook', False):
-                attribute()
+            if callable(attribute):
+                if getattr(attribute, '_is_run_selected_methods', False):
+                    attribute()
         return instance
 
+    def run_all_methods(cls) -> typing.Any:
+        for attribute in dir(cls):
+            if callable(getattr(cls, attribute)) and not attribute.startswith('_'):
+                try:
+                    getattr(cls, attribute)(cls)
+                except Exception as exc:
+                    logger.error(f'Error while executing {attribute}: {exc}')
+                    sys.exit(1)
+        return cls
+
     @staticmethod
-    def post_init_hook(method: typing.Callable) -> typing.Callable:
-        # Logging what container on what node
-        # {component} STATUS output after {command} is {output} ...
-        method._is_post_init_hook = True
+    def run_selected_methods(method: typing.Callable) -> typing.Callable:
+        method._is_run_selected_methods = True
         @functools.wraps(method)
         def method_wrapper(self, *args, **kwargs) -> typing.Callable:
             return method(self, *args, **kwargs)

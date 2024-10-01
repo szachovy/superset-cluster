@@ -44,7 +44,7 @@ initialize_nodes() {
     ssh superset@${mgmt_node} "echo ${mysql_superset_password} > /opt/superset-cluster/mysql-mgmt/mysql_superset_password"
     ssh superset@${mgmt_node} "printf '%s\n' '${encoded_mysql_login_file}' | base64 --decode  > /opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
     ssh superset@${mgmt_node} "chmod 600 /opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
-    ssh superset@${mgmt_node} "export STATE=${STATE} && export PRIORITY=${PRIORITY} && /opt/superset-cluster/mysql-mgmt/init.sh ${virtual_ip_address} ${virtual_ip_address_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
+    ssh superset@${mgmt_node} "export STATE=${STATE} && export PRIORITY=${PRIORITY} && /opt/superset-cluster/mysql-mgmt/init.sh ${virtual_ip_address} ${virtual_network_mask} ${virtual_network_interface} ${VIRTUAL_NETWORK} $(array_to_string_converter ${mysql_nodes[@]})"
     ssh superset@${mgmt_node} "docker login ghcr.io -u szachovy -p ..."
     ssh superset@${mgmt_node} "docker pull ghcr.io/szachovy/superset-cluster-service:latest"
     ssh superset@${mgmt_node} "echo $(openssl rand -base64 42) | docker secret create superset_secret_key -"
