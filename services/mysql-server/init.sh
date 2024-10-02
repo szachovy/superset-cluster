@@ -29,9 +29,9 @@ openssl \
     -days 365
 
 # temporary
-docker build \
-  --tag mysql-server \
-  /opt/superset-cluster/mysql-server
+# docker build \
+#   --tag mysql-server \
+#   /opt/superset-cluster/mysql-server
 
 docker run \
   --detach \
@@ -54,5 +54,6 @@ docker run \
   --volume "/opt/superset-cluster/mysql-server/mysql_server_certificate.pem:/etc/mysql/ssl/mysql_server_certificate.pem" \
   --volume "/opt/superset-cluster/mysql-server/mysql_server_key.pem:/etc/mysql/ssl/mysql_server_key.pem" \
   --volume "/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem:/etc/mysql/ssl/superset_cluster_ca_certificate.pem" \
-  mysql-server
-  #ghcr.io/szachovy/superset-cluster-mysql-server:latest
+  ghcr.io/szachovy/superset-cluster-mysql-server:latest
+
+  # mysql-server
