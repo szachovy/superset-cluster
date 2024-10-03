@@ -1,5 +1,6 @@
 import io
 import os
+import random
 import paramiko
 import pathlib
 import marshal
@@ -21,24 +22,22 @@ class Remote:
         return self.ssh_config.lookup(self.node)['identityfile'][0]
 
     def run_command(self, command: str):
-        nonce = 'tmp123'
+        nonce = f'tmp123-{random.randrange(1, 4294967296)}'
         with open(f'{os.path.dirname(os.path.abspath(__file__))}/container_connection.py', 'r') as memfile:
             code_object = compile(memfile.read() + command, filename=nonce, mode="exec")
             pyc_file = io.BytesIO()
             pyc_file.write(b'o\r\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
             marshal.dump(code_object, pyc_file)
-            # pyc_file.seek(0)
             self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
-            # self.sftp_client.putfo(b'hi', )
-        # self.upload_file(pyc_file, '/opt/superset-cluster/hello.pyc')
-        # try:
-        #     _, stdout, stderr = self.ssh_client.exec_command(f"python3 {command}")
-        #     output = stdout.read().decode()
-        #     print(output)
-        #     error = stderr.read().decode()
-        #     print(error)
-        # except Exception as e:
-        #     print(e)
+        try:
+            _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
+            output = stdout.read().decode()
+            # print(output)
+            error = stderr.read().decode()
+            # print(error)
+            return output
+        except Exception as e:
+            print(e)
 
     def upload_directory(self, local_directory_path, remote_directory_path):
         stack = [(local_directory_path, remote_directory_path)]

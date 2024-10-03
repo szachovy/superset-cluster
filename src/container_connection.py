@@ -18,9 +18,9 @@ class ContainerUtilities:
         self.client: docker.client.DockerClient = docker.from_env()
         self.container: str = container
 
-    def run_command_on_the_container(self, command: str) -> bytes | requests.exceptions.RequestException:
+    def run_command_on_the_container(self, command: str, user: str = 'superset', environment: dict = {}) -> bytes | requests.exceptions.RequestException:
         try:
-            request: docker.models.containers.ExecResult = self.client.containers.get(self.container).exec_run(command, stdout=True, stderr=True)
+            request: docker.models.containers.ExecResult = self.client.containers.get(self.container).exec_run(command, user=user, environment=environment, stdout=True, stderr=True)
         except (docker.errors.NotFound, docker.errors.APIError) as error:
             raise requests.exceptions.RequestException(f'Can not run commands on the container {self.container}: {error}')
         if request.exit_code != 0:

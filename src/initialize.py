@@ -1,3 +1,4 @@
+import base64
 import sys
 import re
 import socket
@@ -68,16 +69,21 @@ class Controller(ArgumentParser, crypto.OpenSSL):
         mysql_root_password = self.generate_mysql_root_password()
         for node in self.mysql_nodes:
             controller = remote.Remote(node)
-            mysql_node_key = self.generate_private_key()
-            mysql_node_csr = self.generate_csr(f'{node}-mysql-server', mysql_node_key)
-            mysql_node_certificate = self.generate_certificate(f'{node}-mysql-server', mysql_node_csr, self.ca_key)
-            controller.upload_directory(local_directory_path='./services/mysql-server', remote_directory_path='/opt/superset-cluster/mysql-server')
-            controller.upload_file(content=mysql_root_password, remote_file_path='/opt/superset-cluster/mysql-server/mysql_root_password')
-            controller.upload_file(content=self.deserialization(self.ca_key), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem')
-            controller.upload_file(content=self.deserialization(self.ca_certificate), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem')
-            controller.upload_file(content=self.deserialization(mysql_node_key), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_key.pem')
-            controller.upload_file(content=self.deserialization(mysql_node_certificate), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_certificate.pem')
-            controller.run_command(f"ContainerUtilities(container='mysql').start()")
+            # mysql_node_key = self.generate_private_key()
+            # mysql_node_csr = self.generate_csr(f'{node}-mysql-server', mysql_node_key)
+            # mysql_node_certificate = self.generate_certificate(f'{node}-mysql-server', mysql_node_csr, self.ca_key)
+            # controller.upload_directory(local_directory_path='./services/mysql-server', remote_directory_path='/opt/superset-cluster/mysql-server')
+            # controller.upload_file(content=mysql_root_password, remote_file_path='/opt/superset-cluster/mysql-server/mysql_root_password')
+            # controller.upload_file(content=self.deserialization(self.ca_key), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem')
+            # controller.upload_file(content=self.deserialization(self.ca_certificate), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem')
+            # controller.upload_file(content=self.deserialization(mysql_node_key), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_key.pem')
+            # controller.upload_file(content=self.deserialization(mysql_node_certificate), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_certificate.pem')
+            # controller.run_command("ContainerUtilities(container='mysql').start()")
+            output = controller.run_command("print(ContainerUtilities(container='mysql').run_command_on_the_container('/opt/store_credentials.exp {mysql_nodes}', 'root', {{'MYSQL_TEST_LOGIN_FILE': '/var/run/mysqld/.mylogin.cnf'}}))".format(mysql_nodes=" ".join(self.mysql_nodes)))
+            print(output)
+            with open('f.cnf', "wb") as file:
+                file.write(base64.b64decode(output))
+            
             controller.ssh_client.close()
             controller.sftp_client.close()
             exit(0)
