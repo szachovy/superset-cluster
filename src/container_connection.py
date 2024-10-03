@@ -2,6 +2,8 @@
 import ast
 import io
 import ipaddress
+import json
+import random
 import re
 import socket
 import tarfile
@@ -65,3 +67,70 @@ class ContainerUtilities:
             )
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
+
+    def start(self):
+        if self.container == 'mysql':
+            self.run_mysql_server()
+        elif self.container == 'mysql-mgmt':
+            self.run_mysql_mgmt()
+        elif self.container == 'redis':
+            self.run_redis()
+        elif self.container == 'superset':
+            self.run_superset()
+
+    def run_mysql_server(self):
+        # temporary
+        import subprocess
+        command = f'docker login ghcr.io -u szachovy -p ...'
+        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        try:
+            self.client.containers.run(
+                "ghcr.io/szachovy/superset-cluster-mysql-server:latest",
+                detach=True,
+                name=self.container,
+                hostname=socket.gethostname(),
+                restart_policy={"Name": "always"},
+                network="host",
+                cap_add=["SYS_NICE"],
+                #{"defaultAction":"SCMP_ACT_ALLOW","architectures":["SCMP_ARCH_X86_64"],"syscalls":[{"names":["kill"],"action":"SCMP_ACT_ERRNO"}]}
+                security_opt=[f"seccomp={json.dumps(json.load(open('/opt/superset-cluster/mysql-server/seccomp.json')), separators=(',', ':'))}"],
+                environment={
+                    "MYSQL_INITDB_SKIP_TZINFO": "true",
+                    "MYSQL_ROOT_PASSWORD_FILE": "/var/run/mysqld/mysql_root_password",
+                    "SERVER_ID": random.randrange(1, 4294967296),
+                    "HEALTHCHECK_START_PERIOD": 90
+                },
+                healthcheck = {
+                    'test': ['CMD', 'mysqladmin', 'ping'],
+                    'interval': 5 * 1000000000,
+                    'timeout': 10 * 1000000000,
+                    'retries': 3,
+                    'start_period': 90 * 1000000000
+                },
+                volumes={
+                    "/opt/superset-cluster/mysql-server/mysql_root_password": {
+                        'bind': '/var/run/mysqld/mysql_root_password'
+                    },
+                    "/opt/superset-cluster/mysql-server/mysql_server_certificate.pem": {
+                        'bind': '/etc/mysql/ssl/mysql_server_certificate.pem',
+                    },
+                    "/opt/superset-cluster/mysql-server/mysql_server_key.pem": {
+                        'bind': '/etc/mysql/ssl/mysql_server_key.pem',
+                    },
+                    "/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem": {
+                        'bind': '/etc/mysql/ssl/superset_cluster_ca_certificate.pem',
+                    }
+                }
+            )
+        except docker.errors.APIError as e:
+            print(f"Docker error {e}")
+
+    def run_mysql_mgmt():
+        pass
+
+    def run_redis():
+        pass
+
+    def run_superset():
+        pass
+

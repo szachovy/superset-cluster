@@ -5,6 +5,7 @@ import socket
 import crypto
 import data_structures
 import remote
+import container_connection
 
 if len(sys.argv) != 6:
     print("Error: Invalid form of arguments provided.")
@@ -39,7 +40,8 @@ class ArgumentParser:
 
         def validate_hostname(hostname: str) -> str:
             """(RFC 1123 compliance)."""
-            allowed_characters = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+            # allowed_characters = re.compile(r"(?!-)[A-Z\d-]{1,63}(?<!-)$", re.IGNORECASE)
+            allowed_characters = re.compile(r"[A-Z\d-]{1,63}", re.IGNORECASE)
             if not ((len(hostname) > 255) or ("." in hostname)):
                 if all(allowed_characters.match(x) for x in hostname):
                     return hostname
@@ -59,24 +61,26 @@ class Controller(ArgumentParser, crypto.OpenSSL):
         print(self.mgmt_nodes)
         print(self.mysql_nodes)
         self.ca_key = self.generate_private_key()
-        self.ca_certificate = self.generate_certificate(self.ca_key, common_name='Superset-Cluster')
+        self.ca_certificate = self.generate_certificate('Superset-Cluster', self.ca_key)
         self.mysql()
 
     def mysql(self):
         mysql_root_password = self.generate_mysql_root_password()
         for node in self.mysql_nodes:
             controller = remote.Remote(node)
-            controller.upload_directory(local_directory_path='../services/mysql-server', remote_directory_path='/opt/superset-cluster')
-            controller.upload_file(content=mysql_root_password, remote_file_path='/opt/superset-cluster/mysql-server/mysql_root_password')
-            controller.upload_file(content=self.ca_key, remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem')
-            controller.upload_file(content=self.ca_certificate, remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem')
             mysql_node_key = self.generate_private_key()
-            mysql_node_certificate = self.generate_certificate(mysql_node_key, common_name=f'{node}-mysql-server')
-            controller.upload_file(content=mysql_node_key, remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_key.pem')
-            controller.upload_file(content=mysql_node_certificate, remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_certificate.pem')
-            #... (pyc)
+            mysql_node_csr = self.generate_csr(f'{node}-mysql-server', mysql_node_key)
+            mysql_node_certificate = self.generate_certificate(f'{node}-mysql-server', mysql_node_csr, self.ca_key)
+            controller.upload_directory(local_directory_path='./services/mysql-server', remote_directory_path='/opt/superset-cluster/mysql-server')
+            controller.upload_file(content=mysql_root_password, remote_file_path='/opt/superset-cluster/mysql-server/mysql_root_password')
+            controller.upload_file(content=self.deserialization(self.ca_key), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem')
+            controller.upload_file(content=self.deserialization(self.ca_certificate), remote_file_path='/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem')
+            controller.upload_file(content=self.deserialization(mysql_node_key), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_key.pem')
+            controller.upload_file(content=self.deserialization(mysql_node_certificate), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_certificate.pem')
+            controller.run_command(f"ContainerUtilities(container='mysql').start()")
             controller.ssh_client.close()
             controller.sftp_client.close()
+            exit(0)
     
     def mgmt(self):
         mysql_superset_password = self.generate_mysql_superset_password()

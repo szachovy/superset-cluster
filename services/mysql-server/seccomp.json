@@ -1,10 +1,14 @@
 {
   "defaultAction": "SCMP_ACT_ALLOW",
-  "architectures": ["SCMP_ARCH_X86_64"],
+  "architectures": [
+      "SCMP_ARCH_X86_64"
+  ],
   "syscalls": [
-    {
-      "names": ["kill"],
-      "action": "SCMP_ACT_ERRNO"
-    }
+      {
+          "names": [
+              "kill"
+          ],
+          "action": "SCMP_ACT_ERRNO"
+      }
   ]
 }
