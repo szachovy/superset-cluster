@@ -76,13 +76,29 @@ class ContainerUtilities:
         return str(ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_network_mask}").network)
 
     def wait_until_healthy(self, container_name, healthcheck_start_period, healthcheck_interval, healthcheck_retries):
-        time.sleep(healthcheck_start_period)
+        time.sleep(int(healthcheck_start_period))
+        print(container_name)
+        if container_name == 'superset':
+            print(self.client.services.get('superset').attrs)
+            print(self.client.api.tasks)
+            # self.client.services.get('superset').attrs['Spec']['Mode']['Replicated']['Replicas']
+        else:
+            for _ in range(int(healthcheck_retries)):
+                print(self.client.containers.get(container_name).attrs['State']['Health']['Status'])
+                if self.client.containers.get(container_name).attrs['State']['Health']['Status'] == 'healthy':
+                    return True
+                time.sleep(int(healthcheck_interval))
+        return False
+        
         for container in self.client.containers.list(all=True):
             if container.name.startswith(container_name):
-                for _ in range(healthcheck_retries):
+                print(container.name)
+                # print(self.client.containers.get(container.name).attrs)
+                for _ in range(int(healthcheck_retries)):
+                    print(self.client.containers.get(container.name).attrs['State']['Health']['Status'])
                     if self.client.containers.get(container.name).attrs['State']['Health']['Status'] == 'healthy':
                         return True
-                    time.sleep(healthcheck_interval)
+                    time.sleep(int(healthcheck_interval))
         return False
 
     def run_mysql_server(self):
@@ -136,7 +152,7 @@ class ContainerUtilities:
         except docker.errors.APIError as e:
             print(f"Docker error {e}")
         
-        self.wait_until_healthy('mysql', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+        print(self.wait_until_healthy('mysql', healthcheck_start_period, healthcheck_interval, healthcheck_retries))
 
     def run_mysql_mgmt(
             self,
@@ -154,9 +170,9 @@ class ContainerUtilities:
         command = f'docker login ghcr.io -u szachovy -p ...'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-        healthcheck_start_period = 25
-        healthcheck_interval = 5
-        healthcheck_retries = 3
+        healthcheck_start_period = "25"
+        healthcheck_interval = "5"
+        healthcheck_retries = "3"
         os.environ["VIRTUAL_IP_ADDRESS"] = virtual_ip_address
         os.environ["VIRTUAL_NETWORK_MASK"] = virtual_network_mask
         os.environ["VIRTUAL_NETWORK_INTERFACE"] = virtual_network_interface
@@ -171,18 +187,14 @@ class ContainerUtilities:
         os.environ["PRIORITY"] = priority
  
         result = subprocess.run(
-            "docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up initcontainer && \
-            docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up maincontainer --detach",
+            "docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up initcontainer --quiet-pull && \
+            docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up maincontainer --detach --quiet-pull",
             capture_output=True,
             text=True,
             shell=True  # Use shell to interpret the command properly
         )
-
-        print(result.stdout)
-        if result.stderr:
-            print(f"Error: {result.stderr}")
     
-        self.wait_until_healthy('mysql-mgmt', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+        print(self.wait_until_healthy('mysql-mgmt', healthcheck_start_period, healthcheck_interval, healthcheck_retries))
 
     def run_superset(self, virtual_ip_address, superset_secret_key, mysql_superset_password):
         #temporary
@@ -215,7 +227,7 @@ class ContainerUtilities:
                 'start_period': healthcheck_start_period * 1000000000  # 30 seconds in nanoseconds before health check starts
             }
         )
-        self.wait_until_healthy('redis', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+        print(self.wait_until_healthy('redis', healthcheck_start_period, healthcheck_interval, healthcheck_retries))
 
         healthcheck_start_period = 60
         healthcheck_interval = 30
@@ -254,5 +266,5 @@ class ContainerUtilities:
                 )
             ]
         )
-        self.wait_until_healthy('superset', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+        print(self.wait_until_healthy('superset', healthcheck_start_period, healthcheck_interval, healthcheck_retries))
 

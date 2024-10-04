@@ -70,10 +70,10 @@ services:
     network_mode: "host"
     healthcheck:
       test: ["CMD", "sh", "-c", "[ $(pgrep -c mysqlrouter) -eq 1 ] && [ $(pgrep -c keepalived) -eq 2 ]"]
-      interval: ${HEALTHCHECK_INTERVAL}s
-      timeout: 5s
-      retries: ${HEALTHCHECK_RETRIES}
-      start_period: ${HEALTHCHECK_START_PERIOD}s
+      interval: "${HEALTHCHECK_INTERVAL}s"
+      timeout: "5s"
+      retries: "${HEALTHCHECK_RETRIES}"
+      start_period: "${HEALTHCHECK_START_PERIOD}s"
     cap_add:
       - "NET_ADMIN"
     volumes:

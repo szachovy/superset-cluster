@@ -74,9 +74,7 @@ class Remote:
         try:
             _, stdout, stderr = self.ssh_client.exec_command(f"chmod 600 {filepath}")
             output = stdout.read().decode()
-            print(output)
             error = stderr.read().decode()
-            print(error)
             return output
         except Exception as e:
             print(e)

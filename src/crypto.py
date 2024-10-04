@@ -77,14 +77,12 @@ class OpenSSL:
 
     @staticmethod
     def deserialization(thing):
-        print(type(thing))
         if isinstance(thing, rsa.RSAPrivateKey):
             return thing.private_bytes(
                 encoding=serialization.Encoding.PEM,
                 format=serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=serialization.NoEncryption()
-            ).decode('utf-8')
-        print(type(thing.public_bytes(serialization.Encoding.PEM).decode('utf-8')))
+            )
         return thing.public_bytes(serialization.Encoding.PEM).decode('utf-8')
 
     # @staticmethod
