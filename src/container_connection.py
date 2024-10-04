@@ -6,8 +6,10 @@ import json
 import random
 import re
 import socket
+import subprocess
 import tarfile
 import os
+import time
 
 import docker
 import requests
@@ -68,21 +70,30 @@ class ContainerUtilities:
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
 
-    def start(self):
-        if self.container == 'mysql':
-            self.run_mysql_server()
-        elif self.container == 'mysql-mgmt':
-            self.run_mysql_mgmt()
-        elif self.container == 'redis':
-            self.run_redis()
-        elif self.container == 'superset':
-            self.run_superset()
+
+    @staticmethod
+    def calculate_virtual_network(virtual_ip_address: str, virtual_network_mask: str) -> str:
+        return str(ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_network_mask}").network)
+
+    def wait_until_healthy(self, container_name, healthcheck_start_period, healthcheck_interval, healthcheck_retries):
+        time.sleep(healthcheck_start_period)
+        for container in self.client.containers.list(all=True):
+            if container.name.startswith(container_name):
+                for _ in range(healthcheck_retries):
+                    if self.client.containers.get(container.name).attrs['State']['Health']['Status'] == 'healthy':
+                        return True
+                    time.sleep(healthcheck_interval)
+        return False
 
     def run_mysql_server(self):
         # temporary
         import subprocess
         command = f'docker login ghcr.io -u szachovy -p ...'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        healthcheck_start_period = 90
+        healthcheck_interval = 5
+        healthcheck_retries = 3
         try:
             self.client.containers.run(
                 "ghcr.io/szachovy/superset-cluster-mysql-server:latest",
@@ -98,14 +109,14 @@ class ContainerUtilities:
                     "MYSQL_INITDB_SKIP_TZINFO": "true",
                     "MYSQL_ROOT_PASSWORD_FILE": "/var/run/mysqld/mysql_root_password",
                     "SERVER_ID": random.randrange(1, 4294967296),
-                    "HEALTHCHECK_START_PERIOD": 90
+                    "HEALTHCHECK_START_PERIOD": 150
                 },
                 healthcheck = {
                     'test': ['CMD', 'mysqladmin', 'ping'],
-                    'interval': 5 * 1000000000,
+                    'interval': healthcheck_interval * 1000000000,
                     'timeout': 10 * 1000000000,
-                    'retries': 3,
-                    'start_period': 90 * 1000000000
+                    'retries': healthcheck_retries,
+                    'start_period': healthcheck_start_period * 1000000000
                 },
                 volumes={
                     "/opt/superset-cluster/mysql-server/mysql_root_password": {
@@ -124,13 +135,124 @@ class ContainerUtilities:
             )
         except docker.errors.APIError as e:
             print(f"Docker error {e}")
+        
+        self.wait_until_healthy('mysql', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
 
-    def run_mysql_mgmt():
-        pass
+    def run_mysql_mgmt(
+            self,
+            virtual_ip_address, 
+            virtual_network_mask, 
+            virtual_network_interface, 
+            primary_mysql_node, 
+            secondary_first_mysql_node, 
+            secondary_second_mysql_node,
+            state,
+            priority):
 
-    def run_redis():
-        pass
+        # temporary
+        import subprocess
+        command = f'docker login ghcr.io -u szachovy -p ...'
+        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-    def run_superset():
-        pass
+        healthcheck_start_period = 25
+        healthcheck_interval = 5
+        healthcheck_retries = 3
+        os.environ["VIRTUAL_IP_ADDRESS"] = virtual_ip_address
+        os.environ["VIRTUAL_NETWORK_MASK"] = virtual_network_mask
+        os.environ["VIRTUAL_NETWORK_INTERFACE"] = virtual_network_interface
+        os.environ["VIRTUAL_NETWORK"] = self.calculate_virtual_network(virtual_ip_address, virtual_network_mask)
+        os.environ["PRIMARY_MYSQL_NODE"] = primary_mysql_node
+        os.environ["SECONDARY_FIRST_MYSQL_NODE"] = secondary_first_mysql_node
+        os.environ["SECONDARY_SECOND_MYSQL_NODE"] = secondary_second_mysql_node
+        os.environ["HEALTHCHECK_START_PERIOD"] = healthcheck_start_period
+        os.environ["HEALTHCHECK_INTERVAL"] = healthcheck_interval
+        os.environ["HEALTHCHECK_RETRIES"] = healthcheck_retries
+        os.environ["STATE"] = state
+        os.environ["PRIORITY"] = priority
+ 
+        result = subprocess.run(
+            "docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up initcontainer && \
+            docker compose --file /opt/superset-cluster/mysql-mgmt/docker_compose.yml up maincontainer --detach",
+            capture_output=True,
+            text=True,
+            shell=True  # Use shell to interpret the command properly
+        )
+
+        print(result.stdout)
+        if result.stderr:
+            print(f"Error: {result.stderr}")
+    
+        self.wait_until_healthy('mysql-mgmt', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+
+    def run_superset(self, virtual_ip_address, superset_secret_key, mysql_superset_password):
+        #temporary
+        import subprocess
+        command = f'docker login ghcr.io -u szachovy -p ...'
+        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        self.client.swarm.init(advertise_addr=virtual_ip_address)
+        self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
+        superset_secret_key_id = self.client.secrets.create(name='superset_secret_key', data=superset_secret_key).id
+        mysql_superset_password_id = self.client.secrets.create(name='mysql_superset_password', data=mysql_superset_password).id
+
+
+        healthcheck_start_period = 10
+        healthcheck_interval = 10
+        healthcheck_retries = 5
+
+        self.client.containers.run(
+            "redis",
+            detach=True,
+            restart_policy={"Name": "always"},
+            name="redis",
+            hostname="redis",
+            network="superset-network",
+            healthcheck={
+                'test': ["CMD", "redis-cli", "ping"],
+                'interval': healthcheck_interval * 1000000000,  # 30 seconds in nanoseconds
+                'timeout': 5 * 1000000000,    # 5 seconds in nanoseconds
+                'retries': healthcheck_retries,
+                'start_period': healthcheck_start_period * 1000000000  # 30 seconds in nanoseconds before health check starts
+            }
+        )
+        self.wait_until_healthy('redis', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
+
+        healthcheck_start_period = 60
+        healthcheck_interval = 30
+        healthcheck_retries = 20
+        self.client.services.create(
+            name="superset",
+            image="ghcr.io/szachovy/superset-cluster-service:latest",
+            networks=["superset-network"],
+            secrets = [
+                docker.types.SecretReference(secret_id=superset_secret_key_id, secret_name="superset_secret_key"),
+                docker.types.SecretReference(secret_id=mysql_superset_password_id, secret_name="mysql_superset_password")
+            ],
+            maxreplicas=1,
+            env=[f"VIRTUAL_IP_ADDRESS={virtual_ip_address}"],
+            endpoint_spec=docker.types.EndpointSpec(
+                mode='vip',
+                ports={443: 443}
+            ),
+            healthcheck = {
+                'test': ["CMD", "curl", "-f", "http://localhost:8088/health"],
+                'interval': healthcheck_interval * 1000000000,
+                'timeout': 5 * 1000000000,
+                'retries': healthcheck_retries,
+                'start_period': healthcheck_start_period * 1000000000
+            },
+            mounts=[
+                docker.types.Mount(
+                    target="/etc/ssl/certs/superset_cluster_certificate.pem",
+                    source="/opt/superset-cluster/superset/superset_cluster_certificate.pem",
+                    type="bind"
+                ),
+                docker.types.Mount(
+                    target="/etc/ssl/certs/superset_cluster_key.pem",
+                    source="/opt/superset-cluster/superset/superset_cluster_key.pem",
+                    type="bind"
+                )
+            ]
+        )
+        self.wait_until_healthy('superset', healthcheck_start_period, healthcheck_interval, healthcheck_retries)
 

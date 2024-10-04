@@ -1,6 +1,7 @@
 import io
 import os
 import random
+import stat
 import paramiko
 import pathlib
 import marshal
@@ -19,6 +20,7 @@ class Remote:
         return self.ssh_config.lookup(self.node)['hostname']
     
     def identity_path(self):
+        print(self.ssh_config.lookup(self.node))
         return self.ssh_config.lookup(self.node)['identityfile'][0]
 
     def run_command(self, command: str):
@@ -32,16 +34,19 @@ class Remote:
         try:
             _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
             output = stdout.read().decode()
-            # print(output)
+            print(output)
             error = stderr.read().decode()
-            # print(error)
+            print(error)
             return output
         except Exception as e:
             print(e)
 
     def upload_directory(self, local_directory_path, remote_directory_path):
         stack = [(local_directory_path, remote_directory_path)]
-        self.sftp_client.mkdir('/opt/superset-cluster')
+        try:
+            self.sftp_client.mkdir('/opt/superset-cluster')
+        except IOError:
+            pass
         while stack:
             local_path, remote_path = stack.pop()
             try:
@@ -64,6 +69,17 @@ class Remote:
             content = content.encode('utf-8')
         self.sftp_client.putfo(io.BytesIO(content), remote_file_path)
         # self.sftp_client.putfo(content, remote_file_path)
+    
+    def change_file_permissions_to_root(self, filepath: str):
+        try:
+            _, stdout, stderr = self.ssh_client.exec_command(f"chmod 600 {filepath}")
+            output = stdout.read().decode()
+            print(output)
+            error = stderr.read().decode()
+            print(error)
+            return output
+        except Exception as e:
+            print(e)
 # import crypto
 # a = crypto.OpenSSL()
 # b = a.generate_private_key()

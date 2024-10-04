@@ -18,7 +18,7 @@ display_help() {
     echo "                                          Example: --virtual-network-interface eth0"
     echo
     echo "  --virtual-network-mask <mask>           Network mask for the virtual network gateway."
-    echo "                                          Example: --virtual-ip-address-mask 24"
+    echo "                                          Example: --virtual-network-mask 24"
     echo
     echo "  -h, --help                              Show this help message and exit."
     echo
@@ -51,7 +51,7 @@ parse_arguments() {
                 shift
                 virtual_network_interface="$1"
                 ;;
-            --virtual-ip-address-mask)
+            --virtual-network-mask)
                 shift
                 virtual_network_mask="$1"
                 ;;
@@ -74,7 +74,7 @@ display_parameters() {
     echo "MySQL Nodes: ${mysql_nodes[@]}"
     echo "Virtual IP Address: $virtual_ip_address"
     echo "Virtual Network Interface: $virtual_network_interface"
-    echo "Virtual IP Address Mask: $virtual_network_mask"
+    echo "Virtual Network Mask: $virtual_network_mask"
 }
 
 parse_arguments "$@"

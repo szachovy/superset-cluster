@@ -70,7 +70,7 @@ class OpenSSL:
             ).not_valid_before(
                 datetime.datetime.utcnow()
             ).not_valid_after(
-                datetime.datetime.utcnow()
+                datetime.datetime.utcnow() + datetime.timedelta(days=365)
             ).sign(
                 ca_key if ca_key else private_key, hashes.SHA256(), default_backend()
         )
