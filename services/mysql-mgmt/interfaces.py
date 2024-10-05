@@ -1,7 +1,6 @@
 
 import ctypes
 import ctypes.util
-import ipaddress
 import os
 import socket
 
@@ -24,6 +23,7 @@ class socket_interface(ctypes.Structure):
 class network_interface_structure(ctypes.Structure):
     pass
 
+
 network_interface_structure._fields_ = [
     ('next_network_interface', ctypes.POINTER(network_interface_structure)),
     ('network_interface_name', ctypes.c_char_p),
@@ -32,6 +32,7 @@ network_interface_structure._fields_ = [
     ('network_interface_mask', ctypes.POINTER(socket_address)),
     ('network_interface_data', ctypes.c_void_p)
 ]
+
 
 def network_interfaces(network_interface: str) -> str | StopIteration:
     clib: ctypes.CDLL = ctypes.CDLL(ctypes.util.find_library('c'))
@@ -51,9 +52,6 @@ def network_interfaces(network_interface: str) -> str | StopIteration:
                 raise StopIteration(f'Provided network interface {network_interface} not found.')
             current_interface = current_interface.next_network_interface.contents
 
-
-def virtual_network(virtual_ip_address: str, virtual_network_mask: str) -> str:
-    return ipaddress.IPv4Interface(f"{virtual_ip_address}/{virtual_network_mask}").network
 
 if __name__ == "__main__":
     print(network_interfaces(network_interface=os.environ['VIRTUAL_NETWORK_INTERFACE']))

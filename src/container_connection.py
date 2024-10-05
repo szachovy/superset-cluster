@@ -6,7 +6,6 @@ import json
 import random
 import re
 import socket
-import subprocess
 import tarfile
 import os
 import time
@@ -69,7 +68,6 @@ class ContainerUtilities:
             )
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
-
 
     @staticmethod
     def calculate_virtual_network(virtual_ip_address: str, virtual_network_mask: str) -> str:

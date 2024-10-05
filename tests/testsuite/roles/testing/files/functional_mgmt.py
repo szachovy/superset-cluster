@@ -1,10 +1,10 @@
 
 import requests
 import container_connection
-import data_structures
+import decorators
 
 
-class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=data_structures.Overlay):
+class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=decorators.Overlay):
     def __init__(self, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(container='mysql-mgmt')
         self.copy_file_to_the_container(host_filepath='/opt/superset-cluster/mysql-mgmt/.mylogin.cnf', container_dirpath='/home/superset')
@@ -15,7 +15,7 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
         self.mysql_secondary_nodes: list = [f"{node_prefix}-3", f"{node_prefix}-4"]
         self.after_disaster: bool = after_disaster
 
-    @data_structures.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods
     def status_cluster(self):
         cluster_status_output: bytes = self.run_command_on_the_container(f"mysqlsh --login-path={self.mysql_secondary_nodes[0]} --interactive --execute=\"dba.getCluster(\'superset\').status();\"")
         if self.after_disaster:
@@ -24,7 +24,7 @@ class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass
             assert self.find_in_the_output(cluster_status_output, b'"status": "OK"'), f'The MySQL InnoDB cluster is not online or can not tolerate failures: {cluster_status_output}'
             assert self.find_in_the_output(cluster_status_output, b'"topologyMode": "Single-Primary"'), 'One primary instance is allowed for a given MySQL InnoDB cluster settings'
 
-    @data_structures.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods
     def status_routers(self):
         routers_status_output: bytes = self.run_command_on_the_container(f"mysqlsh --login-path={self.mysql_secondary_nodes[0]} --interactive --execute=\"dba.getCluster(\'superset\').listRouters();\"")
         assert (self.find_in_the_output(routers_status_output, f'{self.mgmt_primary_node}'.encode()) and self.find_in_the_output(routers_status_output, f'{self.mgmt_secondary_node}'.encode())), f'MySQL Mgmt routers are offline or not attached, expected {self.mgmt_primary_node} and {self.mgmt_secondary_node} to be visible from the superset cluster'

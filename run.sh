@@ -69,16 +69,7 @@ parse_arguments() {
     done
 }
 
-display_parameters() {
-    echo "Management Nodes: ${mgmt_nodes[@]}"
-    echo "MySQL Nodes: ${mysql_nodes[@]}"
-    echo "Virtual IP Address: $virtual_ip_address"
-    echo "Virtual Network Interface: $virtual_network_interface"
-    echo "Virtual Network Mask: $virtual_network_mask"
-}
-
 parse_arguments "$@"
-display_parameters
 
 if python --version &>/dev/null; then
   eval "python ./src/initialize.py \
@@ -98,19 +89,3 @@ else
   echo "Neither python nor python3 is set as the main executable in this environment, check python location with 'which python'."
   exit 1
 fi
-
-
-# mgmt_nodes=("wiktor-min-deblike" "wiktor-min-rhlike")
-# mysql_nodes=("wiktor-min-build" "wiktor-cli-sles" "wiktor-minssh-sles")
-
-# virtual_ip_address="10.145.211.180"
-# virtual_network_interface="ens3"
-# virtual_network_mask="22"
-
-# VIRTUAL_NETWORK="10.145.208.0/22"  # do it in common via python
-
-# _path_to_root_catalog="."
-
-# source ${_path_to_root_catalog}/src/common.sh
-
-# initialize_nodes

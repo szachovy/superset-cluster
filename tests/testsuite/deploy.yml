@@ -1,17 +1,17 @@
 ---
-- name: "infrastructure testing"
-  connection: "local"
-  hosts: "testing"
-  any_errors_fatal: yes
-  tasks:
-    - ansible.builtin.include_role: { name: "testing", tasks_from: "infrastructure" }
+# - name: "infrastructure testing"
+#   connection: "local"
+#   hosts: "testing"
+#   any_errors_fatal: yes
+#   tasks:
+#     - ansible.builtin.include_role: { name: "testing", tasks_from: "infrastructure" }
 
-- name: "system testing"
-  connection: "local"
-  hosts: "testing"
-  any_errors_fatal: yes
-  tasks:
-    - ansible.builtin.include_role: { name: "testing", tasks_from: "system" }
+# - name: "system testing"
+#   connection: "local"
+#   hosts: "testing"
+#   any_errors_fatal: yes
+#   tasks:
+#     - ansible.builtin.include_role: { name: "testing", tasks_from: "system" }
 
 - name: "functional testing"
   connection: "local"

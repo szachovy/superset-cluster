@@ -1,6 +1,4 @@
 
-import ctypes
-import ctypes.util
 import functools
 import threading
 import typing
@@ -10,24 +8,6 @@ import sys
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-class socket_address(ctypes.Structure):
-    _fields_ = [
-        ('socket_address_family', ctypes.c_ushort),
-        ('socket_address_code', ctypes.c_byte * 14)
-    ]
-
-
-class socket_interface(ctypes.Structure):
-    _fields_ = [
-        ('socket_interface_family', ctypes.c_ushort),
-        ('socket_interface_port', ctypes.c_uint16),
-        ('socket_interface_address', ctypes.c_byte * 4)
-    ]
-
-
-class network_interface(ctypes.Structure):
-    pass
 
 
 class Overlay(type):
@@ -73,3 +53,6 @@ class Overlay(type):
             return method_wrapper.tokens
         method_wrapper.object_created = False
         return method_wrapper
+
+class Logging:
+    pass

@@ -104,6 +104,7 @@ resource "docker_container" "nodes" {
   provisioner "local-exec" {
     command = <<-EOT
       docker cp ../../src $HOSTNAME:/opt/superset-testing
+      docker cp ../../services/mysql-mgmt/interfaces.py $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
       docker exec $HOSTNAME /bin/bash -c \
         "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
