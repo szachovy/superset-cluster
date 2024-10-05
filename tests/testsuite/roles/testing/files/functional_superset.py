@@ -5,11 +5,11 @@ import typing
 import ssl
 import socket
 
-import container_connection
+import container
 import decorators
 
 
-class Redis(container_connection.ContainerUtilities, metaclass=decorators.Overlay):
+class Redis(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, container: str) -> None:
         super().__init__(container=container)
 
@@ -24,7 +24,7 @@ class Redis(container_connection.ContainerUtilities, metaclass=decorators.Overla
         return True
 
 
-class Celery(container_connection.ContainerUtilities, metaclass=decorators.Overlay):
+class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, container: str) -> None:
         super().__init__(container=container)
         self.superset_container: str = container
@@ -54,7 +54,7 @@ class Celery(container_connection.ContainerUtilities, metaclass=decorators.Overl
         return True
 
 
-class Superset(container_connection.ContainerUtilities, metaclass=decorators.Overlay):
+class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, superset_container: str, virtual_ip_address: str) -> None:
         super().__init__(container=superset_container)
         self.redis: typing.Type = Redis(container=superset_container)
@@ -64,19 +64,22 @@ class Superset(container_connection.ContainerUtilities, metaclass=decorators.Ove
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
         self.api_csrf_header: str = f"X-CSRFToken: {self.login_to_superset()['csrf_token']}"
         self.api_session_header: str = f"Cookie: session={self.login_to_superset()['session_token']}"
-
-    @decorators.Overlay.single_sign_on
-    def login_to_superset_api(self) -> str | AssertionError:
-        headers: str = "Content-Type: application/json"
-        payload: str = f'{{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}}'
+    
+    @decorators.Overlay.run_selected_methods
+    def load_ssl_server_certificate(self) -> None:
         context = ssl.create_default_context()
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
         with socket.create_connection((self.virtual_ip_address, 443)) as sock:
             with context.wrap_socket(sock, server_hostname=self.virtual_ip_address) as ssl_sock:
-                with open("/opt/superset-testing/server_certificate.pem", "wb") as f:
-                    f.write(ssl.DER_cert_to_PEM_cert(ssl_sock.getpeercert(binary_form=True)).encode())
+                with open("/opt/superset-testing/server_certificate.pem", "wb") as cert:
+                    cert.write(ssl.DER_cert_to_PEM_cert(ssl_sock.getpeercert(binary_form=True)).encode())
         self.copy_file_to_the_container(host_filepath='/opt/superset-testing/server_certificate.pem', container_dirpath='/app')
+
+    @decorators.Overlay.single_sign_on
+    def login_to_superset_api(self) -> str | AssertionError:
+        headers: str = "Content-Type: application/json"
+        payload: str = f'{{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}}'
         api_login_output: bytes = self.run_command_on_the_container(f"curl --cacert /app/server_certificate.pem --silent --url {self.api_default_url}/security/login --header '{headers}' --data '{payload}'")
         assert not self.find_in_the_output(api_login_output, b'"message"'), f'Could not log in to the Superset API {api_login_output}'
         return self.decode_command_output(api_login_output).get("access_token")

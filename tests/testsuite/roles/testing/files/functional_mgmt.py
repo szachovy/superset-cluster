@@ -1,10 +1,10 @@
 
 import requests
-import container_connection
+import container
 import decorators
 
 
-class MgmtNodeFunctionalTests(container_connection.ContainerUtilities, metaclass=decorators.Overlay):
+class MgmtNodeFunctionalTests(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(container='mysql-mgmt')
         self.copy_file_to_the_container(host_filepath='/opt/superset-cluster/mysql-mgmt/.mylogin.cnf', container_dirpath='/home/superset')

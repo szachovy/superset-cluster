@@ -6,7 +6,7 @@ import paramiko
 import pathlib
 import marshal
 
-class Remote:
+class RemoteConnection:
     def __init__(self, node: str) -> None:
         self.node = node
         self.ssh_client = paramiko.SSHClient()
@@ -27,15 +27,14 @@ class Remote:
 
     def run_python_command(self, command: str) -> None:
         nonce: str = f'{self.node}-{random.randrange(1, 4294967296)}'
-        with open(f'{os.path.dirname(os.path.abspath(__file__))}/container_connection.py', 'r') as memfile:
+        with open(f'{os.path.dirname(os.path.abspath(__file__))}/container.py', 'r') as memfile:
             code_object = compile(memfile.read() + command, filename=nonce, mode="exec")
             pyc_file = io.BytesIO()
             pyc_file.write(b'o\r\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
             marshal.dump(code_object, pyc_file)
             self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
         try:
-            stdin, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
-            print(stdin)
+            _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
             output = stdout.read().decode()
             print(output)
             error = stderr.read().decode()

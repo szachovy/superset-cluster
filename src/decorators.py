@@ -7,8 +7,8 @@ import sys
 
 
 logging.basicConfig(level=logging.INFO)
+logging.getLogger("paramiko").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
-
 
 class Overlay(type):
     def __call__(cls, *args, **kwargs) -> typing.Any:
