@@ -144,16 +144,14 @@ resource "null_resource" "generate_ansible_group_vars" {
     when    = create
     command = <<-EOT
       mkdir $(dirname $GROUP_VARS_FILE)
-      cp $DEFAULTS_FILE $GROUP_VARS_FILE
       {
         echo "virtual_ip_address: \"$VIRTUAL_IP_ADDRESS\""
         echo "virtual_network_mask: \"$VIRTUAL_NETWORK_MASK\""
         echo "node_prefix: \"$NODE_PREFIX\""
-      } >> $GROUP_VARS_FILE
+      } > $GROUP_VARS_FILE
     EOT
 
     environment = {
-      DEFAULTS_FILE           = "../../src/defaults.yml"
       GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
       NODE_PREFIX             = "${var.node_prefix}"
       VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")

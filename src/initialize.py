@@ -1,4 +1,5 @@
 import base64
+import ipaddress
 import sys
 import re
 import socket
@@ -24,8 +25,12 @@ class ArgumentParser:
 
     def validate_virtual_network_mask(self) -> None:
         try:
-            if 0 <= int(sys.argv[3]) <= 32:
-                self.virtual_network_mask = sys.argv[3] 
+            try:
+                network_mask: int = ipaddress.IPv4Network(f'0.0.0.0/{sys.argv[3]}').prefixlen
+            except ipaddress.NetmaskValueError:
+                raise ValueError
+            if 0 <= network_mask <= 32:
+                self.virtual_network_mask = network_mask
         except ValueError:
             raise ValueError('Invalid virtual-network-mask provided.')
 

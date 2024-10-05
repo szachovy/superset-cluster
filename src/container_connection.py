@@ -77,28 +77,14 @@ class ContainerUtilities:
 
     def wait_until_healthy(self, container_name, healthcheck_start_period, healthcheck_interval, healthcheck_retries):
         time.sleep(int(healthcheck_start_period))
-        print(container_name)
-        if container_name == 'superset':
-            print(self.client.services.get('superset').attrs)
-            print(self.client.api.tasks)
-            # self.client.services.get('superset').attrs['Spec']['Mode']['Replicated']['Replicas']
-        else:
-            for _ in range(int(healthcheck_retries)):
-                print(self.client.containers.get(container_name).attrs['State']['Health']['Status'])
+        for _ in range(int(healthcheck_retries)):
+            if container_name == 'superset':
+                if self.client.api.tasks(filters={"service": 'superset'})[0]['Status']['State'] == 'running':
+                    return True
+            else:
                 if self.client.containers.get(container_name).attrs['State']['Health']['Status'] == 'healthy':
                     return True
-                time.sleep(int(healthcheck_interval))
-        return False
-        
-        for container in self.client.containers.list(all=True):
-            if container.name.startswith(container_name):
-                print(container.name)
-                # print(self.client.containers.get(container.name).attrs)
-                for _ in range(int(healthcheck_retries)):
-                    print(self.client.containers.get(container.name).attrs['State']['Health']['Status'])
-                    if self.client.containers.get(container.name).attrs['State']['Health']['Status'] == 'healthy':
-                        return True
-                    time.sleep(int(healthcheck_interval))
+            time.sleep(int(healthcheck_interval))
         return False
 
     def run_mysql_server(self):
