@@ -13,7 +13,7 @@ class Redis(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, container: str) -> None:
         super().__init__(container=container)
 
-    @decorators.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods_once
     def status(self) -> None | AssertionError:
         test_connection: bytes = self.run_command_on_the_container(f"python3 -c 'import redis; print(redis.StrictRedis(host=\"redis\", port=6379).ping())'")
         assert self.find_in_the_output(test_connection, b'True'), f'The redis container is not responding'
@@ -31,13 +31,13 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
         self.celery_broker: str = f"redis://redis:6379/0"
         self.celery_sql_lab_task_annotations: str = "sql_lab.get_sql_results"
 
-    @decorators.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods_once
     def status(self) -> None | AssertionError:
         command: str = f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'"
         test_connection: bytes = self.run_command_on_the_container(command)
         assert self.find_in_the_output(test_connection, b"{'ok': 'pong'}"), f'The Celery process in the {self.superset_container} container on is not responding, output after {command} is {test_connection}'
 
-    @decorators.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods_once
     def status_cache(self) -> None | AssertionError:
         celery_workers_configuration: dict = self.decode_command_output(
             self.run_command_on_the_container(f"python3 -c 'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().conf())'")
@@ -64,8 +64,7 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
         self.api_csrf_header: str = f"X-CSRFToken: {self.login_to_superset()['csrf_token']}"
         self.api_session_header: str = f"Cookie: session={self.login_to_superset()['session_token']}"
-    
-    @decorators.Overlay.run_selected_methods
+
     def load_ssl_server_certificate(self) -> None:
         context = ssl.create_default_context()
         context.check_hostname = False
@@ -78,6 +77,7 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
 
     @decorators.Overlay.single_sign_on
     def login_to_superset_api(self) -> str | AssertionError:
+        self.load_ssl_server_certificate()
         headers: str = "Content-Type: application/json"
         payload: str = f'{{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}}'
         api_login_output: bytes = self.run_command_on_the_container(f"curl --cacert /app/server_certificate.pem --silent --url {self.api_default_url}/security/login --header '{headers}' --data '{payload}'")
@@ -98,14 +98,14 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             "session_token": superset_login_session_cookie
         }
 
-    @decorators.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods_once
     def status_database(self) -> None | AssertionError:
         with open('/opt/superset-cluster/mysql-mgmt/mysql_superset_password', 'r') as mysql_superset_password:
             payload: str = f'{{"database_name": "MySQL", "sqlalchemy_uri": "mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446/superset", "impersonate_user": false}}'
             test_database_connection: bytes = self.run_command_on_the_container(f"curl --location --cacert /app/server_certificate.pem --silent {self.api_default_url}/database/test_connection/ --header 'Content-Type: application/json' --header '{self.api_authorization_header}' --header '{self.api_csrf_header}' --header '{self.api_session_header}' --header 'Referer: https://{self.virtual_ip_address}' --data '{payload}'")
             assert self.find_in_the_output(test_database_connection, b'{"message":"OK"}'), f'Could not connect to the superset database on {self.virtual_ip_address} port 6446, the database is either down or not configured according to the given SQL Alchemy URI, {test_database_connection}'
 
-    @decorators.Overlay.run_selected_methods
+    @decorators.Overlay.run_selected_methods_once
     def status_swarm(self) -> None | AssertionError:
         swarm_info = self.info()['Swarm']
         assert swarm_info['LocalNodeState'] == 'active', 'The Swarm node has not been activated'

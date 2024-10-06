@@ -78,18 +78,23 @@ class ContainerConnection:
         except (ValueError, SyntaxError) as error:
             raise ValueError(f'Error decoding command {command} output: {error}')
 
+    def get_logs(self):
+        if self.container == 'superset':
+            return self.client.containers.get(self.client.containers.list(filters={"name": "superset"})[0].name).logs().decode('utf-8')
+        return self.client.containers.get(self.container).logs().decode('utf-8')
+
     def wait_until_healthy(self, cls: typing.Type[ContainerInstance]) -> str:
         cls.run()
         time.sleep(cls.healthcheck_start_period)
         for _ in range(cls.healthcheck_retries):
             if self.container == 'superset':
                 if self.client.api.tasks(filters={"service": 'superset'})[0]['Status']['State'] == 'running':
-                    return f'Container {self.container} is healthy'
+                    return f'{self.get_logs()}\nContainer {self.container} is healthy'
             else:
                 if self.client.containers.get(self.container).attrs['State']['Health']['Status'] == 'healthy':
-                    return f'Container {self.container} is healthy'
+                    return f'{self.get_logs()}\nContainer {self.container} is healthy'
             time.sleep(cls.healthcheck_interval)
-        return f'Timeout while waiting for {self.container} healthcheck'
+        return f'{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck'
 
     def run_mysql_server(self) -> None:
         class MySQL_Server(ContainerInstance):
@@ -291,6 +296,7 @@ class ContainerConnection:
                 return self.client.secrets.create(name='mysql_superset_password', data=self.mysql_superset_password).id
 
             def run(self) -> None:
+                print('hello from superset run')
                 self.client.services.create(
                     name="superset",
                     image="ghcr.io/szachovy/superset-cluster-service:latest",
@@ -330,6 +336,7 @@ class ContainerConnection:
         import subprocess
         command = f'docker login ghcr.io -u szachovy -p ...'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
+        self.container = 'redis'
         print(self.wait_until_healthy(Redis(self.client, virtual_ip_address)))
+        self.container = 'superset'
         print(self.wait_until_healthy(Superset(self.client, virtual_ip_address, superset_secret_key, mysql_superset_password)))

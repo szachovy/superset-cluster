@@ -64,7 +64,8 @@ services:
         set -euo pipefail
         sudo keepalived --use-file "/opt/default/keepalived.conf"
         sleep ${HEALTHCHECK_START_PERIOD}
-        mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
+        mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf" &
+        tail -f /opt/default/mysql_router/log/mysqlrouter.log
     container_name: "mysql-mgmt"
     restart: "always"
     network_mode: "host"

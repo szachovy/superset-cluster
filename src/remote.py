@@ -1,10 +1,17 @@
+import functools
 import io
+import logging
 import os
 import random
+import re
 import socket
 import paramiko
 import pathlib
 import marshal
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
+logging.getLogger("paramiko").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
 class RemoteConnection:
     def __init__(self, node: str) -> None:
@@ -19,13 +26,27 @@ class RemoteConnection:
             self.ssh_client.connect(hostname=self.node_hostname(), username='superset', key_filename=self.identity_path())
         self.sftp_client = self.ssh_client.open_sftp()
 
+    def log_remote_command_execution(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            self = args[0]
+            command = args[1]
+            result = func(*args, **kwargs)
+            if result['output']:
+                logger.info(f"[Node: {getattr(self, 'node', 'UnknownNode')}] Command: {command} - Output:\n{result['output']}")
+            if result['error']:
+                logger.error(f"[Node: {getattr(self, 'node', 'UnknownNode')}] Command: {command} - Error:\n{result['error']}")
+            return result
+        return wrapper
+
     def node_hostname(self) -> str:
         return self.ssh_config.lookup(self.node)['hostname']
     
     def identity_path(self) -> str:
         return self.ssh_config.lookup(self.node)['identityfile'][0]
 
-    def run_python_command(self, command: str) -> None:
+    @log_remote_command_execution
+    def run_python_container_command(self, command: str) -> None:
         nonce: str = f'{self.node}-{random.randrange(1, 4294967296)}'
         with open(f'{os.path.dirname(os.path.abspath(__file__))}/container.py', 'r') as memfile:
             code_object = compile(memfile.read() + command, filename=nonce, mode="exec")
@@ -33,15 +54,11 @@ class RemoteConnection:
             pyc_file.write(b'o\r\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
             marshal.dump(code_object, pyc_file)
             self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
-        try:
-            _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
-            output = stdout.read().decode()
-            print(output)
-            error = stderr.read().decode()
-            print(error)
-            return output
-        except Exception as e:
-            print(e)
+        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
+        return {
+            "output": stdout.read().decode(),
+            "error": stderr.read().decode()
+        }
 
 
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:
