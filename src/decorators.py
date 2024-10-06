@@ -12,7 +12,7 @@ class Overlay(type):
                 continue
             attribute = getattr(instance, class_attribute)
             if callable(attribute):
-                if getattr(attribute, '_is_run_selected_methods', False):
+                if getattr(attribute, '_is_run_selected_methods_once', False):
                     attribute()
         return instance
 
@@ -24,7 +24,7 @@ class Overlay(type):
 
     @staticmethod
     def run_selected_methods_once(method: typing.Callable) -> typing.Callable:
-        method._is_run_selected_methods = True
+        method._is_run_selected_methods_once = True
         @functools.wraps(method)
         def method_wrapper(self, *args, **kwargs) -> typing.Callable:
             return method(self, *args, **kwargs)

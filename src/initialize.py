@@ -58,7 +58,7 @@ class ArgumentParser:
             self.mysql_nodes.append(validate_hostname(mysql_node))
 
 
-class Controller(ArgumentParser):
+class Controller(ArgumentParser, metaclass=decorators.Overlay):
     def __init__(self) -> None:
         super().__init__()
         self.mysql_nodes = [remote.RemoteConnection(node) for node in self.mysql_nodes]
@@ -74,19 +74,19 @@ class Controller(ArgumentParser):
         self.superset_secret_key = self.cert_manager.generate_superset_secret_key()
         for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
             node.key = self.cert_manager.generate_private_key()
-            node.csr = self.cert_manager.generate_csr(f'Superset-Cluster-{node}', node.key)
-            node.certificate = self.cert_manager.generate_certificate(f'Superset-Cluster-{node}', node.csr, self.ca_key)
+            node.csr = self.cert_manager.generate_csr(f'Superset-Cluster-{node.node}', node.key)
+            node.certificate = self.cert_manager.generate_certificate(f'Superset-Cluster-{node.node}', node.csr, self.ca_key)
             node.create_directory('/opt/superset-cluster')
         for node in self.mgmt_nodes:
             node.superset_key = self.cert_manager.generate_private_key()
             node.superset_csr = self.cert_manager.generate_csr(self.virtual_ip_address, node.superset_key)
-            node.superset_certificate = self.generate_certificate(self.virtual_ip_address, node.superset_csr, self.ca_key)
+            node.superset_certificate = self.cert_manager.generate_certificate(self.virtual_ip_address, node.superset_csr, self.ca_key)
 
     def get_mylogin_cnf(self, node: remote.RemoteConnection) -> str | ValueError:
         for _ in range(3):
-            output = node.run_python_container_command("print(ContainerConnection(container='mysql').run_command_on_the_container('/opt/store_credentials.exp {mysql_nodes}', 'root', {{'MYSQL_TEST_LOGIN_FILE': '/var/run/mysqld/.mylogin.cnf'}}))".format(mysql_nodes=" ".join(self.mysql_nodes)))['output']
+            output = node.run_python_container_command("print(ContainerConnection(container='mysql').run_command_on_the_container('/opt/store_credentials.exp {mysql_nodes}', 'root', {{'MYSQL_TEST_LOGIN_FILE': '/var/run/mysqld/.mylogin.cnf'}}))".format(mysql_nodes=" ".join(node.node for node in self.mysql_nodes)))['output']
             mylogin_cnf = base64.b64decode(output[2:-2].replace('\\n', ''))
-            if len(mylogin_cnf) > 200:
+            if len(mylogin_cnf) > 300:
                 return mylogin_cnf
         raise ValueError('Fetched MYSQL_TEST_LOGIN_FILE invalid')
 
@@ -100,7 +100,7 @@ class Controller(ArgumentParser):
             node.upload_file(content=self.cert_manager.deserialization(node.certificate), remote_file_path='/opt/superset-cluster/mysql-server/mysql_server_certificate.pem')
             node.run_python_container_command("ContainerConnection(container='mysql').run_mysql_server()")
             if node == self.mysql_nodes[0]:
-                self.mylogin_cnf = self.get_mylogin_cnf()
+                self.mylogin_cnf = self.get_mylogin_cnf(node)
 
 
     def start_mysql_mgmt(self, node: remote.RemoteConnection, state: str, priority: int):

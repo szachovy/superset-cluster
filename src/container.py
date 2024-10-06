@@ -296,7 +296,6 @@ class ContainerConnection:
                 return self.client.secrets.create(name='mysql_superset_password', data=self.mysql_superset_password).id
 
             def run(self) -> None:
-                print('hello from superset run')
                 self.client.services.create(
                     name="superset",
                     image="ghcr.io/szachovy/superset-cluster-service:latest",
