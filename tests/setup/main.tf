@@ -104,6 +104,7 @@ resource "docker_container" "nodes" {
   provisioner "local-exec" {
     command = <<-EOT
       docker cp ../../src $HOSTNAME:/opt/superset-testing
+      docker cp ../../services/mysql-mgmt/interfaces.py $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
       docker exec $HOSTNAME /bin/bash -c \
         "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
@@ -144,20 +145,19 @@ resource "null_resource" "generate_ansible_group_vars" {
     when    = create
     command = <<-EOT
       mkdir $(dirname $GROUP_VARS_FILE)
-      cp $DEFAULTS_FILE $GROUP_VARS_FILE
       {
+        echo "virtual_network_interface: eth0"
         echo "virtual_ip_address: \"$VIRTUAL_IP_ADDRESS\""
-        echo "virtual_ip_address_mask: \"$VIRTUAL_IP_ADDRESS_MASK\""
+        echo "virtual_network_mask: \"$VIRTUAL_NETWORK_MASK\""
         echo "node_prefix: \"$NODE_PREFIX\""
-      } >> $GROUP_VARS_FILE
+      } > $GROUP_VARS_FILE
     EOT
 
     environment = {
-      DEFAULTS_FILE           = "../../src/defaults.yml"
       GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
       NODE_PREFIX             = "${var.node_prefix}"
       VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")
-      VIRTUAL_IP_ADDRESS_MASK = cidrnetmask("${var.subnet}")
+      VIRTUAL_NETWORK_MASK = cidrnetmask("${var.subnet}")
     }
   }
 

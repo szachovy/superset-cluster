@@ -54,4 +54,6 @@ RUN \
 
 USER root
 
-ENTRYPOINT sh -c "chown --recursive superset:superset /etc/ssl/certs && gosu superset nginx & exec gosu superset /app/entrypoint.sh"
+ENTRYPOINT sh -c " \
+  chown --recursive superset:superset /etc/ssl/certs && \
+  gosu superset nginx & exec gosu superset /app/entrypoint.sh"

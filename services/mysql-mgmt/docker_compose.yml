@@ -39,7 +39,7 @@ services:
       - "NET_ADMIN"
     environment:
       - VIRTUAL_IP_ADDRESS=${VIRTUAL_IP_ADDRESS}
-      - VIRTUAL_IP_ADDRESS_MASK=${VIRTUAL_IP_ADDRESS_MASK}
+      - VIRTUAL_NETWORK_MASK=${VIRTUAL_NETWORK_MASK}
       - VIRTUAL_NETWORK_INTERFACE=${VIRTUAL_NETWORK_INTERFACE}
       - VIRTUAL_NETWORK=${VIRTUAL_NETWORK}
       - STATE=${STATE}
@@ -64,11 +64,17 @@ services:
         set -euo pipefail
         sudo keepalived --use-file "/opt/default/keepalived.conf"
         sleep ${HEALTHCHECK_START_PERIOD}
-        mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf"
+        mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf" &
+        tail -f /opt/default/mysql_router/log/mysqlrouter.log
     container_name: "mysql-mgmt"
     restart: "always"
-    hostname: "${HOSTNAME}"
     network_mode: "host"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "[ $(pgrep -c mysqlrouter) -eq 1 ] && [ $(pgrep -c keepalived) -eq 2 ]"]
+      interval: "${HEALTHCHECK_INTERVAL}s"
+      timeout: "5s"
+      retries: "${HEALTHCHECK_RETRIES}"
+      start_period: "${HEALTHCHECK_START_PERIOD}s"
     cap_add:
       - "NET_ADMIN"
     volumes:

@@ -35,7 +35,7 @@ The following software needs to be installed on both the user's host and externa
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
 * `openssh-server v1:8.9p1-3ubuntu0.10`
 
-...python packages... docker
+...python packages... docker paramiko PYTHON VERSION IMPORTANT DUE TO MAGIC NUMBER
 
 ## Installation & Usage
 

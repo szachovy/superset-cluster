@@ -1,28 +1,7 @@
 
-import ctypes
-import ctypes.util
 import functools
 import threading
 import typing
-
-
-class socket_address(ctypes.Structure):
-    _fields_ = [
-        ('socket_address_family', ctypes.c_ushort),
-        ('socket_address_code', ctypes.c_byte * 14)
-    ]
-
-
-class socket_interface(ctypes.Structure):
-    _fields_ = [
-        ('socket_interface_family', ctypes.c_ushort),
-        ('socket_interface_port', ctypes.c_uint16),
-        ('socket_interface_address', ctypes.c_byte * 4)
-    ]
-
-
-class network_interface(ctypes.Structure):
-    pass
 
 
 class Overlay(type):
@@ -32,15 +11,20 @@ class Overlay(type):
             if class_attribute.startswith('_'):
                 continue
             attribute = getattr(instance, class_attribute)
-            if callable(attribute) and getattr(attribute, '_is_post_init_hook', False):
-                attribute()
+            if callable(attribute):
+                if getattr(attribute, '_is_run_selected_methods_once', False):
+                    attribute()
         return instance
 
+    def run_all_methods(cls) -> typing.Any:
+        for attribute in dir(cls):
+            if callable(getattr(cls, attribute)) and not attribute.startswith('_'):
+                getattr(cls, attribute)(cls)
+        return cls
+
     @staticmethod
-    def post_init_hook(method: typing.Callable) -> typing.Callable:
-        # Logging what container on what node
-        # {component} STATUS output after {command} is {output} ...
-        method._is_post_init_hook = True
+    def run_selected_methods_once(method: typing.Callable) -> typing.Callable:
+        method._is_run_selected_methods_once = True
         @functools.wraps(method)
         def method_wrapper(self, *args, **kwargs) -> typing.Callable:
             return method(self, *args, **kwargs)
