@@ -60,7 +60,6 @@ class RemoteConnection:
             "error": stderr.read().decode()
         }
 
-
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:
         stack = [(local_directory_path, remote_directory_path)]
         while stack:

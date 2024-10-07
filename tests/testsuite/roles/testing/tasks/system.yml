@@ -9,10 +9,9 @@
         --virtual-ip-address {{ virtual_ip_address }} \
         --virtual-network-interface {{ virtual_network_interface }} \
         --virtual-network-mask {{ virtual_network_mask }}
-    } | tee /tmp/superset_cluster_testsuite.log
+    } > /tmp/superset_cluster_testsuite.log 2>&1
   args:
     executable: /bin/bash
     chdir: '../../'
-
   async: 1800
   poll: 60

@@ -146,6 +146,7 @@ resource "null_resource" "generate_ansible_group_vars" {
     command = <<-EOT
       mkdir $(dirname $GROUP_VARS_FILE)
       {
+        echo "virtual_network_interface: eth0"
         echo "virtual_ip_address: \"$VIRTUAL_IP_ADDRESS\""
         echo "virtual_network_mask: \"$VIRTUAL_NETWORK_MASK\""
         echo "node_prefix: \"$NODE_PREFIX\""

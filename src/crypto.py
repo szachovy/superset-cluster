@@ -62,12 +62,3 @@ class OpenSSL:
                 encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption()
             ).decode('utf-8')
         return pki.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM).decode('utf-8')
-
-# import crypto
-# obj = crypto.OpenSSL()
-# a = obj.generate_private_key()
-# b = obj.generate_csr('asd', a)
-# c = obj.generate_certificate('asd', b, a)
-# print(obj.deserialize(a))
-# print(obj.deserialize(b))
-# print(obj.deserialize(c))
