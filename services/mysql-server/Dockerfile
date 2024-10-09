@@ -1,18 +1,29 @@
-FROM mysql:8.0-debian
+ARG BUILDPLATFORM="amd64"
+FROM --platform=${BUILDPLATFORM} mysql:8.0-debian
 
-COPY --chown=mysql "mysql_config.cnf.tpl" "/opt/"
+LABEL version="1.0"
+
+ENV LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8"
+
+COPY --chown=mysql:mysql "mysql_config.cnf.tpl" "/opt/"
 COPY "store_credentials.exp" "/opt/"
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
 RUN \
-  apt \
+  set \
+    -eux \
+  && \
+  apt-get \
     update \
   && \
-  apt \
+  apt-get \
     install \
       --yes \
-      curl \
-      expect \
-      gosu \
+      "curl=7.88.1-10+deb12u7" \
+      "expect=5.45.4-2+b1" \
+      "gosu=1.14-1+b10" \
   && \
   curl \
     --location \
@@ -22,22 +33,60 @@ RUN \
   && \
   chmod \
     555 \
-      envsubst \
+      "envsubst" \
   && \
   mkdir \
     "/etc/mysql/ssl" \
+  && \
+  apt-get \
+    clean \
   && \
   rm \
     --recursive \
     --force \
       "/var/lib/apt/lists/*"
 
-ENTRYPOINT sh -c " \
-  chmod 444 /var/run/mysqld/mysql_root_password && \
-  chown --recursive mysql:mysql /etc/mysql/ssl /etc/mysql/conf.d /var/run/mysqld && \
-  gosu mysql ./envsubst -no-unset -no-empty < /opt/mysql_config.cnf.tpl > /etc/mysql/conf.d/mysql_config.cnf && \
-  exec gosu mysql docker-entrypoint.sh mysqld & \
-  sleep ${HEALTHCHECK_START_PERIOD} && \
-  chmod 400 /var/run/mysqld/mysql_root_password && \
-  chown --recursive root:root /var/run/mysqld && \
-  tail -f /dev/null"
+ENTRYPOINT [ "/bin/bash", "-c", " \
+  chmod \
+    444 \
+      /var/run/mysqld/mysql_root_password \
+  && \
+  chown \
+    --recursive \
+      mysql:mysql \
+    /etc/mysql/ssl \
+    /etc/mysql/conf.d \
+    /var/run/mysqld \
+  && \
+  gosu \
+    mysql \
+      ./envsubst \
+        -no-unset \
+        -no-empty \
+          < /opt/mysql_config.cnf.tpl \
+          > /etc/mysql/conf.d/mysql_config.cnf \
+  && \
+  exec \
+    gosu \
+      mysql \
+        docker-entrypoint.sh \
+        mysqld \
+  & \
+  sleep \
+    ${HEALTHCHECK_START_PERIOD} \
+  && \
+  chmod \
+    400 \
+      /var/run/mysqld/mysql_root_password \
+  && \
+  chown \
+    --recursive \
+      root:root \
+    /var/run/mysqld \
+  && \
+  tail \
+    --follow \
+      /dev/null \
+        -- \
+  " \
+]

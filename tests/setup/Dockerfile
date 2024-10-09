@@ -1,17 +1,24 @@
-FROM ubuntu:22.04
+ARG BUILDPLATFORM="amd64"
+FROM --platform=${BUILDPLATFORM} ubuntu:22.04
+
+LABEL version="1.0"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
 
 RUN \
-  apt \
+  set \
+    -eux \
+  && \
+  apt-get \
     update \
   && \
-  apt \ 
+  apt-get \ 
     install \
       --yes \
-      ca-certificates \
-      curl \
-      nano \
+      "ca-certificates=20240203~22.04.1" \
+      "curl=7.81.0-1ubuntu1.18" \
   && \
   install \
     --mode \
@@ -21,7 +28,7 @@ RUN \
   && \
   curl \
     --location \
-      https://download.docker.com/linux/ubuntu/gpg \
+      "https://download.docker.com/linux/ubuntu/gpg" \
     --output \
       "/etc/apt/keyrings/docker.asc" \
   && \
@@ -52,7 +59,7 @@ RUN \
   && \
   mkdir \
     --mode \
-      700 \
+        700 \
       "/home/superset/.ssh" \
   && \
   chmod \
@@ -64,25 +71,32 @@ RUN \
       "/opt" \
       "/home/superset/.ssh" \
   && \
-  apt \
+  apt-get \
     update \
   && \
-  apt \
+  apt-get \
     install \
       --yes \
-      containerd.io=1.6.31-1 \
-      docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy \
-      docker-ce=5:26.1.0-1~ubuntu.22.04~jammy \
-      docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy \
-      openssh-server=1:8.9p1-3ubuntu0.10 \
+      "containerd.io=1.6.31-1" \
+      "docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy" \
+      "docker-ce=5:26.1.0-1~ubuntu.22.04~jammy" \
+      "docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy" \
+      "openssh-server=1:8.9p1-3ubuntu0.10" \
   && \
-  apt \
-    clean
-
+  apt-get \
+    clean \
+  && \
+  rm \
+    --recursive \
+    --force \
+      "/var/lib/apt/lists/*"
+    
 COPY --chown=superset:superset "id_rsa.pub" "/home/superset/.ssh/authorized_keys"
 
 USER superset
 
-ENV PYTHONPATH="/opt/superset-cluster:${PYTHONPATH}"
+ENV LANG="C.UTF-8" \
+    LC_ALL="C.UTF-8" \
+    PYTHONPATH="/opt/superset-cluster:${PYTHONPATH}"
 
-ENTRYPOINT ["/bin/bash", "-c", "tail --follow /dev/null"]
+ENTRYPOINT ["/bin/bash", "-c", "tail --follow /dev/null --"]
