@@ -1,2 +1,3 @@
+---
 ignored:
   - DL3002  # Using gosu in some entrypoints

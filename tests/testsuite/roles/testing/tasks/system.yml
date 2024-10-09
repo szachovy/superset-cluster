@@ -1,5 +1,5 @@
 ---
-- name: end-to-end run
+- name: "Run main program"
   ansible.builtin.shell: |
     set -euxo pipefail
     {
@@ -11,7 +11,7 @@
         --virtual-network-mask {{ virtual_network_mask }}
     } > /tmp/superset_cluster_testsuite.log 2>&1
   args:
-    executable: /bin/bash
-    chdir: '../../'
+    executable: "/bin/bash"
+    chdir: "../../"
   async: 1800
   poll: 60

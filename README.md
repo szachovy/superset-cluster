@@ -11,12 +11,14 @@ Resilent Business Intelligence.
 
 ### Hosts specification
 
+* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4, IPv6 on this interface should be disabled or made non-routing default.
+* 
 * Images are built specifically for `x86_64` or `arm64` Linux platforms shipped with Python 3.
 * Both `ssh` and `docker` services on the nodes must be enabled by default.
 _[See how to do it with `systemctl`](https://documentation.suse.com/smart/systems-management/html/reference-systemctl-enable-disable-services/index.html#id-1.4)._
 * Nodes must be able to resolve DNS names between each other.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
-* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4.
+
 * Ability to read/write to the `/opt` directory on the nodes as well as in the user's host.
 * On the MySQL nodes port `3306` should be open for communication within the nodes.
 * On the Management nodes port `6446` should be open for communication within the nodes.

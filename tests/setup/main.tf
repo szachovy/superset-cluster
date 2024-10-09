@@ -80,11 +80,6 @@ resource "docker_container" "nodes" {
   image      = docker_image.node_image.name
   privileged = true  # nodes containers are treated as standalone virtual machines
 
-  ports {
-    internal = 8088
-    external = 8088 + count.index
-  }
-
   ulimit {
     name = "nofile"
     soft = 1024
@@ -106,16 +101,16 @@ resource "docker_container" "nodes" {
       docker cp ../../src $HOSTNAME:/opt/superset-testing
       docker cp ../../services/mysql-mgmt/interfaces.py $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
-      docker exec $HOSTNAME /bin/bash -c \
-        "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
-        && python3 /tmp/get-pip.py > /dev/null 2>&1 \
-        && python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
-      docker exec --user=root $HOSTNAME /bin/bash -c \
-        "service ssh start \
-        && service docker start \
-        && echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf \
-        && usermod --append --groups docker superset \
-        && chown --recursive superset:superset /opt/superset-testing"
+      docker exec $HOSTNAME /bin/bash -c " \
+        wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py && \
+        python3 /tmp/get-pip.py > /dev/null 2>&1 && \
+        python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
+      docker exec --user=root $HOSTNAME /bin/bash -c " \
+        service ssh start && \
+        service docker start && \
+        echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf && \
+        usermod --append --groups docker superset && \
+        chown --recursive superset:superset /opt/superset-testing"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no
@@ -154,9 +149,9 @@ resource "null_resource" "generate_ansible_group_vars" {
     EOT
 
     environment = {
-      GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
-      NODE_PREFIX             = "${var.node_prefix}"
-      VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")
+      GROUP_VARS_FILE      = "../testsuite/group_vars/testing.yml"
+      NODE_PREFIX          = "${var.node_prefix}"
+      VIRTUAL_IP_ADDRESS   = cidrhost("${var.subnet}", "${10}")
       VIRTUAL_NETWORK_MASK = cidrnetmask("${var.subnet}")
     }
   }
