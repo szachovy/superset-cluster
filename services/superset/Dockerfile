@@ -41,7 +41,6 @@ RUN \
       superset:superset \
     "/var/lib/nginx" \
     "/var/log/nginx" \
-    "/app" \
   && \
   apt-get \
     clean \
@@ -58,6 +57,7 @@ ENTRYPOINT [ "/bin/bash", "-c", " \
     --recursive \
       superset:superset \
     /etc/ssl/certs \
+    /app \
   && \
   gosu \
     superset \
@@ -67,5 +67,10 @@ ENTRYPOINT [ "/bin/bash", "-c", " \
     gosu \
       superset \
         /app/entrypoint.sh \
+  && \
+  chown \
+    --recursive \
+      root:root \
+    /app \
   " \
 ]

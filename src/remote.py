@@ -23,7 +23,10 @@ class RemoteConnection:
         except (paramiko.ssh_exception.SSHException, socket.gaierror):
             self.ssh_config = paramiko.SSHConfig()
             self.ssh_config.parse(open(f'{pathlib.Path.home()}/.ssh/config'))
-            self.ssh_client.connect(hostname=self.node_hostname(), username='superset', key_filename=self.identity_path())
+            try:
+                self.ssh_client.connect(hostname=self.node_hostname(), username='superset', key_filename=self.identity_path())
+            except KeyError:
+                logger.error(f'Unable to connect to {self.node} from the localhost')
         self.sftp_client = self.ssh_client.open_sftp()
 
     def log_remote_command_execution(func):

@@ -17,6 +17,7 @@ import requests
 
 import abc
 
+
 class ContainerInstance(abc.ABC):
     @abc.abstractmethod
     def run(self):
@@ -80,7 +81,15 @@ class ContainerConnection:
 
     def get_logs(self):
         if self.container == 'superset':
-            return self.client.containers.get(self.client.containers.list(filters={"name": "superset"})[0].name).logs().decode('utf-8')
+            try:
+                return self.client.containers.get(self.client.containers.list(filters={"name": "superset"})[0].name).logs().decode('utf-8')
+            except IndexError:
+                return 'Container superset has not been spawned by the service.'
+        if self.container == 'mysql-mgmt':
+            container_log: str = self.client.containers.get('mysql-mgmt-initcontainer').logs().decode('utf-8') + '\n\n'
+            if 'mysql-mgmt' in self.client.containers.list(all=True):
+                container_log += self.client.containers.get(self.container).logs().decode('utf-8')
+            return container_log
         return self.client.containers.get(self.container).logs().decode('utf-8')
 
     def wait_until_healthy(self, cls: typing.Type[ContainerInstance]) -> str:
@@ -94,7 +103,7 @@ class ContainerConnection:
                 if self.client.containers.get(self.container).attrs['State']['Health']['Status'] == 'healthy':
                     return f'{self.get_logs()}\nContainer {self.container} is healthy'
             time.sleep(cls.healthcheck_interval)
-        return f'{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck'
+        return f'{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck to be healthy'
 
     def run_mysql_server(self) -> None:
         class MySQL_Server(ContainerInstance):
@@ -298,7 +307,7 @@ class ContainerConnection:
             def run(self) -> None:
                 self.client.services.create(
                     name="superset",
-                    image="ghcr.io/szachovy/superset-cluster-service:latest",
+                    image="ghcr.io/szachovy/superset-cluster-superset-service:latest",
                     networks=["superset-network"],
                     secrets = [
                         docker.types.SecretReference(secret_id=self.create_superset_secret_key_secret(), secret_name="superset_secret_key"),

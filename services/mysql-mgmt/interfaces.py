@@ -40,13 +40,16 @@ def network_interfaces(network_interface: str) -> str | StopIteration:
     if clib.getifaddrs(ctypes.pointer(network_interfaces)) == 0:
         current_interface: network_interface_structure = network_interfaces.contents
         while True:
-            if current_interface.network_interface_name == network_interface.encode() and current_interface.network_interface_data:
+            if current_interface.network_interface_name == network_interface.encode() \
+                   and current_interface.network_interface_data:
                 if current_interface.network_interface_address.contents.socket_address_family == 2:
-                    return socket.inet_ntop(socket.AF_INET,
-                                            ctypes.cast(ctypes.pointer(current_interface.network_interface_address.contents),
-                                                        ctypes.POINTER(socket_interface)
-                                                ).contents.socket_interface_address
-                                            )
+                    return socket.inet_ntop(
+                        socket.AF_INET,
+                        ctypes.cast(
+                            ctypes.pointer(current_interface.network_interface_address.contents),
+                            ctypes.POINTER(socket_interface)
+                        ).contents.socket_interface_address
+                    )
             if not current_interface.next_network_interface:
                 clib.freeifaddrs(network_interfaces)
                 raise StopIteration(f'Provided network interface {network_interface} not found.')

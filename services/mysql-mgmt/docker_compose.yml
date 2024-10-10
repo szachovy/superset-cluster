@@ -1,8 +1,7 @@
 ---
 services:
   initcontainer:
-    build: "."
-    image: "mysql-mgmt"
+    image: "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest"
     user: "root"
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
@@ -12,7 +11,7 @@ services:
       - "/bin/bash"
       - "-c"
       - |
-        set -euxo pipefail
+        set -euo pipefail
         export MYSQL_SUPERSET_PASSWORD=$(</run/secrets/mysql_superset_password)
         if ! mysqlsh \
                --login-path="${PRIMARY_MYSQL_NODE}" \
@@ -98,22 +97,23 @@ services:
       - "mysql_superset_password"
 
   maincontainer:
-    image: "mysql-mgmt"
+    image: "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest"
+    pull_policy: "always"
     user: "superset"
     entrypoint:
       - "/bin/bash"
       - "-c"
       - |
-        set -euxo pipefail
+        set -euo pipefail
         sudo keepalived --use-file "/opt/default/keepalived.conf"
         sleep ${HEALTHCHECK_START_PERIOD}
         mysqlrouter --config "/opt/default/mysql_router/mysqlrouter.conf" &
-        tail --follow /opt/default/mysql_router/log/mysqlrouter.log
+        tail --follow --verbose /opt/default/mysql_router/log/*.log
     container_name: "mysql-mgmt"
-    restart: "always"
+    restart: "on-failure"
     network_mode: "host"
     healthcheck:
-      test: ["CMD", "sh", "-c", "[ $(pgrep -c mysqlrouter) -eq 1 ] && [ $(pgrep -c keepalived) -eq 2 ]"]
+      test: ["CMD", "sh", "-c", "[ $(pgrep --full --count 'mysqlrouter --config /opt/default/mysql_router/mysqlrouter.conf') -eq 1 ] && [ $(pgrep --count keepalived) -eq 2 ]"]
       interval: "${HEALTHCHECK_INTERVAL}s"
       timeout: "5s"
       retries: "${HEALTHCHECK_RETRIES}"

@@ -1,5 +1,10 @@
 terraform {
+  required_version = "1.0.10"
   required_providers {
+    null = {
+      source  = "hashicorp/null"
+      version = "3.2.2"
+    }
     docker = {
       source  = "kreuzwerker/docker"
       version = "3.0.2"
@@ -13,7 +18,7 @@ provider "docker" {
 
 resource "null_resource" "manage_ssh" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {
@@ -56,7 +61,7 @@ resource "docker_image" "node_image" {
   name = "${var.node_prefix}:${var.node_version}"
 
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   build {
@@ -78,7 +83,7 @@ resource "docker_container" "nodes" {
   name       = "${var.node_prefix}-${count.index}"
   hostname   = "${var.node_prefix}-${count.index}"
   image      = docker_image.node_image.name
-  privileged = true  # nodes containers are treated as standalone virtual machines
+  privileged = true # nodes containers are treated as standalone virtual machines
 
   ulimit {
     name = "nofile"
@@ -88,7 +93,7 @@ resource "docker_container" "nodes" {
 
   networks_advanced {
     name         = docker_network.nodes_network.name
-    ipv4_address = cidrhost("${var.subnet}", "${2 + count.index}")
+    ipv4_address = cidrhost(var.subnet, 2 + count.index)
   }
 
   labels {
@@ -120,7 +125,7 @@ resource "docker_container" "nodes" {
 
     environment = {
       HOSTNAME   = "${var.node_prefix}-${count.index}"
-      IP_ADDRESS = cidrhost("${var.subnet}", "${2 + count.index}")
+      IP_ADDRESS = cidrhost(var.subnet, 2 + count.index)
     }
   }
 
@@ -133,7 +138,7 @@ resource "docker_container" "nodes" {
 
 resource "null_resource" "generate_ansible_group_vars" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {
@@ -150,9 +155,9 @@ resource "null_resource" "generate_ansible_group_vars" {
 
     environment = {
       GROUP_VARS_FILE      = "../testsuite/group_vars/testing.yml"
-      NODE_PREFIX          = "${var.node_prefix}"
-      VIRTUAL_IP_ADDRESS   = cidrhost("${var.subnet}", "${10}")
-      VIRTUAL_NETWORK_MASK = cidrnetmask("${var.subnet}")
+      NODE_PREFIX          = var.node_prefix
+      VIRTUAL_IP_ADDRESS   = cidrhost(var.subnet, 10)
+      VIRTUAL_NETWORK_MASK = cidrnetmask(var.subnet)
     }
   }
 
@@ -168,7 +173,7 @@ resource "null_resource" "generate_ansible_group_vars" {
 
 resource "null_resource" "finish_configuration" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {

@@ -23,10 +23,12 @@
     (node.container.Config.ExposedPorts | length != 0)
 
 - name: "Check out passwordless ssh to the nodes"
-  ansible.builtin.shell: "ssh superset@{{ container.value['Name'] }} exit"
+  ansible.builtin.command: "ssh superset@{{ container.value['Name'] }} exit"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
+  register: "ssh_command"
+  changed_when: "ssh_command.rc != 0"
 
 - name: "Check out internal nodes settings"
   community.docker.docker_container_exec:
