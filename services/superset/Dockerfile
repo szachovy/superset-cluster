@@ -67,10 +67,5 @@ ENTRYPOINT [ "/bin/bash", "-c", " \
     gosu \
       superset \
         /app/entrypoint.sh \
-  && \
-  chown \
-    --recursive \
-      root:root \
-    /app \
   " \
 ]

@@ -12,8 +12,8 @@
 - name: "Run functional tests on superset"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
-    command: "python3 -c '
-      import functional_superset;
+    command: "python3 -c
+      'import functional_superset;
       superset_functional = functional_superset.Superset(
         superset_container=\"{{ superset_container_name.stdout.strip() }}\",
         virtual_ip_address=\"{{ virtual_ip_address }}\"
@@ -26,8 +26,8 @@
 - name: "Run functional tests on mgmt"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
-    command: "python3 -c '
-      import functional_mgmt;
+    command: "python3 -c
+      'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
@@ -59,8 +59,8 @@
 - name: "Run functional tests on mgmt after disaster"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-1"
-    command: "python3 -c '
-      import functional_mgmt;
+    command: "python3 -c
+      'import functional_mgmt;
       mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
@@ -75,8 +75,8 @@
 - name: "Run functional tests on superset after disaster"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-1"
-    command: "python3 -c '
-      import functional_superset;
+    command: "python3 -c
+      'import functional_superset;
       superset_functional = functional_superset.Superset(
         superset_container=\"{{ superset_container_name.stdout.strip() }}\",
         virtual_ip_address=\"{{ virtual_ip_address }}\"

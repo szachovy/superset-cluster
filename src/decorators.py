@@ -1,3 +1,6 @@
+"""
+temp
+"""
 
 import functools
 import threading
@@ -24,7 +27,8 @@ class Overlay(type):
 
     @staticmethod
     def run_selected_methods_once(method: typing.Callable) -> typing.Callable:
-        method._is_run_selected_methods_once = True
+        method._is_run_selected_methods_once = True  # pylint: disable=protected-access
+
         @functools.wraps(method)
         def method_wrapper(self, *args, **kwargs) -> typing.Callable:
             return method(self, *args, **kwargs)
@@ -33,6 +37,7 @@ class Overlay(type):
     @staticmethod
     def single_sign_on(method_reference: typing.Callable) -> typing.Callable:
         lock = threading.Lock()
+
         @functools.wraps(method_reference)
         def method_wrapper(*args, **kwargs) -> str | dict[str, str]:
             if not method_wrapper.object_created:

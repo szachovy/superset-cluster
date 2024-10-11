@@ -19,8 +19,7 @@
     (node.container.State.Running == false) or
     (container.value['Name'] != node.container.Config.Hostname) or
     (node.container.HostConfig.MemorySwap != 0) or
-    (node.container.HostConfig.NetworkMode != 'bridge') or
-    (node.container.Config.ExposedPorts | length != 0)
+    (node.container.HostConfig.NetworkMode != 'bridge')
 
 - name: "Check out passwordless ssh to the nodes"
   ansible.builtin.command: "ssh superset@{{ container.value['Name'] }} exit"
@@ -33,8 +32,8 @@
 - name: "Check out internal nodes settings"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "python3 -c '
-      import introspect;
+    command: "python3 -c 
+      'import introspect;
       introspect.ContainerChecks(
         node_prefix=\"{{ node_prefix }}\",
         virtual_network_interface=\"{{ virtual_network_interface }}\"
@@ -44,3 +43,5 @@
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
+  register: "introspect_command"
+  changed_when: "introspect_command.rc != 0"

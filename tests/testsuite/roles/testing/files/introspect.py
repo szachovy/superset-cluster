@@ -1,10 +1,12 @@
-
+"""
+temporary
+"""
 import ipaddress
 import socket
 import subprocess
 
-import decorators
 import interfaces
+import decorators
 
 
 class ContainerChecks(metaclass=decorators.Overlay):
@@ -23,7 +25,8 @@ class ContainerChecks(metaclass=decorators.Overlay):
                     'status'
                 ],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                check=True
             ).returncode == 0, \
             f'SSH service is not running in {socket.gethostname()} node'
         assert \
@@ -34,7 +37,8 @@ class ContainerChecks(metaclass=decorators.Overlay):
                     'status'
                 ],
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                stderr=subprocess.PIPE,
+                check=True
             ).returncode == 0, \
             f'Docker service is not running in {socket.gethostname()} node'
 

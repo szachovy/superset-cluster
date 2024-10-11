@@ -1,3 +1,6 @@
+"""
+temporary
+"""
 
 import json
 import time
@@ -10,8 +13,8 @@ import decorators
 
 
 class Redis(container.ContainerConnection, metaclass=decorators.Overlay):
-    def __init__(self, container: str) -> None:
-        super().__init__(container=container)
+    def __init__(self, superset_container: str) -> None:
+        super().__init__(container=superset_container)
 
     @decorators.Overlay.run_selected_methods_once
     def status(self) -> None | AssertionError:
@@ -35,8 +38,8 @@ class Redis(container.ContainerConnection, metaclass=decorators.Overlay):
 
 
 class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
-    def __init__(self, container: str) -> None:
-        super().__init__(container=container)
+    def __init__(self, superset_container: str) -> None:
+        super().__init__(container=superset_container)
         self.superset_container: str = container
         self.celery_broker: str = "redis://redis:6379/0"
         self.celery_sql_lab_task_annotations: str = "sql_lab.get_sql_results"
@@ -91,8 +94,8 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
 class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, superset_container: str, virtual_ip_address: str) -> None:
         super().__init__(container=superset_container)
-        self.redis: typing.Type = Redis(container=superset_container)
-        self.celery: typing.Type = Celery(container=superset_container)
+        self.redis: typing.Type = Redis(superset_container=superset_container)
+        self.celery: typing.Type = Celery(superset_container=superset_container)
         self.virtual_ip_address: str = virtual_ip_address
         self.api_default_url: str = f"https://{virtual_ip_address}/api/v1"
         self.api_authorization_header: str = f"Authorization: Bearer {self.login_to_superset_api()}"
@@ -105,8 +108,12 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
         context.verify_mode = ssl.CERT_NONE
         with socket.create_connection((self.virtual_ip_address, 443)) as sock:
             with context.wrap_socket(sock, server_hostname=self.virtual_ip_address) as ssl_sock:
-                with open("/opt/superset-testing/server_certificate.pem", "wb") as cert:
-                    cert.write(ssl.DER_cert_to_PEM_cert(ssl_sock.getpeercert(binary_form=True)).encode())
+                with open(
+                    file="/opt/superset-testing/server_certificate.pem",
+                    mode="wb",
+                    encoding="utf-8"
+                ) as certificate:
+                    certificate.write(ssl.DER_cert_to_PEM_cert(ssl_sock.getpeercert(binary_form=True)).encode())
         self.copy_file_to_the_container(
             host_filepath="/opt/superset-testing/server_certificate.pem",
             container_dirpath="/app"
@@ -169,7 +176,11 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
 
     @decorators.Overlay.run_selected_methods_once
     def status_database(self) -> None | AssertionError:
-        with open("/opt/superset-cluster/mysql-mgmt/mysql_superset_password", "r") as mysql_superset_password:
+        with open(
+            file="/opt/superset-cluster/mysql-mgmt/mysql_superset_password",
+            mode="r",
+            encoding="utf-8"
+        ) as mysql_superset_password:
             payload: str = f"""
                 {
                     {
@@ -178,7 +189,7 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                         "impersonate_user": "false"
                     }
                 }
-            """
+            """    # noqa: E501
             command: str = f"""
                 curl
                     --location
