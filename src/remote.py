@@ -12,6 +12,7 @@ import random
 import socket
 import typing
 
+import cryptography
 import paramiko
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class RemoteConnection:
+    # pylint: disable=too-many-instance-attributes
     def __init__(self, node: str) -> None:
         self.node = node
         self.ssh_client = paramiko.SSHClient()
@@ -43,6 +45,12 @@ class RemoteConnection:
             except KeyError:
                 logger.error("Unable to connect to %s from the localhost", self.node)
         self.sftp_client = self.ssh_client.open_sftp()
+        self.key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey | None = None
+        self.csr: cryptography.x509.base.CertificateSigningRequest | None = None
+        self.certificate: cryptography.x509.base.Certificate | None = None
+        self.superset_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey | None = None
+        self.superset_csr: cryptography.x509.base.CertificateSigningRequest | None = None
+        self.superset_certificate: cryptography.x509.base.Certificate | None = None
 
     @staticmethod
     def log_remote_command_execution(func: typing.Callable):
@@ -75,8 +83,8 @@ class RemoteConnection:
         return self.ssh_config.lookup(self.node)['identityfile'][0]
 
     @log_remote_command_execution
-    def run_python_container_command(self, command: str) -> None:
-        nonce: str = f'{self.node}-{random.randrange(1, 4294967296)}'
+    def run_python_container_command(self, command: str) -> dict:
+        nonce = f'{self.node}-{random.randrange(1, 4294967296)}'
         with open(
             file=f"{os.path.dirname(os.path.abspath(__file__))}/container.py",
             mode="r",

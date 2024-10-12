@@ -18,7 +18,7 @@ import decorators
 import remote
 
 
-@decorators.Overlay.run_all_methods
+@decorators.Overlay.run_all_methods  # type: ignore[arg-type]
 class ArgumentParser:
     def validate_virtual_ip_address(self) -> None:
         try:
@@ -66,8 +66,12 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
     # pylint: disable=too-many-instance-attributes
     def __init__(self) -> None:
         super().__init__()
-        self.mysql_nodes: list[remote.RemoteConnection] = [remote.RemoteConnection(node) for node in self.mysql_nodes]
-        self.mgmt_nodes: list[remote.RemoteConnection]  = [remote.RemoteConnection(node) for node in self.mgmt_nodes]
+        self.mysql_nodes: list[remote.RemoteConnection] = [
+            remote.RemoteConnection(node) for node in self.mysql_nodes
+        ]  # type: ignore[assignment]
+        self.mgmt_nodes: list[remote.RemoteConnection] = [
+            remote.RemoteConnection(node) for node in self.mgmt_nodes
+        ]  # type: ignore[assignment]
         self.cert_manager = crypto.OpenSSL()
 
     @decorators.Overlay.run_selected_methods_once
@@ -92,7 +96,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                                                                                self.ca_key)
 
     @functools.lru_cache(maxsize=1)
-    def get_mylogin_cnf(self, node: remote.RemoteConnection) -> str | ValueError:
+    def get_mylogin_cnf(self, node: remote.RemoteConnection) -> bytes:
         for _ in range(3):
             output = node.run_python_container_command(
                 "print( \

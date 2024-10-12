@@ -40,9 +40,9 @@ network_interface_structure._fields_ = [  # pylint: disable=protected-access
 ]
 
 
-def network_interfaces(network_interface: str) -> str | StopIteration:
-    clib: ctypes.CDLL = ctypes.CDLL(ctypes.util.find_library("c"))
-    interfaces: ctypes.POINTER = ctypes.POINTER(network_interface_structure)()
+def network_interfaces(network_interface: str) -> str:
+    clib = ctypes.CDLL(ctypes.util.find_library("c"))
+    interfaces = ctypes.POINTER(network_interface_structure)()
     if clib.getifaddrs(ctypes.pointer(interfaces)) == 0:
         current_interface: network_interface_structure = interfaces.contents
         while True:

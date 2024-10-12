@@ -19,8 +19,13 @@ import subprocess
 import docker
 import requests
 
+
 # pylint: disable=too-few-public-methods
 class ContainerInstance(abc.ABC):
+    healthcheck_interval: int
+    healthcheck_retries: int
+    healthcheck_start_period: int
+
     @abc.abstractmethod
     def run(self):
         pass
@@ -28,15 +33,15 @@ class ContainerInstance(abc.ABC):
 
 class ContainerConnection:
     def __init__(self, container: str | None) -> None:
-        self.client: docker.client.DockerClient = docker.from_env()
-        self.container: str = container
+        self.client = docker.from_env()
+        self.container = container
 
     def run_command_on_the_container(
             self,
             command: str,
             user: str = "superset",
             environment: dict | None = None
-            ) -> bytes | requests.exceptions.RequestException:
+            ) -> bytes:
         try:
             request = self.client.containers.get(
                 self.container
@@ -56,7 +61,7 @@ class ContainerConnection:
                 f"""Command: {command} failed with exit code [{request.exit_code}]
                     giving the following output: {request.output}
                 """
-            ) from error
+            )
         return request.output
 
     def info(self) -> dict:
@@ -74,7 +79,7 @@ class ContainerConnection:
     def find_in_the_output(output: bytes, text: bytes) -> bool:
         return text in output
 
-    def find_node_ip(self, node: str) -> str | socket.gaierror:
+    def find_node_ip(self, node: str) -> ipaddress.IPv4Address:
         try:
             return ipaddress.IPv4Address(socket.gethostbyname(node))
         except socket.gaierror as socketerror:
@@ -84,13 +89,13 @@ class ContainerConnection:
 
     @staticmethod
     def extract_session_cookie(request_output: bytes) -> str | ValueError:
-        cookie_section: str | None = re.search(r"Set-Cookie: session=(.*?);", request_output.decode("utf-8"))
+        cookie_section = re.search(r"Set-Cookie: session=(.*?);", request_output.decode("utf-8"))
         if cookie_section:
             return cookie_section.group(1)
-        raise ValueError(f"Session cookie in {request_output} has not been found")
+        raise ValueError(f"Session cookie in {request_output!r} has not been found")
 
     @staticmethod
-    def decode_command_output(command: bytes) -> dict | ValueError:
+    def decode_command_output(command: bytes) -> dict[str, dict]:
         try:
             return ast.literal_eval(
                 command.decode("utf-8")
@@ -99,7 +104,7 @@ class ContainerConnection:
                 .replace("false", "False")
             )
         except (ValueError, SyntaxError) as error:
-            raise ValueError(f"Error decoding command {command}") from error
+            raise ValueError(f"Error decoding command {command!r}") from error
 
     def get_logs(self) -> str:
         if self.container == "superset":
@@ -112,14 +117,14 @@ class ContainerConnection:
             except IndexError:
                 return "Container superset has not been spawned by the service"
         if self.container == "mysql-mgmt":
-            container_log: str = ""
+            container_log = ""
             for container in self.client.containers.list(all=True, filters={"name": "mysql-mgmt"})[::-1]:
                 container_log += self.client.containers.get(container.name).logs().decode("utf-8") + "\n\n"
             return container_log
         return self.client.containers.get(self.container).logs().decode("utf-8")
 
     def wait_until_healthy(self, cls: typing.Type[ContainerInstance]) -> str:
-        cls.run()
+        cls.run()  # type: ignore[call-arg]
         time.sleep(cls.healthcheck_start_period)
         for _ in range(cls.healthcheck_retries):
             if self.container == "superset":
@@ -188,7 +193,7 @@ class ContainerConnection:
         import subprocess
         command = 'docker login ghcr.io -u szachovy -p ...'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(self.wait_until_healthy(MySQLServer(self.client, self.container)))
+        print(self.wait_until_healthy(MySQLServer(self.client, str(self.container))))  # type: ignore[arg-type]
 
     # pylint: disable=too-many-arguments
     def run_mysql_mgmt(
@@ -277,7 +282,7 @@ class ContainerConnection:
 
         return print(
             self.wait_until_healthy(
-                MySQLMgmt(
+                MySQLMgmt(  # type: ignore[arg-type]
                     virtual_ip_address=virtual_ip_address,
                     virtual_network_mask=virtual_network_mask,
                     virtual_network_interface=virtual_network_interface,
@@ -400,12 +405,17 @@ class ContainerConnection:
         self.container = "redis"
         print(
             self.wait_until_healthy(
-                Redis(self.client, virtual_ip_address)
+                Redis(self.client, virtual_ip_address)  # type: ignore[arg-type]
             )
         )
         self.container = "superset"
         print(
             self.wait_until_healthy(
-                Superset(self.client, virtual_ip_address, superset_secret_key, mysql_superset_password)
+                Superset(
+                    self.client,
+                    virtual_ip_address,
+                    superset_secret_key,
+                    mysql_superset_password
+                )  # type: ignore[arg-type]
             )
         )

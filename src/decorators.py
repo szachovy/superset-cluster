@@ -2,6 +2,8 @@
 temp
 """
 
+# mypy: disable-error-code=attr-defined
+
 import functools
 import threading
 import typing

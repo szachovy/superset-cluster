@@ -30,7 +30,7 @@ class OpenSSL:
         return base64.b64encode(os.urandom(42)).decode('utf-8')
 
     @staticmethod
-    def generate_private_key() -> cryptography.hazmat.bindings._rust.openssl.rsa.RSAPrivateKey:
+    def generate_private_key() -> cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey:
         return cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
             public_exponent=65537,
             key_size=2048,
@@ -39,8 +39,8 @@ class OpenSSL:
 
     @staticmethod
     def generate_csr(common_name: str,
-                     private_key: cryptography.hazmat.bindings._rust.openssl.rsa.RSAPrivateKey
-                     ) -> cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest:
+                     private_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey
+                     ) -> cryptography.x509.base.CertificateSigningRequest:
         return cryptography.x509.CertificateSigningRequestBuilder().subject_name(
                 cryptography.x509.Name(
                     [
@@ -54,13 +54,12 @@ class OpenSSL:
         )
 
     @staticmethod
-    def generate_certificate(common_name: str,
-                             private_key:
-                             cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest |
-                             cryptography.hazmat.bindings._rust.openssl.rsa.RSAPrivateKey,
-                             ca_key:
-                             cryptography.hazmat.bindings._rust.openssl.rsa.RSAPrivateKey |
-                             None = None) -> cryptography.hazmat.bindings._rust.x509.Certificate:
+    def generate_certificate(
+        common_name: str,
+        private_key: cryptography.x509.base.CertificateSigningRequest |
+        cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey,
+        ca_key: cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey | None = None
+    ) -> cryptography.x509.base.Certificate:
         return cryptography.x509.CertificateBuilder().subject_name(
                 cryptography.x509.Name(
                     [
@@ -82,20 +81,23 @@ class OpenSSL:
             ).not_valid_after(
                 datetime.datetime.utcnow() + datetime.timedelta(days=365)
             ).sign(
-                ca_key if ca_key else private_key,
+                ca_key if ca_key else private_key,  # type: ignore[arg-type]
                 algorithm=cryptography.hazmat.primitives.hashes.SHA256(),
                 backend=cryptography.hazmat.backends.default_backend()
         )
 
     @staticmethod
     def deserialization(pki:
-                        cryptography.hazmat.bindings._rust.openssl.rsa.RSAPrivateKey |
-                        cryptography.hazmat.bindings._rust.x509.CertificateSigningRequest |
-                        cryptography.hazmat.bindings._rust.x509.Certificate) -> str:
+                        cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey |
+                        cryptography.x509.base.CertificateSigningRequest |
+                        cryptography.x509.base.Certificate |
+                        None) -> str:
         if isinstance(pki, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey):
             return pki.private_bytes(
                 encoding=cryptography.hazmat.primitives.serialization.Encoding.PEM,
                 format=cryptography.hazmat.primitives.serialization.PrivateFormat.TraditionalOpenSSL,
                 encryption_algorithm=cryptography.hazmat.primitives.serialization.NoEncryption()
             ).decode('utf-8')
-        return pki.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM).decode('utf-8')
+        if pki:
+            return pki.public_bytes(cryptography.hazmat.primitives.serialization.Encoding.PEM).decode('utf-8')
+        raise ValueError('Cannot deserialize certificate, error while generation')
