@@ -1,5 +1,69 @@
 """
-temp
+Containers Management Module
+
+This module provides a set of classes and functions for managing containerized
+services.
+
+Classes:
+--------
+1. ContainerInstance:
+   An abstract base class representing a generic container instance that requires
+   health-check configuration. It serves as a blueprint for implementing concrete
+   container services with a `run` method for initialization.
+
+2. ContainerConnection:
+   Manages connections to specific Docker containers, offering functionalities
+   for running commands, copying files, retrieving logs, and checking container
+   health. It provides methods to execute commands on containers, transfer files
+   to containers, and monitor the container's health status.
+
+3. MySQLServer (nested in `run_mysql_server`):
+   Manages the setup and initialization of a MySQL Server instance, including
+   configuration of health-check intervals, retries, and environmental variables.
+
+4. MySQLMgmt (nested in `run_mysql_mgmt`):
+   Configures and runs a MySQL Management instance that sets up virtual IPs and
+   network-related environmental variables required for container orchestration.
+
+5. Redis (nested in `run_superset`):
+   Responsible for initializing and setting up a Redis container in a Docker
+   Swarm network, which is essential for supporting Superset in clustered
+   deployments.
+
+6. Superset (nested in `run_superset`):
+   Manages the setup of the Superset service, configuring health checks,
+   environment variables, and Docker secrets for secure handling of sensitive data.
+
+Key Functionalities:
+--------------------
+- Cluster Management:
+  Functions for starting, stopping, and managing containers or services
+  such as MySQL, Redis, and Superset, designed to run in a cluster setup using
+  Docker containers.
+
+- Command Execution on Containers:
+  users are allowed to execute shell commands on the target container and retrieve
+  the output, handling any errors that occur during execution.
+
+- File Transfer to Containers:
+  users are able to package files as a tar archive
+  and transfer them into a specified directory in the target container.
+
+- Container Health Checking:
+  mechanisms for polling container health until it reaches a defined "healthy" status or
+  a timeout occurs are provided.
+
+Usage Example:
+--------------
+This module is used on behalf of RemoteConnection, because the following is
+executed on the remote nodes.
+Being on the node it is possible to run the corroutines on the containers directly:
+
+ContainerConnection(container='mysql').run_mysql_server()  # starts mysql container and returns status
+print(ContainerConnection(
+    container='mysql'
+    ).run_command_on_the_container("echo 'Hello World'")
+)  # prints Hello World from mysql container
 """
 
 import abc
@@ -342,7 +406,7 @@ class ContainerConnection:
                 self.mysql_superset_password = mysql_superset_password
                 self.healthcheck_start_period = 60
                 self.healthcheck_interval = 60
-                self.healthcheck_retries = 20
+                self.healthcheck_retries = 14
 
             def create_superset_secret_key_secret(self) -> str:
                 return self.client.secrets.create(

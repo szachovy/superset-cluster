@@ -1,5 +1,38 @@
 """
-asdas
+Management Node Functional Tests
+
+This module provides a test suite for verifying the functionality and failover
+mechanisms of superset cluster within a management node.
+
+Classes:
+--------
+- Mgmt:
+  Primarly it runs mysqlsh dba commands on the InnoDB cluster and parses if output is expected given status.
+
+Key Functionalities:
+--------------------
+- Status of Cluster: Validates the status of a MySQL InnoDB cluster
+  settings and fault tolerance based on the current state.
+
+- Status of Routers: Ensures that the MySQL routers are online and connected to
+  the expected primary and secondary management nodes.
+
+- After Disaster Checks: After a simulated disaster, confirms that one of
+  the secondary nodes has been promoted to the primary role.
+
+Example Usage:
+--------------
+To use the `Mgmt` class, create an instance with the virtual IP address,
+node prefix from the terraform generated nodes, and the `after_disaster` status.
+Status methods are called automatically.
+
+```python
+Mgmt(
+    virtual_ip_address="192.168.0.100",
+    node_prefix="node",
+    after_disaster=False
+)
+mgmt_functional.check_after_disaster()  # call only if after_disaster=True
 """
 
 import requests
@@ -7,7 +40,7 @@ import container
 import decorators
 
 
-class MgmtNodeFunctionalTests(container.ContainerConnection, metaclass=decorators.Overlay):
+class Mgmt(container.ContainerConnection, metaclass=decorators.Overlay):
     def __init__(self, virtual_ip_address: str, node_prefix: str, after_disaster: bool) -> None:
         super().__init__(container="mysql-mgmt")
         self.copy_file_to_the_container(

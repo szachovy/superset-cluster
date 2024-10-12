@@ -1,6 +1,41 @@
 """
-temporary
+Container Introspective Checks
+
+This module provides the `ContainerChecks` class, which performs essential
+service and network checks within a containerized or virtualized environment.
+
+Classes:
+--------
+1. ContainerChecks:
+    A class that conducts a series of health and configuration checks for
+    container nodes. It verifies the status of services such as SSH and Docker,
+    confirms that each node can be resolved through DNS, and checks network
+    interface settings for correct hostname resolution.
+
+Key Functionalities:
+--------------------
+- Service Status Verification: The `status_services` method checks whether
+  essential services like SSH and Docker are running, and it raises an alert if
+  they are not operational.
+
+- DNS Resolution Validation: The `status_dns` method ensures that each node
+  within the specified range can be resolved using DNS, thereby confirming that
+  the nodes are reachable and correctly configured in the DNS server.
+
+- Network Interface Configuration Check: The `status_network_interfaces`
+  method verifies that the system hostname resolves to the correct IP address
+  assigned to the specified network interface. This ensures that the node's
+  hostname and IP configuration are consistent with the intended network setup.
+
+Example Usage:
+--------------
+```python
+ContainerChecks(
+    node_prefix="node",
+    virtual_network_interface="192.168.0.100"
+)
 """
+
 import ipaddress
 import socket
 import subprocess

@@ -1,5 +1,62 @@
 """
-temporary
+Superset Node Functional Tests
+
+This module provides classes and methods for testing the
+Superset node ecosystem, including Redis, Celery, and Superset itself,
+within containerized environments.
+
+Classes:
+--------
+- Redis:
+  A class to manage and test Redis service operations within a specified
+  container. It verifies connectivity and fetches query results.
+
+- Celery:
+  A class to manage and validate the Celery service associated with the
+  Superset container. It verifies connectivity and performs tests related
+  to cache and query processing.
+
+- Superset:
+  A class to manage and interact with Superset services within a container.
+  It handles login operations, checks the status of the database and Swarm
+  configuration, runs SQL queries, and retrieves query results.
+
+Key Functionalities:
+--------------------
+- Service Status Checks: Each class includes methods that verify the
+  operational status of core services (e.g., Redis ping, Celery worker status,
+  and Superset database connection) to ensure the environment is functioning
+  properly.
+
+- Authenticated API Access: The `Superset` class supports secure API
+  interactions by managing SSL certificates and handling session-based login
+  for accessing and testing Superset features.
+
+- Query Execution and Result Retrieval: Through the Superset class, users
+  can execute SQL queries, track their execution status, and retrieve results,
+  while leveraging Redis and Celery to monitor processing and caching
+  capabilities.
+
+- Configuration Validation: The module performs checks on critical
+  configurations such as database connectivity, Swarm node activation, and
+  the presence of necessary Celery worker features, to confirm that services
+  are properly configured for use within the Superset ecosystem.
+
+
+Example Usage:
+--------------
+To use the `Superset` class, create an instance with the container name and
+virtual IP address, after necessary checks it runs query pipeline involving
+all the connectivity components, results are parsed with the expectations.
+Status methods are called automatically.
+
+```python
+superset_functional = Superset(
+    superset_container="superset.1.qwecnevnouwoebvuwec",
+    virtual_ip_address="192.168.1.100"
+)
+query_dttm = superset_functional.run_query()
+superset_functional.get_query_results(query_dttm)
 """
 
 import json
@@ -48,7 +105,7 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
     @decorators.Overlay.run_selected_methods_once
     def status(self) -> None:
         command = f"""python3 -c
-            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())
+            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().ping())'
         """
         test_connection = self.run_command_on_the_container(command)
         assert \
@@ -60,7 +117,7 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
     @decorators.Overlay.run_selected_methods_once
     def status_cache(self) -> None:
         command = f"""python3 -c
-            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().conf())
+            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().conf())'
         """
         celery_workers_configuration: dict = self.decode_command_output(
             self.run_command_on_the_container(command)
@@ -75,9 +132,9 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
                 \nCommand: {command}\nReturned decoded: {celery_workers_configuration}
             """
 
-    def find_processed_queries(self) -> bool | AssertionError:
+    def find_processed_queries(self) -> bool:
         command = f"""python3 -c
-            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().stats())
+            'import celery; print(celery.Celery(\"tasks\", broker=\"{self.celery_broker}\").control.inspect().stats())'
         """
         celery_workers_stats: dict = self.decode_command_output(
             self.run_command_on_the_container(command)
@@ -93,7 +150,7 @@ class Celery(container.ContainerConnection, metaclass=decorators.Overlay):
 
 
 class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
-    def __init__(self, superset_container: str, virtual_ip_address) -> None:
+    def __init__(self, superset_container: str, virtual_ip_address: str) -> None:
         super().__init__(container=superset_container)
         self.redis = Redis(superset_container=superset_container)
         self.celery = Celery(superset_container=superset_container)
@@ -113,8 +170,7 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                 if certificate_binary is not None:
                     with open(
                         file="/opt/superset-testing/server_certificate.pem",
-                        mode="wb",
-                        encoding="utf-8"
+                        mode="wb"
                     ) as certificate:
                         certificate.write(ssl.DER_cert_to_PEM_cert(certificate_binary).encode())
         self.copy_file_to_the_container(
@@ -126,13 +182,13 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     def login_to_superset_api(self) -> str:
         self.load_ssl_server_certificate()
         headers = "Content-Type: application/json"
-        payload = "{{'username': 'superset', 'password': 'cluster', 'provider': 'db', 'refresh': true}}"
+        payload = '{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}'
         command = f"""
-            curl
-                --cacert /app/server_certificate.pem
-                --silent
-                --url {self.api_default_url}/security/login
-                --header '{headers}'
+            curl \
+                --cacert /app/server_certificate.pem \
+                --silent \
+                --url {self.api_default_url}/security/login \
+                --header '{headers}' \
                 --data '{payload}'
         """
         api_login_output = self.run_command_on_the_container(command)
@@ -146,10 +202,10 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     @decorators.Overlay.single_sign_on
     def login_to_superset(self) -> dict:
         command = f"""
-            curl
-            --cacert /app/server_certificate.pem
-            --include
-            --url {self.api_default_url}/security/csrf_token/
+            curl \
+            --cacert /app/server_certificate.pem \
+            --include \
+            --url {self.api_default_url}/security/csrf_token/ \
             --header '{self.api_authorization_header}'
         """
         csrf_login_request = self.run_command_on_the_container(command)
@@ -160,15 +216,15 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             """
         session_request_cookie = self.extract_session_cookie(csrf_login_request)
         csrf_token = json.loads(csrf_login_request.decode('utf-8').split('\r\n\r\n')[1]).get("result")
-        command = f"""  # type: ignore[no-redef]
-            curl
-                --location
-                --cacert /app/server_certificate.pem
-                --include
-                --url https://{self.virtual_ip_address}/login/
-                --header 'Cookie: session={session_request_cookie}'
+        command = f"""
+            curl \
+                --location \
+                --cacert /app/server_certificate.pem \
+                --include \
+                --url https://{self.virtual_ip_address}/login/ \
+                --header 'Cookie: session={session_request_cookie}' \
                 --data 'csrf_token={csrf_token}'
-        """
+        """    # type: ignore[no-redef]
         superset_login_request = self.run_command_on_the_container(command)
         assert \
             not self.find_in_the_output(superset_login_request, b"Redirecting..."), \
@@ -188,26 +244,24 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             mode="r",
             encoding="utf-8"
         ) as mysql_superset_password:
-            payload = f"""
-                {
-                    {
-                        "database_name": "MySQL",
-                        "sqlalchemy_uri": f"mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446/superset",
-                        "impersonate_user": "false"
-                    }
-                }
-            """    # noqa: E501
+            payload = f'''
+            {{
+                "database_name": "MySQL",
+                "sqlalchemy_uri": "mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{self.virtual_ip_address}:6446/superset",
+                "impersonate_user": "false"
+            }}
+            '''    # noqa: E501
             command = f"""
-                curl
-                    --location
-                    --cacert /app/server_certificate.pem
-                    --silent
-                    {self.api_default_url}/database/test_connection/
-                    --header 'Content-Type: application/json'
-                    --header '{self.api_authorization_header}'
-                    --header '{self.api_csrf_header}'
-                    --header '{self.api_session_header}'
-                    --header 'Referer: https://{self.virtual_ip_address}'
+                curl \
+                    --location \
+                    --cacert /app/server_certificate.pem \
+                    --silent \
+                    {self.api_default_url}/database/test_connection/ \
+                    --header 'Content-Type: application/json' \
+                    --header '{self.api_authorization_header}' \
+                    --header '{self.api_csrf_header}' \
+                    --header '{self.api_session_header}' \
+                    --header 'Referer: https://{self.virtual_ip_address}' \
                     --data '{payload}'
             """
             test_database_connection = self.run_command_on_the_container(command)
@@ -229,18 +283,18 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             "The testing localhost is supposed to be a Swarm manager, but it is not"
 
     def run_query(self) -> float:
-        payload = "{{'database_id': 1, 'runAsync': true, 'sql': 'SELECT * FROM superset.logs;'}}"
+        payload = '{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}}'
         command = f"""
-            curl
-                --location
-                --cacert /app/server_certificate.pem
-                --silent
-                {self.api_default_url}/sqllab/execute/
-                --header 'Content-Type: application/json'
-                --header '{self.api_authorization_header}'
-                --header '{self.api_session_header}'
-                --header '{self.api_csrf_header}'
-                --header 'Referer: https://{self.virtual_ip_address}'
+            curl \
+                --location \
+                --cacert /app/server_certificate.pem \
+                --silent \
+                {self.api_default_url}/sqllab/execute/ \
+                --header 'Content-Type: application/json' \
+                --header '{self.api_authorization_header}' \
+                --header '{self.api_session_header}' \
+                --header '{self.api_csrf_header}' \
+                --header 'Referer: https://{self.virtual_ip_address}' \
                 --data '{payload}'
         """
         sqllab_run_query = self.run_command_on_the_container(command)
@@ -261,15 +315,15 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     def get_query_results(self, dttm_time_query_identifier: float) -> None:
         time.sleep(45)  # state refreshing
         command = f"""
-            curl
-                --location
-                --cacert /app/server_certificate.pem
-                --silent
-                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})'
-                --header 'Accept: application/json'
-                --header '{self.api_authorization_header}'
-                --header '{self.api_session_header}'
-                --header 'Referer: https://{self.virtual_ip_address}'
+            curl \
+                --location \
+                --cacert /app/server_certificate.pem \
+                --silent \
+                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' \
+                --header 'Accept: application/json' \
+                --header '{self.api_authorization_header}' \
+                --header '{self.api_session_header}' \
+                --header 'Referer: https://{self.virtual_ip_address}' \
                 --header '{self.api_csrf_header}'
         """
         query_result = self.decode_command_output(
@@ -277,13 +331,13 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
         )
         list_of_results = query_result.get("result")
         if isinstance(list_of_results, list):
-            assert \
-                list_of_results[0]["state"] == "success", \
-                f"""Could not find query state or returned unsuccessful
-                    \nCommand: {command}\nReturned decoded: {query_result}
-                """
             first_result = list_of_results[0]
             if isinstance(first_result, dict):
+                assert \
+                    first_result["state"] == "success", \
+                    f"""Could not find query state or returned unsuccessful
+                        \nCommand: {command}\nReturned decoded: {query_result}
+                    """
                 results_key = f"superset_results{first_result['resultsKey']}"
                 assert \
                     self.redis.fetch_query_result(results_key), \

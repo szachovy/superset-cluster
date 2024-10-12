@@ -7,13 +7,13 @@
     - name: "Run sanity tasks from testing role"
       ansible.builtin.include_role: {name: "testing", tasks_from: "sanity"}
 
-# - name: "System testing"
-#   connection: "local"
-#   hosts: "testing"
-#   any_errors_fatal: true
-#   tasks:
-#     - name: "Run system tasks from testing role"
-#       ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
+- name: "System testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run system tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
 
 - name: "Functional testing"
   connection: "local"

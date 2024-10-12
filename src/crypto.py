@@ -1,5 +1,46 @@
 """
-temp
+This module provides utilities for generating and managing cryptographic keys, passwords,
+and certificates using the OpenSSL library through the `cryptography` package.
+
+Classes:
+--------
+- `OpenSSL`:
+  A utility class for cryptographic operations, providing static methods for password
+  and key generation, CSR and certificate creation, and serialization of cryptographic objects.
+
+Key Functionalities:
+--------------------
+- Password Generation: Generate secure MySQL and Superset credentials.
+- Key Generation: Create RSA private keys for encryption and signing.
+- CSR Creation: Generate Certificate Signing Requests for obtaining certificates.
+- Certificate Generation: Create X.509 certificates, optionally signed by a Certificate Authority (CA).
+- Deserialization: Convert private keys and certificates to PEM format strings for storage and transmission.
+
+Usage Example:
+--------------
+import crypto
+obj = crypto.OpenSSL()
+
+# Generates a Base64-encoded secret key for Superset web application.
+obj.generate_superset_secret_key()
+
+# Creates a random 12-character password for Superset user's database.
+obj.generate_mysql_superset_password()
+
+# Generates a secure MySQL root password encoded in Base64.
+obj.generate_mysql_root_password()
+
+# Creates a new RSA private key for encryption and signing.
+key = obj.generate_private_key()
+
+# Creates a Certificate Signing Request using a provided common name and RSA private key.
+csr = obj.generate_csr('temporary-cn', key)
+
+# Generates an X.509 certificate using the provided common name and private key, with optional CA signing.
+certificate = obj.generate_certificate('temporary-cn', csr, key)
+
+# Deserializes the given RSA private key, CSR, or certificate into a PEM format string.
+print(obj.deserialize(certificate))
 """
 
 # pylint: disable=c-extension-no-member

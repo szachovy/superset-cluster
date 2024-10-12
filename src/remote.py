@@ -1,5 +1,39 @@
 """
-func
+Remote Connection Management Module
+
+This module facilitates operations to the superset-cluster nodes.
+
+Classes:
+--------
+- `RemoteConnection`:
+  This class manages secure remote connections to the specified remote node using SSH and SFTP.
+  It allows for executing commands on remote servers, uploading files and directories,
+  and managing cryptographic keys and certificates for secure communications.
+
+Key Functionalities:
+--------------------
+- SSH and SFTP client connection: Establishes SSH and SFTP connection though system settings or user's SSH config file.
+
+- Runs remote python commands: Logs and executes a Python command on the remote node via
+  compiled container.py python file placement with functions to run on it.
+
+- Remote filesystem management: Sets permissions, creates, and uploads files or directories to the remote paths
+  using dedicated SFTP client routines.
+
+Example Usage:
+--------------
+To create a connection to a remote node, instantiate the RemoteConnection class with the node's
+hostname. After the connection is established, you can use its methods to interact
+with the remote server.
+
+```python
+remote_node = RemoteConnection("mysql1")
+remote_node.create_directory("/opt/example")
+remote_node.upload_directory(".", "/opt/example/content")
+remote_node.upload_file("/opt/example/content/run.py")
+output = remote_node.run_python_container_command("print('Hello World')")
+print(output)
+remote_node.change_permissions_to_root("/opt/example/content/run.py")
 """
 
 import functools

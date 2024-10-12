@@ -28,7 +28,7 @@
     container: "{{ node_prefix }}-0"
     command: "python3 -c
       'import functional_mgmt;
-      mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
+      mgmt_functional = functional_mgmt.Mgmt(
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=False
@@ -61,7 +61,7 @@
     container: "{{ node_prefix }}-1"
     command: "python3 -c
       'import functional_mgmt;
-      mgmt_functional = functional_mgmt.MgmtNodeFunctionalTests(
+      mgmt_functional = functional_mgmt.Mgmt(
         virtual_ip_address=\"{{ virtual_ip_address }}\",
         node_prefix=\"{{ node_prefix }}\",
         after_disaster=True

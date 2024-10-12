@@ -1,5 +1,49 @@
 """
-temp
+Cluster Initialization Module
+
+This module is responsible for initializing and managing a Superset cluster
+environment, including the setup and configuration of MySQL servers, management
+nodes, and Superset services within a distributed system.
+
+Classes:
+--------
+- `ArgumentParser`:
+  This class is responsible for parsing and validating command-line
+  arguments related to the cluster configuration.
+
+- `Controller`:
+  This class manages the orchestration of the MySQL servers,
+  management nodes, and the Superset service. It ensures that all
+  components are properly configured, securely authenticated, and operationally
+  ready to interact with each other over a specified network.
+
+Key Functionalities:
+--------------------
+- Cluster Initialization: Sets up MySQL and management nodes, configures
+  virtual IP settings, and initiates the Superset service.
+
+- Secure Authentication: Uses OpenSSL for generating private keys and
+  certificates required for secure communications between cluster components.
+
+- Remote Management: Employs the remote connection routines for
+  handling SSH/SFTP communications with nodes, including uploading
+  directories/files and executing commands.
+
+Example Usage:
+--------------
+This module is intended to run with the main program executable.
+However, for the development purposes it is possible to run the code base
+from the CLI given arguments in the sequence specified below:
+
+1. Virtual IP address (e.g., "192.168.1.100")
+2. Virtual network interface (e.g., "eth0")
+3. Virtual network mask (e.g., "24")
+4. Comma-separated list of management node hostnames (e.g., "mgmt1,mgmt2")
+5. Comma-separated list of MySQL node hostnames (e.g., "mysql1,mysql2,mysql3")
+
+```bash
+python initialize.py 192.168.1.100 eth0 24 mgmt1,mgmt2 mysql1,mysql2,mysql3
+```
 """
 
 # pylint: disable=consider-using-f-string
