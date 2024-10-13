@@ -253,11 +253,6 @@ class ContainerConnection:
                         }
                     }
                 )
-        # temporary
-        import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
-        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        print(self.wait_until_healthy(MySQLServer(self.client, str(self.container))))  # type: ignore[arg-type]
 
     # pylint: disable=too-many-arguments
     def run_mysql_mgmt(
@@ -338,11 +333,6 @@ class ContainerConnection:
                     shell=True,  # noqa: E128
                     check=True,  # noqa: E128
                 )  # noqa: E124
-
-        # temporary
-        import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
-        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return print(
             self.wait_until_healthy(
@@ -462,10 +452,6 @@ class ContainerConnection:
                     ]
                 )
 
-        #temporary
-        import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
-        subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.container = "redis"
         print(
             self.wait_until_healthy(

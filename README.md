@@ -13,13 +13,13 @@ Resilent Business Intelligence.
 
 ![Demo](docs/demo.gif)
 
-![Architecture](docs/arch.svg)
+Follow [ARCHITECTURE.md](docs/ARCHITECTURE.md) for more.
 
 ## Requirements
 
 ### Hosts specification
 
-* Images are built and tested specifically for `Ubuntu 22.04 x86_64` Linux platforms shipped with `Python 3.10.12`.
+* Images are built and tested specifically for `Ubuntu 22.04 x86_64` Linux platforms shipped with `Python v3.10.12`.
 * Both `ssh` and `docker` services must be enabled by default on the nodes.
 * Nodes must be able to resolve DNS names among themselves and communicate freely over the internal network,
   only port `443` should be exposed on the management nodes.
@@ -44,7 +44,7 @@ The following software needs to be installed on the external nodes:
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
 * `openssh-server v1:8.9p1-3ubuntu0.10`
-* `Python v3.10.12` with the following third party packages:
+* `python v3.10.12` with the following third party packages:
   * `docker v7.1.0`
 
 ## Usage
@@ -73,8 +73,6 @@ Navigate to `https://<virtual-ip-address>` in your web browser. Use the default 
 Remember to change the default credentials after successfully logging in by going to _Settings > Info > Reset My Password_.
 
 ## Development
-
-For development purposes you can setup Terraform testing infrastructure being in `./tests/setup`, run:
 
 Set up the Terraform testing infrastructure for development, by navigating to the `./tests/setup` directory and running:
 
