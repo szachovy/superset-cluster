@@ -32,7 +32,7 @@
 - name: "Check out internal nodes settings"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "python3 -c 
+    command: "python3 -c
       'import introspect;
       introspect.ContainerChecks(
         node_prefix=\"{{ node_prefix }}\",

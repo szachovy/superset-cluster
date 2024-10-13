@@ -1,11 +1,15 @@
+# superset-cluster
+
 ![Tests](https://github.com/szachovy/superset-cluster/actions/workflows/tests.yml/badge.svg)
 ![Style](https://github.com/szachovy/superset-cluster/actions/workflows/style.yml/badge.svg)
 
-# superset-cluster
-
 Resilent Business Intelligence.
 
-* Survives multiple node failures with recovery mechanisms
+* Survives multiple node failures, recovery mechanisms are integrated.
+* No need for complex cluster management (e.g., Kubernetes).
+* Security by default, data in transit encryption.
+* Maintenance without downtime.
+* Implements caching and parallel job execution for enhanced performance.
 
 ![Demo](docs/demo.gif)
 
@@ -16,16 +20,20 @@ Resilent Business Intelligence.
 ### Hosts specification
 
 * Images are built and tested specifically for `Ubuntu 22.04 x86_64` Linux platforms shipped with `Python 3.10.12`.
-* Both `ssh` and `docker` services on the nodes must be enabled by default.
-* Nodes must be able to resolve DNS names between each other and be able to freely comunicate between each other in the internal network, only `443` port in the management nodes should be exposed.
-* The user's host must be able to `ssh` to each of the nodes passwordlessly.
+* Both `ssh` and `docker` services must be enabled by default on the nodes.
+* Nodes must be able to resolve DNS names among themselves and communicate freely over the internal network,
+  only port `443` should be exposed on the management nodes.
+* The user's host must be able to connect to each of the nodes via SSH passwordlessly.
 * Ability to read/write to the `/opt` directory on the nodes.
-* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4, IPv6 on this interface should be disabled or made non-routable default.
+* At least one available and running network interface must be capable of sending and receiving packets
+  between the user's host and management nodes via IPv4, IPv6 should be disabled or configured to be non-routable by default.
 
 ### Installed software
 
 The following software needs to be installed on the user's host:
-...
+
+* `python v3.10.12` with the following third party packages:
+  * `paramiko v3.5.0`
 
 The following software needs to be installed on the external nodes:
 
@@ -36,12 +44,15 @@ The following software needs to be installed on the external nodes:
 * `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
 * `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
 * `openssh-server v1:8.9p1-3ubuntu0.10`
-
-...python packages... docker paramiko PYTHON VERSION IMPORTANT DUE TO MAGIC NUMBER
+* `Python v3.10.12` with the following third party packages:
+  * `docker v7.1.0`
 
 ## Usage
 
-Having two management nodes setup and three mysql nodes setup, run `./superset-cluster` with virtual ip address set to connect to on the specified network interface with a mask on the default gateway to be used as an example:
+To set up superset cluster with two management nodes and three MySQL nodes,
+run `./superset-cluster` with the virtual IP address configured for the
+specified available network interface. Use the following command as an example,
+including the appropriate subnet mask for the default gateway:
 
 ```bash
 ./superset-cluster \
@@ -52,21 +63,27 @@ Having two management nodes setup and three mysql nodes setup, run `./superset-c
   --virtual-network-mask 24
 ```
 
-Follow `./superset-cluster --help` for more information.
+For more information, run `./superset-cluster --help`.
 
-Next, navigate to https://192.168.1.100 in your web browser with the IP address provided in the installation to the default credentials username: superset, password: cluster
-Remember to change default credentials after successful log in the Settings > Info > Reset my password
+Navigate to `https://<virtual-ip-address>` in your web browser. Use the default credentials to log in:
+
+* Username: `superset`
+* Password: `cluster`
+
+Remember to change the default credentials after successfully logging in by going to _Settings > Info > Reset My Password_.
 
 ## Development
 
 For development purposes you can setup Terraform testing infrastructure being in `./tests/setup`, run:
+
+Set up the Terraform testing infrastructure for development, by navigating to the `./tests/setup` directory and running:
 
 ```bash
 terraform init
 terraform apply
 ```
 
-Consequently, run [Usage](#usage) command against this infrastructure. For default parameters it would be:
+Once the infrastructure is up and running, you can use the [Usage](#usage) command against it:
 
 ```bash
 ./superset-cluster \
@@ -77,7 +94,7 @@ Consequently, run [Usage](#usage) command against this infrastructure. For defau
   --virtual-network-mask 16
 ```
 
-Please refer to [the testing guide](tests/TESTING.md) for more information.
+For more detailed information, please refer to [the testing guide](tests/TESTING.md).
 
 ## License
 
@@ -85,11 +102,13 @@ Please refer to [the testing guide](tests/TESTING.md) for more information.
 
 ## Contributing
 
-If you notice anything missing, spot a bug, or have an enhancement proposal, feel free to open an issue with the appropriate label. Pull requests are welcome. Please ensure that the tests are updated as necessary.
+If you notice anything missing, spot a bug, or have an enhancement proposal,
+feel free to open an issue with the appropriate label.
+Pull requests are welcome. Please ensure that the tests are updated as necessary.
 
 ## Personal contact information
 
-In case of any inquiries, please write to email: wjmaj98@gmail.com
+In case of any inquiries, please write an email to: _wjmaj98@gmail.com_
 
 ## Additional resources
 
