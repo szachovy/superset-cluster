@@ -1,33 +1,33 @@
 ![Tests](https://github.com/szachovy/superset-cluster/actions/workflows/tests.yml/badge.svg)
-![System Tests Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/szachovy/d4fd269e226b0ed70954f861129a2756/raw/superset-cluster-codecoverage.json)
 ![Style](https://github.com/szachovy/superset-cluster/actions/workflows/style.yml/badge.svg)
 
 # superset-cluster
 
 Resilent Business Intelligence.
-[That's how it works](docs/ARCHITECTURE.md).
+
+* Survives multiple node failures with recovery mechanisms
+
+![Demo](docs/demo.gif)
+
+![Architecture](docs/arch.svg)
 
 ## Requirements
 
 ### Hosts specification
 
-* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4, IPv6 on this interface should be disabled or made non-routing default.
-* 
-* Images are built specifically for `x86_64` or `arm64` Linux platforms shipped with Python 3.
+* Images are built and tested specifically for `Ubuntu 22.04 x86_64` Linux platforms shipped with `Python 3.10.12`.
 * Both `ssh` and `docker` services on the nodes must be enabled by default.
-_[See how to do it with `systemctl`](https://documentation.suse.com/smart/systems-management/html/reference-systemctl-enable-disable-services/index.html#id-1.4)._
-* Nodes must be able to resolve DNS names between each other.
+* Nodes must be able to resolve DNS names between each other and be able to freely comunicate between each other in the internal network, only `443` port in the management nodes should be exposed.
 * The user's host must be able to `ssh` to each of the nodes passwordlessly.
-
-* Ability to read/write to the `/opt` directory on the nodes as well as in the user's host.
-* On the MySQL nodes port `3306` should be open for communication within the nodes.
-* On the Management nodes port `6446` should be open for communication within the nodes.
-* ... `2377` port for swarm cluster ...
-* For production setups follow [SECURITY.md](docs/SECURITY.md).
+* Ability to read/write to the `/opt` directory on the nodes.
+* There should be at least one available and running network interface capable of sending and receiving packets between the user's host and management nodes via IPv4, IPv6 on this interface should be disabled or made non-routable default.
 
 ### Installed software
 
-The following software needs to be installed on both the user's host and external nodes. The setup has been tested on [`ubuntu:24.04`](tests/setup/Dockerfile) with the following versions:
+The following software needs to be installed on the user's host:
+...
+
+The following software needs to be installed on the external nodes:
 
 * `ca-certificates v20230311ubuntu0.22.04.1`
 * `containerd.io v1.6.31-1`
@@ -39,39 +39,45 @@ The following software needs to be installed on both the user's host and externa
 
 ...python packages... docker paramiko PYTHON VERSION IMPORTANT DUE TO MAGIC NUMBER
 
-## Installation & Usage
+## Usage
 
-With the [Requirements](#requirements) satisfied, you can build and run the entire setup from the repository root catalog:
-
-```bash
-./run.sh
-```
-
-Explore [docs](docs/) for further information about the setup, or visit [additional resources](#additional-resources) to learn more about Superset and MySQL components as a whole.
-
-### Example
-
-Having the `tun0` network interface on the localhost that enables connections to the hosts available for the management nodes with the following addresses:
-* `10.145.211.151`
-* `10.145.211.152`
-
-With hosts available for the MySQL InnoDB cluster having the following addresses:
-* `10.145.211.153`
-* `10.145.211.154`
-* `10.145.211.156`
-
-The exemplary command for execution is as follows:
+Having two management nodes setup and three mysql nodes setup, run `./superset-cluster` with virtual ip address set to connect to on the specified network interface with a mask on the default gateway to be used as an example:
 
 ```bash
-./run.sh \
-  --network-interface=tun0 \
-  --mgmt-nodes=10.145.211.151,10.145.211.152 \
-  --mysql-nodes=10.145.211.153,10.145.211.154,10.145.211.156
+./superset-cluster \
+  --mgmt-nodes node1,node2 \
+  --mysql-nodes node3,node4,node5 \
+  --virtual-ip-address 192.168.1.100 \
+  --virtual-network-interface eth0 \
+  --virtual-network-mask 24
 ```
 
-### Development
+Follow `./superset-cluster --help` for more information.
 
-For development purposes, you can set up and run end-to-end tests from the test suite locally. Testing infrastructure remains preserved. Please refer to [the testing guide](tests/TESTING.md) for more information.
+Next, navigate to https://192.168.1.100 in your web browser with the IP address provided in the installation to the default credentials username: superset, password: cluster
+Remember to change default credentials after successful log in the Settings > Info > Reset my password
+
+## Development
+
+For development purposes you can setup Terraform testing infrastructure being in `./tests/setup`, run:
+
+```bash
+terraform init
+terraform apply
+```
+
+Consequently, run [Usage](#usage) command against this infrastructure. For default parameters it would be:
+
+```bash
+./superset-cluster \
+  --mgmt-nodes node-0,node-1 \
+  --mysql-nodes node-2,node-3,node-4 \
+  --virtual-ip-address 172.18.0.10 \
+  --virtual-network-interface eth0 \
+  --virtual-network-mask 16
+```
+
+Please refer to [the testing guide](tests/TESTING.md) for more information.
 
 ## License
 
@@ -90,3 +96,4 @@ In case of any inquiries, please write to email: wjmaj98@gmail.com
 * [What is Apache Superset?](https://superset.apache.org/docs/intro)
 * [Chapter 23 InnoDB Cluster](https://dev.mysql.com/doc/refman/8.0/en/mysql-innodb-cluster-introduction.html)
 * [Redis OSS and Stack](https://redis.io/docs/latest/operate/oss_and_stack/)
+* [NGINX Reverse Proxy](https://docs.nginx.com/nginx/admin-guide/web-server/reverse-proxy/)

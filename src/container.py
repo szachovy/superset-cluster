@@ -255,7 +255,7 @@ class ContainerConnection:
                 )
         # temporary
         import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
+        command = 'docker login ghcr.io -u szachovy -p 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'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         print(self.wait_until_healthy(MySQLServer(self.client, str(self.container))))  # type: ignore[arg-type]
 
@@ -341,7 +341,7 @@ class ContainerConnection:
 
         # temporary
         import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
+        command = 'docker login ghcr.io -u szachovy -p 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'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return print(
@@ -464,7 +464,7 @@ class ContainerConnection:
 
         #temporary
         import subprocess
-        command = 'docker login ghcr.io -u szachovy -p ...'
+        command = 'docker login ghcr.io -u szachovy -p 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'
         subprocess.run(command, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         self.container = "redis"
         print(

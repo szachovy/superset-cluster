@@ -283,7 +283,7 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             "The testing localhost is supposed to be a Swarm manager, but it is not"
 
     def run_query(self) -> float:
-        payload = '{{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}}'
+        payload = '{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}'
         command = f"""
             curl \
                 --location \

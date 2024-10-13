@@ -1,3 +1,5 @@
 # Architecture
 
-![Architecture](arch.jpg)
+![Architecture](arch.svg)
+
+_Documentation in progress._
