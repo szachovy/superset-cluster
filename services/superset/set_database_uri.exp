@@ -1,9 +1,38 @@
 #!/usr/bin/expect -f
 
-spawn superset shell
-expect ">>>"
-send "import mysql_connect; mysql_connect.create_mysql_connection();\n"
-expect ">>>"
-send "exit()\n"
+set timeout 10
+
+if {[catch {spawn superset shell} result]} {
+    puts "Failed to start the Superset shell: $result"
+    exit 1
+}
+
+expect {
+    ">>>" {
+        send "import mysql_connect; mysql_connect.create_mysql_connection()\n"
+    }
+    timeout {
+        puts "Timeout while waiting for Superset shell prompt to create MySQL database connection"
+        exit 1
+    }
+    eof {
+        puts "Superset shell prompt to create MySQL database connection terminated unexpectedly"
+        exit 1
+    }
+}
+
+expect {
+    ">>>" {
+        send "exit()\n"
+    }
+    timeout {
+        puts "Timeout while waiting for Superset shell prompt to create MySQL database connection"
+        exit 1
+    }
+    eof {
+        puts "Superset shell prompt to create MySQL database connection terminated unexpectedly"
+        exit 1
+    }
+}
 
 expect eof

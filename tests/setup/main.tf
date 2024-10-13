@@ -1,5 +1,10 @@
 terraform {
+  required_version = "1.0.10"
   required_providers {
+    null = {
+      source  = "hashicorp/null"
+      version = "3.2.2"
+    }
     docker = {
       source  = "kreuzwerker/docker"
       version = "3.0.2"
@@ -13,7 +18,7 @@ provider "docker" {
 
 resource "null_resource" "manage_ssh" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {
@@ -56,7 +61,7 @@ resource "docker_image" "node_image" {
   name = "${var.node_prefix}:${var.node_version}"
 
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   build {
@@ -78,12 +83,7 @@ resource "docker_container" "nodes" {
   name       = "${var.node_prefix}-${count.index}"
   hostname   = "${var.node_prefix}-${count.index}"
   image      = docker_image.node_image.name
-  privileged = true  # nodes containers are treated as standalone virtual machines
-
-  ports {
-    internal = 8088
-    external = 8088 + count.index
-  }
+  privileged = true # nodes containers are treated as standalone virtual machines
 
   ulimit {
     name = "nofile"
@@ -93,7 +93,7 @@ resource "docker_container" "nodes" {
 
   networks_advanced {
     name         = docker_network.nodes_network.name
-    ipv4_address = cidrhost("${var.subnet}", "${2 + count.index}")
+    ipv4_address = cidrhost(var.subnet, 2 + count.index)
   }
 
   labels {
@@ -106,16 +106,16 @@ resource "docker_container" "nodes" {
       docker cp ../../src $HOSTNAME:/opt/superset-testing
       docker cp ../../services/mysql-mgmt/interfaces.py $HOSTNAME:/opt/superset-testing
       docker cp ../testsuite/roles/testing/files/. $HOSTNAME:/opt/superset-testing
-      docker exec $HOSTNAME /bin/bash -c \
-        "wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py \
-        && python3 /tmp/get-pip.py > /dev/null 2>&1 \
-        && python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
-      docker exec --user=root $HOSTNAME /bin/bash -c \
-        "service ssh start \
-        && service docker start \
-        && echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf \
-        && usermod --append --groups docker superset \
-        && chown --recursive superset:superset /opt/superset-testing"
+      docker exec $HOSTNAME /bin/bash -c " \
+        wget --directory-prefix=/tmp --quiet https://bootstrap.pypa.io/get-pip.py && \
+        python3 /tmp/get-pip.py > /dev/null 2>&1 && \
+        python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
+      docker exec --user=root $HOSTNAME /bin/bash -c " \
+        service ssh start && \
+        service docker start && \
+        echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf && \
+        usermod --append --groups docker superset && \
+        chown --recursive superset:superset /opt/superset-testing"
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no
@@ -125,7 +125,7 @@ resource "docker_container" "nodes" {
 
     environment = {
       HOSTNAME   = "${var.node_prefix}-${count.index}"
-      IP_ADDRESS = cidrhost("${var.subnet}", "${2 + count.index}")
+      IP_ADDRESS = cidrhost(var.subnet, 2 + count.index)
     }
   }
 
@@ -138,7 +138,7 @@ resource "docker_container" "nodes" {
 
 resource "null_resource" "generate_ansible_group_vars" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {
@@ -154,10 +154,10 @@ resource "null_resource" "generate_ansible_group_vars" {
     EOT
 
     environment = {
-      GROUP_VARS_FILE         = "../testsuite/group_vars/testing.yml"
-      NODE_PREFIX             = "${var.node_prefix}"
-      VIRTUAL_IP_ADDRESS      = cidrhost("${var.subnet}", "${10}")
-      VIRTUAL_NETWORK_MASK = cidrnetmask("${var.subnet}")
+      GROUP_VARS_FILE      = "../testsuite/group_vars/testing.yml"
+      NODE_PREFIX          = var.node_prefix
+      VIRTUAL_IP_ADDRESS   = cidrhost(var.subnet, 10)
+      VIRTUAL_NETWORK_MASK = cidrnetmask(var.subnet)
     }
   }
 
@@ -173,7 +173,7 @@ resource "null_resource" "generate_ansible_group_vars" {
 
 resource "null_resource" "finish_configuration" {
   triggers = {
-    always_run = "${timestamp()}"
+    always_run = timestamp()
   }
 
   provisioner "local-exec" {

@@ -1,21 +1,24 @@
 ---
-- name: "sanity testing"
+- name: "Sanity testing"
   connection: "local"
   hosts: "testing"
-  any_errors_fatal: yes
+  any_errors_fatal: true
   tasks:
-    - ansible.builtin.include_role: { name: "testing", tasks_from: "sanity" }
+    - name: "Run sanity tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "sanity"}
 
-- name: "system testing"
+- name: "System testing"
   connection: "local"
   hosts: "testing"
-  any_errors_fatal: yes
+  any_errors_fatal: true
   tasks:
-    - ansible.builtin.include_role: { name: "testing", tasks_from: "system" }
+    - name: "Run system tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
 
-- name: "functional testing"
+- name: "Functional testing"
   connection: "local"
   hosts: "testing"
-  any_errors_fatal: yes
+  any_errors_fatal: true
   tasks:
-    - ansible.builtin.include_role: { name: "testing", tasks_from: "functional" }
+    - name: "Run functional tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "functional"}

@@ -85,7 +85,7 @@ jobs:
     needs: "setup"
     steps:
       - name: "Lint Python files with mypy"
-        run: "mypy $(find . -name '*.py')"
+        run: "mypy --install-types --non-interactive $(find . -name '*.py')"
 
   run-python-flake8:
     runs-on: "self-hosted"

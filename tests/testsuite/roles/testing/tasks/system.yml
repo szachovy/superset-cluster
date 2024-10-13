@@ -1,9 +1,9 @@
 ---
-- name: end-to-end run
+- name: "Run main program"
   ansible.builtin.shell: |
     set -euxo pipefail
     {
-      ./run.sh \
+      ./superset-cluster \
         --mgmt-nodes {{ node_prefix }}-0,{{ node_prefix }}-1 \
         --mysql-nodes {{ node_prefix }}-2,{{ node_prefix }}-3,{{ node_prefix }}-4 \
         --virtual-ip-address {{ virtual_ip_address }} \
@@ -11,7 +11,9 @@
         --virtual-network-mask {{ virtual_network_mask }}
     } > /tmp/superset_cluster_testsuite.log 2>&1
   args:
-    executable: /bin/bash
-    chdir: '../../'
-  async: 1800
+    executable: "/bin/bash"
+    chdir: "../../"
+  async: 2100
   poll: 60
+  register: "run_command"
+  changed_when: "run_command.rc != 0"

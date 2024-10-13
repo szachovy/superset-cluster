@@ -1,5 +1,5 @@
 ---
-- name: "check out nodes network"
+- name: "Check out nodes network"
   community.docker.docker_network_info:
     name: "{{ node_prefix }}-network"
   register: "network"
@@ -8,7 +8,7 @@
     (network.network.Internal == true) or
     (network.network.Scope != 'local')
 
-- name: "check out nodes infrastructure"
+- name: "Check out nodes infrastructure settings"
   community.docker.docker_container_info:
     name: "{{ container.value['Name'] }}"
   loop: "{{ network.network.Containers | dict2items }}"
@@ -21,27 +21,27 @@
     (node.container.HostConfig.MemorySwap != 0) or
     (node.container.HostConfig.NetworkMode != 'bridge')
 
-# (node.container.HostConfig.Privileged == true) or
-# (node.container.Config.ExposedPorts | length != 0) or
-# (node.container.Config.User == 'root')
-
-- name: "check passwordless ssh to the nodes"
-  ansible.builtin.shell: "ssh superset@{{ container.value['Name'] }} exit"
+- name: "Check out passwordless ssh to the nodes"
+  ansible.builtin.command: "ssh superset@{{ container.value['Name'] }} exit"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
+  register: "ssh_command"
+  changed_when: "ssh_command.rc != 0"
 
-- name: "introspect running containers"
+- name: "Check out internal nodes settings"
   community.docker.docker_container_exec:
     container: "{{ container.value['Name'] }}"
-    command: "python3 -c 
+    command: "python3 -c
       'import introspect;
       introspect.ContainerChecks(
         node_prefix=\"{{ node_prefix }}\",
         virtual_network_interface=\"{{ virtual_network_interface }}\"
-      )
-      '"
+      )'
+      "
     chdir: "/opt/superset-testing"
   loop: "{{ network.network.Containers | dict2items }}"
   loop_control:
     loop_var: "container"
+  register: "introspect_command"
+  changed_when: "introspect_command.rc != 0"
