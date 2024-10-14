@@ -7,7 +7,7 @@ on:  # yamllint disable-line rule:truthy
 
 jobs:
   setup:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     steps:
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-python@v5"
@@ -20,7 +20,7 @@ jobs:
             pylint==3.2.4 mypy==1.10.1 flake8==7.1.0 yamllint==1.35.1
 
   run-markdown-lint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint Markdown files"
@@ -29,14 +29,14 @@ jobs:
           version: "0.41.0"
 
   run-yaml-lint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint YAML files"
         run: "yamllint ."
 
   run-shell-check:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint shell scripts"
@@ -45,7 +45,7 @@ jobs:
           version: "v0.10.0"
 
   run-docker-hadolint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint Dockerfiles"
@@ -55,7 +55,7 @@ jobs:
           recursive: true
 
   run-terraform-tflint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - uses: "terraform-linters/setup-tflint@v4"
@@ -67,28 +67,28 @@ jobs:
         working-directory: "./tests/setup"
 
   run-ansible-lint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint ansible testing playbook"
         uses: "ansible/ansible-lint@v24.6.1"
 
   run-python-pylint:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint Python files with pylint"
         run: "pylint $(find . -name '*.py')"
 
   run-python-mypy:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint Python files with mypy"
         run: "mypy --install-types --non-interactive $(find . -name '*.py')"
 
   run-python-flake8:
-    runs-on: "ubuntu-22.04"
+    runs-on: "self-hosted"
     needs: "setup"
     steps:
       - name: "Lint Python files with flake8"
