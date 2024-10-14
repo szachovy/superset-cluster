@@ -3,7 +3,7 @@
 ![Tests](https://github.com/szachovy/superset-cluster/actions/workflows/tests.yml/badge.svg)
 ![Style](https://github.com/szachovy/superset-cluster/actions/workflows/style.yml/badge.svg)
 
-Resilent Business Intelligence.
+Resilient Business Intelligence.
 
 * Survives multiple node failures, recovery mechanisms are integrated.
 * No need for complex cluster management (e.g., Kubernetes).

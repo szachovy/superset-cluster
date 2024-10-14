@@ -1,7 +1,7 @@
 variable "gateway" {
   description = "Network gateway for the container nodes"
   type        = string
-  default     = "172.18.0.1"
+  default     = "192.168.0.1"
 }
 
 variable "node_prefix" {
@@ -19,5 +19,5 @@ variable "node_version" {
 variable "subnet" {
   description = "Network subnet for the container nodes"
   type        = string
-  default     = "172.18.0.0/16"
+  default     = "192.168.0.0/24"
 }
