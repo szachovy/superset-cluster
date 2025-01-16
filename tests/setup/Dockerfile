@@ -1,5 +1,5 @@
 ARG BUILDPLATFORM="amd64"
-FROM --platform=${BUILDPLATFORM} ubuntu:22.04
+FROM --platform=${BUILDPLATFORM} ubuntu:24.04
 
 LABEL version="1.0"
 
