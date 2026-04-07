@@ -79,14 +79,12 @@ RUN \
   apt-get \
     install \
       --yes \
-      --no-install-recommends \
       "containerd.io" \
       "docker-buildx-plugin" \
       "docker-ce" \
       "docker-ce-cli" \
       "openssh-server" \
       "python3" \
-      "python3-pip" \
   && \
   apt-get \
     clean \
