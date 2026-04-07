@@ -254,12 +254,6 @@ class ContainerConnection:
                     }
                 )
 
-        return print(
-            self.wait_until_healthy(
-                MySQLServer(self.client, self.container)  # type: ignore[arg-type]
-            )
-        )
-
     # pylint: disable=too-many-arguments
     def run_mysql_mgmt(
             self,
