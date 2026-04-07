@@ -39,7 +39,7 @@
 
 - name: "Container health status after cluster init"
   ansible.builtin.debug:
-    msg: "{{ item.item }}:\n{{ item.stdout }}"
+    msg: "{{ item.stdout_lines }}"
   loop: "{{ container_health.results }}"
   loop_control:
     label: "{{ item.item }}"

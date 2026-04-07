@@ -43,18 +43,18 @@
   always:
     - name: "Superset functional test results (pre-disaster)"
       ansible.builtin.debug:
-        msg: >-
-          rc={{ functional_superset.rc }}
-          stdout={{ functional_superset.stdout }}
-          stderr={{ functional_superset.stderr }}
+        msg:
+          - "rc: {{ functional_superset.rc }}"
+          - "stdout: {{ functional_superset.stdout }}"
+          - "stderr: {{ functional_superset.stderr }}"
       when: "functional_superset is defined"
 
     - name: "Management functional test results (pre-disaster)"
       ansible.builtin.debug:
-        msg: >-
-          rc={{ functional_mgmt.rc }}
-          stdout={{ functional_mgmt.stdout }}
-          stderr={{ functional_mgmt.stderr }}
+        msg:
+          - "rc: {{ functional_mgmt.rc }}"
+          - "stdout: {{ functional_mgmt.stdout }}"
+          - "stderr: {{ functional_mgmt.stderr }}"
       when: "functional_mgmt is defined"
 
 - name: "Stop mgmt primary node"
@@ -86,7 +86,7 @@
 
 - name: "Container health status after disaster"
   ansible.builtin.debug:
-    msg: "{{ item.item }}:\n{{ item.stdout }}"
+    msg: "{{ item.stdout_lines }}"
   loop: "{{ post_disaster_health.results }}"
   loop_control:
     label: "{{ item.item }}"
@@ -138,16 +138,16 @@
   always:
     - name: "Management functional test results (post-disaster)"
       ansible.builtin.debug:
-        msg: >-
-          rc={{ functional_mgmt_disaster.rc }}
-          stdout={{ functional_mgmt_disaster.stdout }}
-          stderr={{ functional_mgmt_disaster.stderr }}
+        msg:
+          - "rc: {{ functional_mgmt_disaster.rc }}"
+          - "stdout: {{ functional_mgmt_disaster.stdout }}"
+          - "stderr: {{ functional_mgmt_disaster.stderr }}"
       when: "functional_mgmt_disaster is defined"
 
     - name: "Superset functional test results (post-disaster)"
       ansible.builtin.debug:
-        msg: >-
-          rc={{ functional_superset_disaster.rc }}
-          stdout={{ functional_superset_disaster.stdout }}
-          stderr={{ functional_superset_disaster.stderr }}
+        msg:
+          - "rc: {{ functional_superset_disaster.rc }}"
+          - "stdout: {{ functional_superset_disaster.stdout }}"
+          - "stderr: {{ functional_superset_disaster.stderr }}"
       when: "functional_superset_disaster is defined"

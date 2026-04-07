@@ -84,28 +84,6 @@ jobs:
             2>&1 | tee -a /tmp/superset_cluster_testsuite.log
         working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"
 
-      - name: "Log container health status"
-        if: "${{ always() }}"
-        run: |
-          {
-            echo ""
-            echo "[Container Health Status]"
-            echo "=== Test Nodes ==="
-            docker ps -a --filter "name=node-" --format "table {{.Names}}\t{{.Status}}" | sort
-            echo ""
-            for node in node-0 node-1 node-2 node-3 node-4; do
-              if docker inspect "$node" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
-                echo "=== $node ==="
-                docker exec "$node" docker ps -a \
-                  --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" \
-                  2>/dev/null || echo "  Could not list containers"
-              else
-                echo "=== $node: NOT RUNNING ==="
-              fi
-              echo ""
-            done
-          } 2>&1 | tee -a /tmp/superset_cluster_testsuite.log
-
       - uses: "actions/upload-artifact@v4"
         if: "${{ always() }}"
         with:
