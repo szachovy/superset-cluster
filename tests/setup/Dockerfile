@@ -86,6 +86,7 @@ RUN \
       "docker-ce-cli" \
       "openssh-server" \
       "python3" \
+      "python3-pip" \
   && \
   apt-get \
     clean \
