@@ -21,9 +21,9 @@ RUN \
   apt-get \
     install \
       --yes \
-      "curl=7.88.1-10+deb12u7" \
-      "expect=5.45.4-2+b1" \
-      "gosu=1.14-1+b10" \
+      "curl" \
+      "expect" \
+      "gosu" \
   && \
   curl \
     --location \
