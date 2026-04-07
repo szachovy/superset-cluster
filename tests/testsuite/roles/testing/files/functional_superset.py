@@ -215,7 +215,8 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                 \nCommand: {command!r}\nReturned: {csrf_login_request!r}
             """
         session_request_cookie = self.extract_session_cookie(csrf_login_request)
-        csrf_token = json.loads(csrf_login_request.decode('utf-8').split('\r\n\r\n')[1]).get("result")
+        body = csrf_login_request.decode('utf-8').split('\r\n\r\n', 1)[1]
+        csrf_token = json.loads(body[body.find('{'):body.rfind('}') + 1]).get("result")
         command = f"""
             curl \
                 --location \
