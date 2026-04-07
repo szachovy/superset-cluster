@@ -14,11 +14,12 @@ RUN \
   apt-get \
     update \
   && \
-  apt-get \ 
+  apt-get \
     install \
       --yes \
-      "ca-certificates=20240203~22.04.1" \
-      "curl=7.81.0-1ubuntu1.18" \
+      --no-install-recommends \
+      "ca-certificates" \
+      "curl" \
   && \
   install \
     --mode \
@@ -77,11 +78,12 @@ RUN \
   apt-get \
     install \
       --yes \
-      "containerd.io=1.6.31-1" \
-      "docker-buildx-plugin=0.14.0-1~ubuntu.22.04~jammy" \
-      "docker-ce=5:26.1.0-1~ubuntu.22.04~jammy" \
-      "docker-ce-cli=5:26.1.0-1~ubuntu.22.04~jammy" \
-      "openssh-server=1:8.9p1-3ubuntu0.10" \
+      --no-install-recommends \
+      "containerd.io" \
+      "docker-buildx-plugin" \
+      "docker-ce" \
+      "docker-ce-cli" \
+      "openssh-server" \
   && \
   apt-get \
     clean \

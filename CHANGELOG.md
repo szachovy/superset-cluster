@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+* Migrated CI workflows from self-hosted to GitHub-hosted `ubuntu-22.04` runners.
+* Made style workflow lint jobs self-contained for GitHub-hosted runner compatibility.
+* Relaxed Dockerfile package version pins for reproducible builds across environments.
+* Fixed `run_mysql_server()` to properly instantiate and start MySQL containers.
+* Added retry logic for async query results in functional tests.
+* Configured Docker-in-Docker containers with `vfs` storage driver.
+* Changed `docker_compose.yml` pull policy from `always` to `missing` for local images.
+* Service images tagged with branch name; `latest` reserved for master.
 
 ## 1.0 - 2024-10-13
 

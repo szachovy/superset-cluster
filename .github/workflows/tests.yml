@@ -11,8 +11,20 @@ env:
 
 jobs:
   tests:
-    runs-on: "self-hosted"
+    runs-on: "ubuntu-22.04"
     steps:
+      - name: "Free disk space"
+        run: |
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc \
+            /usr/local/share/boost \
+            /usr/local/graalvm \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell
+          sudo docker image prune --all --force
+
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-node@v3"
         with:
@@ -37,7 +49,7 @@ jobs:
 
       - name: "Run Ansible testsuite"
         run: "ansible-playbook --inventory inventory.yml deploy.yml"
-        working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
+        working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"
 
       - uses: "actions/upload-artifact@v4"
         if: "${{ always() }}"
