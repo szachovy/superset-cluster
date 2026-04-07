@@ -1,4 +1,15 @@
 ---
+- name: "Initialize test log"
+  ansible.builtin.shell: |
+    {
+      echo "superset-cluster Test Suite"
+      echo "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+      echo "========================================"
+    } > /tmp/superset_cluster_testsuite.log
+  args:
+    executable: "/bin/bash"
+  changed_when: false
+
 - name: "Check out nodes network"
   community.docker.docker_network_info:
     name: "{{ node_prefix }}-network"
@@ -45,3 +56,18 @@
     loop_var: "container"
   register: "introspect_command"
   changed_when: "introspect_command.rc != 0"
+
+- name: "Log sanity test results"
+  ansible.builtin.shell: |
+    {
+      echo ""
+      echo "[Sanity Testing]"
+      echo "Network: {{ node_prefix }}-network (scope={{ network.network.Scope }}, containers={{ network.network.Containers | length }})"
+      echo "Infrastructure: {{ node.results | length }} containers verified"
+      echo "SSH: {{ ssh_command.results | length }} nodes reachable"
+      echo "Introspection: {{ introspect_command.results | length }} nodes passed"
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+  changed_when: false
+  failed_when: false

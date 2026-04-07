@@ -1,4 +1,15 @@
 ---
+- name: "Log functional test header"
+  ansible.builtin.shell: |
+    {
+      echo ""
+      echo "[Functional Testing]"
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+  changed_when: false
+  failed_when: false
+
 - name: "Find superset container name"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
@@ -9,32 +20,66 @@
       {% endraw %}
   register: "superset_container_name"
 
-- name: "Run functional tests on superset"
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
-    command: "python3 -c
-      'import functional_superset;
-      superset_functional = functional_superset.Superset(
-        superset_container=\"{{ superset_container_name.stdout.strip() }}\",
-        virtual_ip_address=\"{{ virtual_ip_address }}\"
-      );
-      query_dttm = superset_functional.run_query();
-      superset_functional.get_query_results(query_dttm)'
-      "
-    chdir: "/opt/superset-testing"
+- block:
+    - name: "Run functional tests on superset"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_superset;
+          superset_functional = functional_superset.Superset(
+            superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+            virtual_ip_address=\"{{ virtual_ip_address }}\"
+          );
+          query_dttm = superset_functional.run_query();
+          superset_functional.get_query_results(query_dttm)'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_superset"
 
-- name: "Run functional tests on mgmt"
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-0"
-    command: "python3 -c
-      'import functional_mgmt;
-      mgmt_functional = functional_mgmt.Mgmt(
-        virtual_ip_address=\"{{ virtual_ip_address }}\",
-        node_prefix=\"{{ node_prefix }}\",
-        after_disaster=False
-      );'
-      "
-    chdir: "/opt/superset-testing"
+    - name: "Run functional tests on mgmt"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_mgmt;
+          mgmt_functional = functional_mgmt.Mgmt(
+            virtual_ip_address=\"{{ virtual_ip_address }}\",
+            node_prefix=\"{{ node_prefix }}\",
+            after_disaster=False
+          );'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_mgmt"
+
+  always:
+    - name: "Log pre-disaster superset results"
+      ansible.builtin.shell: |
+        {
+          echo ""
+          echo "--- Superset (pre-disaster) ---"
+          echo "rc: {{ functional_superset.rc }}"
+          printf '%s\n' {{ functional_superset.stdout | quote }}
+          printf '%s\n' {{ functional_superset.stderr | quote }}
+        } >> /tmp/superset_cluster_testsuite.log 2>&1
+      args:
+        executable: "/bin/bash"
+      changed_when: false
+      failed_when: false
+      when: "functional_superset is defined"
+
+    - name: "Log pre-disaster mgmt results"
+      ansible.builtin.shell: |
+        {
+          echo ""
+          echo "--- Management (pre-disaster) ---"
+          echo "rc: {{ functional_mgmt.rc }}"
+          printf '%s\n' {{ functional_mgmt.stdout | quote }}
+          printf '%s\n' {{ functional_mgmt.stderr | quote }}
+        } >> /tmp/superset_cluster_testsuite.log 2>&1
+      args:
+        executable: "/bin/bash"
+      changed_when: false
+      failed_when: false
+      when: "functional_mgmt is defined"
 
 - name: "Stop mgmt primary node"
   community.docker.docker_container:
@@ -46,6 +91,18 @@
     name: "{{ node_prefix }}-2"
     state: "stopped"
 
+- name: "Log disaster simulation"
+  ansible.builtin.shell: |
+    {
+      echo ""
+      echo "--- Disaster Simulation ---"
+      echo "Stopped: {{ node_prefix }}-0 (mgmt primary), {{ node_prefix }}-2 (mysql primary)"
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+  changed_when: false
+  failed_when: false
+
 - name: "Find superset container name"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-1"
@@ -56,32 +113,66 @@
       {% endraw %}
   register: "superset_container_name"
 
-- name: "Run functional tests on mgmt after disaster"
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-1"
-    command: "python3 -c
-      'import functional_mgmt;
-      mgmt_functional = functional_mgmt.Mgmt(
-        virtual_ip_address=\"{{ virtual_ip_address }}\",
-        node_prefix=\"{{ node_prefix }}\",
-        after_disaster=True
-      );
-      mgmt_functional.check_after_disaster()'
-      "
-    chdir: "/opt/superset-testing"
-  retries: 6
-  delay: 10
+- block:
+    - name: "Run functional tests on mgmt after disaster"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-1"
+        command: "python3 -c
+          'import functional_mgmt;
+          mgmt_functional = functional_mgmt.Mgmt(
+            virtual_ip_address=\"{{ virtual_ip_address }}\",
+            node_prefix=\"{{ node_prefix }}\",
+            after_disaster=True
+          );
+          mgmt_functional.check_after_disaster()'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_mgmt_disaster"
+      retries: 6
+      delay: 10
 
-- name: "Run functional tests on superset after disaster"
-  community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-1"
-    command: "python3 -c
-      'import functional_superset;
-      superset_functional = functional_superset.Superset(
-        superset_container=\"{{ superset_container_name.stdout.strip() }}\",
-        virtual_ip_address=\"{{ virtual_ip_address }}\"
-      );
-      query_dttm = superset_functional.run_query();
-      superset_functional.get_query_results(query_dttm)'
-      "
-    chdir: "/opt/superset-testing"
+    - name: "Run functional tests on superset after disaster"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-1"
+        command: "python3 -c
+          'import functional_superset;
+          superset_functional = functional_superset.Superset(
+            superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+            virtual_ip_address=\"{{ virtual_ip_address }}\"
+          );
+          query_dttm = superset_functional.run_query();
+          superset_functional.get_query_results(query_dttm)'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_superset_disaster"
+
+  always:
+    - name: "Log post-disaster mgmt results"
+      ansible.builtin.shell: |
+        {
+          echo ""
+          echo "--- Management (post-disaster) ---"
+          echo "rc: {{ functional_mgmt_disaster.rc }}"
+          printf '%s\n' {{ functional_mgmt_disaster.stdout | quote }}
+          printf '%s\n' {{ functional_mgmt_disaster.stderr | quote }}
+        } >> /tmp/superset_cluster_testsuite.log 2>&1
+      args:
+        executable: "/bin/bash"
+      changed_when: false
+      failed_when: false
+      when: "functional_mgmt_disaster is defined"
+
+    - name: "Log post-disaster superset results"
+      ansible.builtin.shell: |
+        {
+          echo ""
+          echo "--- Superset (post-disaster) ---"
+          echo "rc: {{ functional_superset_disaster.rc }}"
+          printf '%s\n' {{ functional_superset_disaster.stdout | quote }}
+          printf '%s\n' {{ functional_superset_disaster.stderr | quote }}
+        } >> /tmp/superset_cluster_testsuite.log 2>&1
+      args:
+        executable: "/bin/bash"
+      changed_when: false
+      failed_when: false
+      when: "functional_superset_disaster is defined"

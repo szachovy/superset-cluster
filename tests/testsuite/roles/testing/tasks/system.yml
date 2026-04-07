@@ -1,4 +1,15 @@
 ---
+- name: "Log system test header"
+  ansible.builtin.shell: |
+    {
+      echo ""
+      echo "[System Testing]"
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+  changed_when: false
+  failed_when: false
+
 - name: "Run main program"
   ansible.builtin.shell: |
     set -euxo pipefail
@@ -9,7 +20,7 @@
         --virtual-ip-address {{ virtual_ip_address }} \
         --virtual-network-interface {{ virtual_network_interface }} \
         --virtual-network-mask {{ virtual_network_mask }}
-    } > /tmp/superset_cluster_testsuite.log 2>&1
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
   args:
     executable: "/bin/bash"
     chdir: "../../"
