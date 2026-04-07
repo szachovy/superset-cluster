@@ -1,6 +1,6 @@
 # Performance
 
-For the general system architecture, refer to [ARCHITECTURE.md](ARCHITECTURE.md).
+This document covers the details of superset-cluster's performance.
 
 ## Celery Asynchronous Query Execution
 
@@ -39,12 +39,6 @@ The MySQL server is configured for cluster workloads with the following performa
 | `binlog_transaction_dependency_tracking` | `WRITESET` | Enables parallel replication on secondaries |
 | `max_connections` | `50` | Limits concurrent connections per MySQL node |
 | `max_connect_errors` | `50` | Blocks hosts after 50 failed connection attempts |
-
-For deeper MySQL performance analysis, refer to:
-
-- [MySQL Performance Schema](https://dev.mysql.com/doc/refman/8.4/en/performance-schema.html)
-- [InnoDB Monitors](https://dev.mysql.com/doc/refman/8.4/en/innodb-monitors.html)
-- [MySQL Examining Server Thread (Process) Information](https://dev.mysql.com/doc/refman/8.4/en/thread-information.html)
 
 ## Nginx Tuning
 

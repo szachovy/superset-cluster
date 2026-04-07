@@ -1,6 +1,6 @@
 # Reliability
 
-For the general system architecture, refer to [ARCHITECTURE.md](ARCHITECTURE.md).
+This document covers the details of highly available architecture of superset-cluster.
 
 ## Fault Tolerance
 

@@ -2,14 +2,12 @@
 
 This document describes the architecture of superset-cluster, a resilient Business Intelligence deployment tool
 that orchestrates [Apache Superset](https://superset.apache.org/) across a multi-node cluster with
-[MySQL InnoDB Cluster](https://dev.mysql.com/doc/refman/8.0/en/mysql-innodb-cluster-introduction.html),
-[Redis](https://redis.io/) caching, and automatic failover.
+[MySQL InnoDB Cluster](https://dev.mysql.com/doc/refman/8.0/en/mysql-innodb-cluster-introduction.html).
 
-See also:
-
-- [SECURITY.md](SECURITY.md) — TLS, credentials, container hardening, MySQL permissions
-- [RELIABILITY.md](RELIABILITY.md) — fault tolerance, health monitoring, VRRP behavior, data durability
-- [PERFORMANCE.md](PERFORMANCE.md) — Celery, Redis caching, MySQL tuning, Nginx tuning, monitoring
+For details in each particular topic, follow:
+* [PERFORMANCE.md](./PERFORMANCE.md)
+* [SECURITY.md](./SECURITY.md)
+* [RELIABILITY.md](./RELIABILITY.md)
 
 ## Cluster Overview
 
@@ -67,18 +65,16 @@ via Swarm's VIP-based endpoint spec. Each Superset container runs three processe
 2. **Gunicorn** (WSGI server) → runs the Superset web application.
 3. **Celery worker** (4 concurrency, prefork pool, fair scheduling) → executes asynchronous SQL queries.
 
+Nginx runs inside each Superset container as a TLS-terminating reverse proxy listening on port 443. It
+forwards requests to Gunicorn on `localhost:8088` with proper `X-Forwarded-*` headers. TLS configuration
+and security headers are detailed in [SECURITY.md](SECURITY.md).
+
 The entrypoint script tests the database connection, creates the default admin user (`superset`/`cluster`),
 runs database migrations (`superset db upgrade`), initializes Superset (`superset init`), and sets up the
 MySQL database connection URI automatically.
 
 Secrets (Superset secret key and MySQL password) are provided through Docker Swarm secrets mounted at
 `/run/secrets/`.
-
-### Nginx
-
-Nginx runs inside each Superset container as a TLS-terminating reverse proxy listening on port 443. It
-forwards requests to Gunicorn on `localhost:8088` with proper `X-Forwarded-*` headers. TLS configuration
-and security headers are detailed in [SECURITY.md](SECURITY.md).
 
 ## Initialization Flow
 
@@ -125,8 +121,6 @@ The controller runs on the user's workstation and communicates with cluster node
 
 ## Networking
 
-### Host Network Mode
-
 MySQL Server and MySQL Management containers run with `network_mode: host`, sharing the host's network
 stack. This enables:
 
@@ -134,14 +128,10 @@ stack. This enables:
 - Keepalived to manage the VIP directly on the host's network interface.
 - MySQL Router to bind to the host's port 6446.
 
-### Docker Swarm Overlay Network
-
 Redis and Superset run on the `superset-network` overlay network, which provides:
 
 - Service discovery: Superset connects to Redis using the hostname `redis`.
 - Port publishing: Swarm publishes port 443 on all Swarm nodes via VIP-based routing.
-
-### Port Summary
 
 | Port | Protocol | Service | Scope |
 |------|----------|---------|-------|
@@ -153,16 +143,12 @@ Redis and Superset run on the `superset-network` overlay network, which provides
 
 ## High Availability
 
-### Management Node Failover
-
 If the active management node fails:
 
 1. Keepalived detects the loss via VRRP advertisement timeout (1-second interval).
 2. The backup node promotes itself to `MASTER` and acquires the VIP.
 3. Gratuitous ARP updates network switches to route traffic to the new master.
 4. MySQL Router on the new master continues serving client connections.
-
-### MySQL Primary Failover
 
 If the MySQL primary node fails:
 
@@ -172,10 +158,9 @@ If the MySQL primary node fails:
 4. The cluster status transitions from `OK` to `OK_NO_TOLERANCE_PARTIAL`, indicating reduced fault
    tolerance.
 
-### Superset Service Recovery
+If the Superset container fails:
 
-Superset runs as a Docker Swarm service with `maxreplicas=1`. If the Superset container fails, Docker
-Swarm automatically reschedules it on an available manager node. The service connects to MySQL through the
+Superset runs as a Docker Swarm service with `maxreplicas=1`. Swarm automatically reschedules it on an available manager node. The service connects to MySQL through the
 VIP (port 6446), so it is transparent to management node failovers.
 
 For detailed fault tolerance scenarios, health check configuration, and VRRP behavior, see

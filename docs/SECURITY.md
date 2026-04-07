@@ -1,8 +1,6 @@
 # Security
 
-This document covers the security architecture of superset-cluster. For the general system architecture, refer
-to [ARCHITECTURE.md](ARCHITECTURE.md). For reliability and performance, see [RELIABILITY.md](RELIABILITY.md)
-and [PERFORMANCE.md](PERFORMANCE.md).
+This document covers the security architecture of superset-cluster.
 
 ## TLS and Encryption
 
