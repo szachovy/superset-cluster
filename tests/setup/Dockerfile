@@ -7,7 +7,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
 
-# hadolint ignore=DL3008,SC2086
+# hadolint ignore=SC2086
 RUN \
   set \
     -eux \
