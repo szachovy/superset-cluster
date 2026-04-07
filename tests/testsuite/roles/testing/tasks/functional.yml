@@ -70,10 +70,12 @@
 - name: "Collect container health after disaster"
   community.docker.docker_container_exec:
     container: "{{ item }}"
-    command: >-
+    command: |
+      {% raw %}
       /bin/bash -c
       'docker ps -a
       --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'
+      {% endraw %}
   loop:
     - "{{ node_prefix }}-1"
     - "{{ node_prefix }}-3"
