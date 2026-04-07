@@ -112,6 +112,8 @@ resource "docker_container" "nodes" {
         python3 -m pip install --quiet --no-cache-dir --user --requirement /opt/superset-testing/requirements.txt"
       docker exec --user=root $HOSTNAME /bin/bash -c " \
         service ssh start && \
+        mkdir -p /etc/docker && \
+        echo '{\"storage-driver\": \"vfs\"}' > /etc/docker/daemon.json && \
         service docker start && \
         echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf && \
         usermod --append --groups docker superset && \
