@@ -326,14 +326,14 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                 --header 'Referer: https://{self.virtual_ip_address}' \
                 --header '{self.api_csrf_header}'
         """
-        for _ in range(3):
+        for _ in range(6):
             query_result = self.decode_command_output(
                 self.run_command_on_the_container(command)
             )
             list_of_results = query_result.get("result")
             if isinstance(list_of_results, list) and len(list_of_results) > 0:
                 break
-            time.sleep(15)
+            time.sleep(30)
         else:
             raise ValueError(f"Could not get non-empty results after retries from {query_result}")
         first_result = list_of_results[0]
