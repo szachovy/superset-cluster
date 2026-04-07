@@ -9,3 +9,11 @@ updates:
     directory: "./tests/testsuite/roles/testing/files"
     schedule:
       interval: "weekly"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "terraform"
+    directory: "./tests/setup"
+    schedule:
+      interval: "weekly"

@@ -119,3 +119,26 @@ sources.
 - Gunicorn (port 8088) binds to `localhost` only, accessible exclusively through the Nginx reverse proxy.
 - IPv6 should be disabled or configured to be non-routable to prevent unintended network exposure.
 - DNS resolution between nodes is required for InnoDB Cluster group replication and SSH connectivity.
+
+## Supply Chain Security
+
+### Code Scanning
+
+[CodeQL](https://codeql.github.com/) runs on every push and weekly via a scheduled workflow, performing static
+analysis on all Python source code. Results are reported to the GitHub Security tab under
+[Code scanning alerts](https://github.com/szachovy/superset-cluster/security/code-scanning).
+
+### Dependency Management
+
+[Dependabot](https://docs.github.com/en/code-security/dependabot) is configured to monitor and automatically
+propose updates for the following ecosystems on a weekly schedule:
+
+| Ecosystem | Directory | Scope |
+|-----------|-----------|-------|
+| `docker` | `./tests/setup` | Base image updates |
+| `pip` | `./tests/testsuite/roles/testing/files` | Python test dependencies |
+| `github-actions` | `/` | CI/CD action versions |
+| `terraform` | `./tests/setup` | Terraform provider versions |
+
+Dependabot alerts for known vulnerabilities are available in the
+[Security tab](https://github.com/szachovy/superset-cluster/security/dependabot).
