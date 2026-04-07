@@ -20,7 +20,8 @@
       {% endraw %}
   register: "superset_container_name"
 
-- block:
+- name: "Run pre-disaster functional tests"
+  block:
     - name: "Run functional tests on superset"
       community.docker.docker_container_exec:
         container: "{{ node_prefix }}-0"
@@ -113,7 +114,8 @@
       {% endraw %}
   register: "superset_container_name"
 
-- block:
+- name: "Run post-disaster functional tests"
+  block:
     - name: "Run functional tests on mgmt after disaster"
       community.docker.docker_container_exec:
         container: "{{ node_prefix }}-1"

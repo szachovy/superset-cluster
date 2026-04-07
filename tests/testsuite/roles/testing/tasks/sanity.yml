@@ -62,7 +62,8 @@
     {
       echo ""
       echo "[Sanity Testing]"
-      echo "Network: {{ node_prefix }}-network (scope={{ network.network.Scope }}, containers={{ network.network.Containers | length }})"
+      echo "Network: {{ node_prefix }}-network"
+      echo "  scope={{ network.network.Scope }}, containers={{ network.network.Containers | length }}"
       echo "Infrastructure: {{ node.results | length }} containers verified"
       echo "SSH: {{ ssh_command.results | length }} nodes reachable"
       echo "Introspection: {{ introspect_command.results | length }} nodes passed"

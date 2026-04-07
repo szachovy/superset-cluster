@@ -94,7 +94,9 @@ jobs:
             for node in node-0 node-1 node-2 node-3 node-4; do
               if docker inspect "$node" --format '{{.State.Running}}' 2>/dev/null | grep -q true; then
                 echo "=== $node ==="
-                docker exec "$node" docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" 2>/dev/null || echo "  Could not list containers"
+                docker exec "$node" docker ps -a \
+                  --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" \
+                  2>/dev/null || echo "  Could not list containers"
               else
                 echo "=== $node: NOT RUNNING ==="
               fi
