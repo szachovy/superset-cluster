@@ -79,7 +79,9 @@ jobs:
           docker image prune --all --force
 
       - name: "Run Ansible testsuite"
-        run: "ansible-playbook --inventory inventory.yml deploy.yml"
+        run: |
+          ansible-playbook --inventory inventory.yml deploy.yml \
+            2>&1 | tee -a /tmp/superset_cluster_testsuite.log
         working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"
 
       - name: "Log container health status"

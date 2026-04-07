@@ -1,15 +1,4 @@
 ---
-- name: "Log functional test header"
-  ansible.builtin.shell: |
-    {
-      echo ""
-      echo "[Functional Testing]"
-    } >> /tmp/superset_cluster_testsuite.log 2>&1
-  args:
-    executable: "/bin/bash"
-  changed_when: false
-  failed_when: false
-
 - name: "Find superset container name"
   community.docker.docker_container_exec:
     container: "{{ node_prefix }}-0"
@@ -52,34 +41,20 @@
       register: "functional_mgmt"
 
   always:
-    - name: "Log pre-disaster superset results"
-      ansible.builtin.shell: |
-        {
-          echo ""
-          echo "--- Superset (pre-disaster) ---"
-          echo "rc: {{ functional_superset.rc }}"
-          printf '%s\n' {{ functional_superset.stdout | quote }}
-          printf '%s\n' {{ functional_superset.stderr | quote }}
-        } >> /tmp/superset_cluster_testsuite.log 2>&1
-      args:
-        executable: "/bin/bash"
-      changed_when: false
-      failed_when: false
+    - name: "Superset functional test results (pre-disaster)"
+      ansible.builtin.debug:
+        msg: >-
+          rc={{ functional_superset.rc }}
+          stdout={{ functional_superset.stdout }}
+          stderr={{ functional_superset.stderr }}
       when: "functional_superset is defined"
 
-    - name: "Log pre-disaster mgmt results"
-      ansible.builtin.shell: |
-        {
-          echo ""
-          echo "--- Management (pre-disaster) ---"
-          echo "rc: {{ functional_mgmt.rc }}"
-          printf '%s\n' {{ functional_mgmt.stdout | quote }}
-          printf '%s\n' {{ functional_mgmt.stderr | quote }}
-        } >> /tmp/superset_cluster_testsuite.log 2>&1
-      args:
-        executable: "/bin/bash"
-      changed_when: false
-      failed_when: false
+    - name: "Management functional test results (pre-disaster)"
+      ansible.builtin.debug:
+        msg: >-
+          rc={{ functional_mgmt.rc }}
+          stdout={{ functional_mgmt.stdout }}
+          stderr={{ functional_mgmt.stderr }}
       when: "functional_mgmt is defined"
 
 - name: "Stop mgmt primary node"
@@ -92,17 +67,27 @@
     name: "{{ node_prefix }}-2"
     state: "stopped"
 
-- name: "Log disaster simulation"
-  ansible.builtin.shell: |
-    {
-      echo ""
-      echo "--- Disaster Simulation ---"
-      echo "Stopped: {{ node_prefix }}-0 (mgmt primary), {{ node_prefix }}-2 (mysql primary)"
-    } >> /tmp/superset_cluster_testsuite.log 2>&1
-  args:
-    executable: "/bin/bash"
+- name: "Collect container health after disaster"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: >-
+      /bin/bash -c
+      'docker ps -a
+      --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'
+  loop:
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "post_disaster_health"
   changed_when: false
   failed_when: false
+
+- name: "Container health status after disaster"
+  ansible.builtin.debug:
+    msg: "{{ item.item }}:\n{{ item.stdout }}"
+  loop: "{{ post_disaster_health.results }}"
+  loop_control:
+    label: "{{ item.item }}"
 
 - name: "Find superset container name"
   community.docker.docker_container_exec:
@@ -149,32 +134,18 @@
       register: "functional_superset_disaster"
 
   always:
-    - name: "Log post-disaster mgmt results"
-      ansible.builtin.shell: |
-        {
-          echo ""
-          echo "--- Management (post-disaster) ---"
-          echo "rc: {{ functional_mgmt_disaster.rc }}"
-          printf '%s\n' {{ functional_mgmt_disaster.stdout | quote }}
-          printf '%s\n' {{ functional_mgmt_disaster.stderr | quote }}
-        } >> /tmp/superset_cluster_testsuite.log 2>&1
-      args:
-        executable: "/bin/bash"
-      changed_when: false
-      failed_when: false
+    - name: "Management functional test results (post-disaster)"
+      ansible.builtin.debug:
+        msg: >-
+          rc={{ functional_mgmt_disaster.rc }}
+          stdout={{ functional_mgmt_disaster.stdout }}
+          stderr={{ functional_mgmt_disaster.stderr }}
       when: "functional_mgmt_disaster is defined"
 
-    - name: "Log post-disaster superset results"
-      ansible.builtin.shell: |
-        {
-          echo ""
-          echo "--- Superset (post-disaster) ---"
-          echo "rc: {{ functional_superset_disaster.rc }}"
-          printf '%s\n' {{ functional_superset_disaster.stdout | quote }}
-          printf '%s\n' {{ functional_superset_disaster.stderr | quote }}
-        } >> /tmp/superset_cluster_testsuite.log 2>&1
-      args:
-        executable: "/bin/bash"
-      changed_when: false
-      failed_when: false
+    - name: "Superset functional test results (post-disaster)"
+      ansible.builtin.debug:
+        msg: >-
+          rc={{ functional_superset_disaster.rc }}
+          stdout={{ functional_superset_disaster.stdout }}
+          stderr={{ functional_superset_disaster.stderr }}
       when: "functional_superset_disaster is defined"
