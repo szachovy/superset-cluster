@@ -314,19 +314,20 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
 
     def get_query_results(self, dttm_time_query_identifier: float) -> None:
         time.sleep(45)  # state refreshing
+        ts = int(dttm_time_query_identifier) - 5000
         command = f"""
             curl \
                 --location \
                 --cacert /app/server_certificate.pem \
                 --silent \
-                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' \
+                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{ts})' \
                 --header 'Accept: application/json' \
                 --header '{self.api_authorization_header}' \
                 --header '{self.api_session_header}' \
                 --header 'Referer: https://{self.virtual_ip_address}' \
                 --header '{self.api_csrf_header}'
         """
-        for _ in range(6):
+        for _ in range(10):
             query_result = self.decode_command_output(
                 self.run_command_on_the_container(command)
             )
