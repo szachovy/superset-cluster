@@ -45,17 +45,31 @@
       ansible.builtin.debug:
         msg:
           - "rc: {{ functional_superset.rc }}"
+      when: "functional_superset is defined"
+
+    - name: "Superset functional test failure details (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
           - "stdout: {{ functional_superset.stdout }}"
           - "stderr: {{ functional_superset.stderr }}"
-      when: "functional_superset is defined"
+      when:
+        - "functional_superset is defined"
+        - "functional_superset.rc != 0"
 
     - name: "Management functional test results (pre-disaster)"
       ansible.builtin.debug:
         msg:
           - "rc: {{ functional_mgmt.rc }}"
+      when: "functional_mgmt is defined"
+
+    - name: "Management functional test failure details (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
           - "stdout: {{ functional_mgmt.stdout }}"
           - "stderr: {{ functional_mgmt.stderr }}"
-      when: "functional_mgmt is defined"
+      when:
+        - "functional_mgmt is defined"
+        - "functional_mgmt.rc != 0"
 
 - name: "Stop mgmt primary node"
   community.docker.docker_container:
@@ -119,6 +133,7 @@
       register: "functional_mgmt_disaster"
       retries: 6
       delay: 10
+      until: "functional_mgmt_disaster.rc == 0"
 
     - name: "Run functional tests on superset after disaster"
       community.docker.docker_container_exec:
@@ -140,14 +155,28 @@
       ansible.builtin.debug:
         msg:
           - "rc: {{ functional_mgmt_disaster.rc }}"
+      when: "functional_mgmt_disaster is defined"
+
+    - name: "Management functional test failure details (post-disaster)"
+      ansible.builtin.debug:
+        msg:
           - "stdout: {{ functional_mgmt_disaster.stdout }}"
           - "stderr: {{ functional_mgmt_disaster.stderr }}"
-      when: "functional_mgmt_disaster is defined"
+      when:
+        - "functional_mgmt_disaster is defined"
+        - "functional_mgmt_disaster.rc != 0"
 
     - name: "Superset functional test results (post-disaster)"
       ansible.builtin.debug:
         msg:
           - "rc: {{ functional_superset_disaster.rc }}"
+      when: "functional_superset_disaster is defined"
+
+    - name: "Superset functional test failure details (post-disaster)"
+      ansible.builtin.debug:
+        msg:
           - "stdout: {{ functional_superset_disaster.stdout }}"
           - "stderr: {{ functional_superset_disaster.stderr }}"
-      when: "functional_superset_disaster is defined"
+      when:
+        - "functional_superset_disaster is defined"
+        - "functional_superset_disaster.rc != 0"

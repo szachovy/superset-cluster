@@ -216,7 +216,18 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             """
         session_request_cookie = self.extract_session_cookie(csrf_login_request)
         body = csrf_login_request.decode('utf-8').split('\r\n\r\n', 1)[1]
-        csrf_token = json.loads(body[body.find('{'):body.rfind('}') + 1]).get("result")
+        start, end = body.find('{'), body.rfind('}')
+        if start == -1 or end == -1 or end < start:
+            raise ValueError(
+                f"No valid JSON object in CSRF response: {body!r}"
+            )
+        try:
+            csrf_response = json.loads(body[start:end + 1])
+        except json.JSONDecodeError as error:
+            raise ValueError(
+                f"Invalid JSON in CSRF response: {body!r}"
+            ) from error
+        csrf_token = csrf_response.get("result")
         command = f"""
             curl \
                 --location \
