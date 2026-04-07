@@ -47,6 +47,28 @@ jobs:
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
+      - name: "Build and pre-load service images into test containers"
+        run: |
+          build_and_load() {
+            local image_tag="$1"
+            local build_context="$2"
+            shift 2
+            local nodes=("$@")
+            docker build --quiet -t "$image_tag" "$build_context"
+            for node in "${nodes[@]}"; do
+              docker save "$image_tag" | docker exec -i "$node" docker load
+            done
+            docker rmi "$image_tag"
+            docker image prune --force
+          }
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server:latest" \
+            "services/mysql-server" node-2 node-3 node-4
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest" \
+            "services/mysql-mgmt" node-0 node-1
+          build_and_load "ghcr.io/szachovy/superset-cluster-superset-service:latest" \
+            "services/superset" node-0 node-1
+          docker image prune --all --force
+
       - name: "Run Ansible testsuite"
         run: "ansible-playbook --inventory inventory.yml deploy.yml"
         working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"

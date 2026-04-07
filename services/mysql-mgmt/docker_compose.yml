@@ -6,7 +6,7 @@ services:
     container_name: "mysql-mgmt-initcontainer"
     network_mode: "host"
     restart: "no"
-    pull_policy: "always"
+    pull_policy: "missing"
     entrypoint:
       - "/bin/bash"
       - "-c"
@@ -98,7 +98,7 @@ services:
 
   maincontainer:
     image: "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest"
-    pull_policy: "always"
+    pull_policy: "missing"
     user: "superset"
     entrypoint:
       - "/bin/bash"
