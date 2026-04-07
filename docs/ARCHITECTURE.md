@@ -5,6 +5,7 @@ that orchestrates [Apache Superset](https://superset.apache.org/) across a multi
 [MySQL InnoDB Cluster](https://dev.mysql.com/doc/refman/8.0/en/mysql-innodb-cluster-introduction.html).
 
 For details in each particular topic, follow:
+
 * [PERFORMANCE.md](./PERFORMANCE.md)
 * [SECURITY.md](./SECURITY.md)
 * [RELIABILITY.md](./RELIABILITY.md)
@@ -112,11 +113,11 @@ orchestrates the following sequence:
 The controller runs on the user's workstation and communicates with cluster nodes over SSH using
 [Paramiko](https://www.paramiko.org/). The `RemoteConnection` class provides:
 
-- **SSH/SFTP connections**: connects as the `superset` user, either directly or through `~/.ssh/config`.
-- **Python bytecode execution**: `container.py` source is compiled to `.pyc`, uploaded to the remote node,
+* **SSH/SFTP connections**: connects as the `superset` user, either directly or through `~/.ssh/config`.
+* **Python bytecode execution**: `container.py` source is compiled to `.pyc`, uploaded to the remote node,
   and executed via `python3 /opt/<nonce>.pyc`. This allows running Docker API commands on remote nodes
   without installing additional management software.
-- **Directory and file uploads**: recursive SFTP-based uploads of service directories, certificates,
+* **Directory and file uploads**: recursive SFTP-based uploads of service directories, certificates,
   and passwords.
 
 ## Networking
@@ -124,14 +125,14 @@ The controller runs on the user's workstation and communicates with cluster node
 MySQL Server and MySQL Management containers run with `network_mode: host`, sharing the host's network
 stack. This enables:
 
-- Direct access to MySQL on port 3306 from other nodes using hostnames.
-- Keepalived to manage the VIP directly on the host's network interface.
-- MySQL Router to bind to the host's port 6446.
+* Direct access to MySQL on port 3306 from other nodes using hostnames.
+* Keepalived to manage the VIP directly on the host's network interface.
+* MySQL Router to bind to the host's port 6446.
 
 Redis and Superset run on the `superset-network` overlay network, which provides:
 
-- Service discovery: Superset connects to Redis using the hostname `redis`.
-- Port publishing: Swarm publishes port 443 on all Swarm nodes via VIP-based routing.
+* Service discovery: Superset connects to Redis using the hostname `redis`.
+* Port publishing: Swarm publishes port 443 on all Swarm nodes via VIP-based routing.
 
 | Port | Protocol | Service | Scope |
 |------|----------|---------|-------|
@@ -160,8 +161,9 @@ If the MySQL primary node fails:
 
 If the Superset container fails:
 
-Superset runs as a Docker Swarm service with `maxreplicas=1`. Swarm automatically reschedules it on an available manager node. The service connects to MySQL through the
-VIP (port 6446), so it is transparent to management node failovers.
+Superset runs as a Docker Swarm service with `maxreplicas=1`. Swarm automatically reschedules it on an
+available manager node. The service connects to MySQL through the VIP (port 6446), so it is transparent
+to management node failovers.
 
 For detailed fault tolerance scenarios, health check configuration, and VRRP behavior, see
 [RELIABILITY.md](RELIABILITY.md).

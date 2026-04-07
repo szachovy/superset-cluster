@@ -10,7 +10,7 @@ The cluster is designed to survive simultaneous failures of one management node 
 |------------------|--------|----------|
 | Management MASTER fails | VIP migrates to BACKUP via VRRP (1–2 second detection) | Automatic |
 | MySQL primary fails | InnoDB Cluster elects new primary from secondaries | Automatic |
-| Both above simultaneously | VIP migrates + new primary elected; cluster status: `OK_NO_TOLERANCE_PARTIAL` | Automatic |
+| Both above simultaneously | VIP migrates + new primary elected; cluster: `OK_NO_TOLERANCE_PARTIAL` | Automatic |
 | Redis container fails | Restart policy: `always`; Celery tasks retry on broker reconnection | Automatic |
 | Superset container fails | Docker Swarm reschedules the service (`maxreplicas=1`) | Automatic |
 

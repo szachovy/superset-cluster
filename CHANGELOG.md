@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* [PERFORMANCE.md](./docs/PERFORMANCE.md), [SECURITY.md](./docs/SECURITY.md) and [RELIABILITY.md](./docs/RELIABILITY.md) documents in the documentation.
+* [PERFORMANCE.md](./docs/PERFORMANCE.md), [SECURITY.md](./docs/SECURITY.md) and
+  [RELIABILITY.md](./docs/RELIABILITY.md) documents in the documentation.
 
 ### Changed
 
