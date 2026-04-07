@@ -7,6 +7,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 USER root
 
+# hadolint ignore=DL3008,SC2086
 RUN \
   set \
     -eux \
@@ -84,6 +85,7 @@ RUN \
       "docker-ce" \
       "docker-ce-cli" \
       "openssh-server" \
+      "python3" \
   && \
   apt-get \
     clean \
