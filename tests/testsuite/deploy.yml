@@ -15,6 +15,42 @@
     - name: "Run system tasks from testing role"
       ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
 
+- name: "Cluster readiness verification"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Verify all containers are healthy on each node"
+      community.docker.docker_container_exec:
+        container: "{{ item }}"
+        command: |
+          {% raw %}
+          /bin/bash -c
+          'UNHEALTHY=$(docker ps -a --filter "health=unhealthy" --format "{{.Names}}");
+          if [ -n "$UNHEALTHY" ]; then
+            echo "Unhealthy containers: $UNHEALTHY"; exit 1;
+          fi;
+          RUNNING=$(docker ps --format "{{.Names}}" | wc -l);
+          if [ "$RUNNING" -eq 0 ]; then
+            echo "No running containers"; exit 1;
+          fi;
+          echo "All $RUNNING containers healthy"'
+          {% endraw %}
+      loop:
+        - "{{ node_prefix }}-0"
+        - "{{ node_prefix }}-1"
+        - "{{ node_prefix }}-2"
+        - "{{ node_prefix }}-3"
+        - "{{ node_prefix }}-4"
+      register: "readiness_check"
+
+    - name: "Cluster readiness results"
+      ansible.builtin.debug:
+        msg: "{{ item.stdout }}"
+      loop: "{{ readiness_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
 - name: "Functional testing"
   connection: "local"
   hosts: "testing"
