@@ -205,7 +205,10 @@ class ContainerConnection:
                 if self.client.containers.get(self.container).attrs["State"]["Health"]["Status"] == "healthy":
                     return f"{self.get_logs()}\nContainer {self.container} is healthy"
             time.sleep(cls.healthcheck_interval)
-        return f"{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck to be healthy"
+        elapsed = cls.healthcheck_start_period + cls.healthcheck_retries * cls.healthcheck_interval
+        raise TimeoutError(
+            f"{self.get_logs()}\nContainer {self.container} not healthy after {elapsed}s"
+        )
 
     def run_mysql_server(self) -> None:
         class MySQLServer(ContainerInstance):
