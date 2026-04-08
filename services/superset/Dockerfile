@@ -17,6 +17,7 @@ RUN \
   pip \
     install \
       --no-cache-dir \
+      "gevent==24.2.1" \
       "redis==4.5.4" \
       "mysql-connector-python==9.0.0"
 

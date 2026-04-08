@@ -17,7 +17,14 @@ if superset test_db \
   superset init
   
   /app/set_database_uri.exp
-  /usr/bin/run-server.sh &
+  gunicorn \
+    --bind 0.0.0.0:8088 \
+    --workers 4 \
+    --worker-class gevent \
+    --timeout 120 \
+    --limit-request-line 8190 \
+    --forwarded-allow-ips "*" \
+    "superset.app:create_app()" &
 
   celery \
     --app superset.tasks.celery_app:app worker \
