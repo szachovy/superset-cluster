@@ -281,7 +281,8 @@ class ContainerConnection:
             secondary_first_mysql_node: str,
             secondary_second_mysql_node: str,
             state: str,
-            priority: str) -> None:
+            priority: str,
+            vrrp_password: str = '') -> None:
 
         class MySQLMgmt(ContainerInstance):
             # pylint: disable=too-many-arguments
@@ -327,6 +328,7 @@ class ContainerConnection:
                 os.environ["HEALTHCHECK_RETRIES"] = str(self.healthcheck_retries)
                 os.environ["STATE"] = state
                 os.environ["PRIORITY"] = priority
+                os.environ["VRRP_PASSWORD"] = vrrp_password
 
             def run(self) -> None:
                 self.setup_env()

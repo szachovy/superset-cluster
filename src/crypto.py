@@ -64,6 +64,10 @@ class OpenSSL:
         return base64.b64encode(os.urandom(16)).decode('utf-8')
 
     @staticmethod
+    def generate_vrrp_password() -> str:
+        return base64.b64encode(os.urandom(6)).decode('utf-8')[:8]
+
+    @staticmethod
     def generate_mysql_superset_password() -> str:
         return "".join(random.choice(string.ascii_lowercase) for _ in range(12))
 

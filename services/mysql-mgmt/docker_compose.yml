@@ -86,6 +86,7 @@ services:
       - "VIRTUAL_NETWORK=${VIRTUAL_NETWORK}"
       - "STATE=${STATE}"
       - "PRIORITY=${PRIORITY}"
+      - "VRRP_PASSWORD=${VRRP_PASSWORD}"
       - "MYSQL_TEST_LOGIN_FILE=/opt/.mylogin.cnf"
     volumes:
       - "default_generated:/opt/default"
