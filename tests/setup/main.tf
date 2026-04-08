@@ -118,6 +118,15 @@ resource "docker_container" "nodes" {
         echo -e 'nameserver 8.8.8.8\nnameserver 8.8.4.4' >> /etc/resolv.conf && \
         usermod --append --groups docker superset && \
         chown --recursive superset:superset /opt/superset-testing"
+      docker exec $HOSTNAME /bin/bash -c " \
+        if [ $NODE_INDEX -ge 2 ]; then \
+          docker pull ghcr.io/szachovy/superset-cluster-mysql-server:latest & \
+        else \
+          docker pull ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest & \
+          docker pull ghcr.io/szachovy/superset-cluster-superset-service:latest & \
+          docker pull redis:latest & \
+        fi; \
+        wait" || true
       echo "Host $HOSTNAME
         Hostname $IP_ADDRESS
         StrictHostKeyChecking no
@@ -128,6 +137,7 @@ resource "docker_container" "nodes" {
     environment = {
       HOSTNAME   = "${var.node_prefix}-${count.index}"
       IP_ADDRESS = cidrhost(var.subnet, 2 + count.index)
+      NODE_INDEX = count.index
     }
   }
 
