@@ -100,6 +100,13 @@ class ContainerConnection:
         self.client = docker.from_env()
         self.container = container
 
+    @staticmethod
+    def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
+        try:
+            client.images.pull(image)
+        except (docker.errors.DockerException, requests.exceptions.RequestException):
+            client.images.build(path=build_context, tag=image)
+
     def run_command_on_the_container(
             self,
             command: str,
@@ -210,6 +217,10 @@ class ContainerConnection:
                 self.healthcheck_retries = 3
 
             def run(self) -> None:
+                image = "ghcr.io/szachovy/superset-cluster-mysql-server:latest"
+                ContainerConnection.pull_or_build_image(
+                    self.client, image, "/opt/superset-cluster/mysql-server"
+                )
                 with open(
                     file="/opt/superset-cluster/mysql-server/seccomp.json",
                     mode="r",
@@ -217,7 +228,7 @@ class ContainerConnection:
                 ) as seccomp:
                     seccomp_parsed = json.dumps(json.load(seccomp), separators=(',', ':'))
                 self.client.containers.run(
-                    "ghcr.io/szachovy/superset-cluster-mysql-server:latest",
+                    image,
                     detach=True,
                     name=self.container,
                     hostname=socket.gethostname(),
@@ -277,6 +288,7 @@ class ContainerConnection:
             # pylint: disable=too-many-instance-attributes
             def __init__(
                         self,
+                        client: docker.client.DockerClient,
                         virtual_ip_address: str,
                         virtual_network_mask: str,
                         virtual_network_interface: str,
@@ -286,6 +298,7 @@ class ContainerConnection:
                         state: str,
                         priority: str
                     ) -> None:
+                self.client = client
                 self.virtual_ip_address = virtual_ip_address
                 self.virtual_network_mask = virtual_network_mask
                 self.virtual_network_interface = virtual_network_interface
@@ -317,6 +330,11 @@ class ContainerConnection:
 
             def run(self) -> None:
                 self.setup_env()
+                ContainerConnection.pull_or_build_image(
+                    self.client,
+                    "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest",
+                    "/opt/superset-cluster/mysql-mgmt"
+                )
                 subprocess.run(" \
                     docker \
                       compose \
@@ -343,6 +361,7 @@ class ContainerConnection:
         return print(
             self.wait_until_healthy(
                 MySQLMgmt(  # type: ignore[arg-type]
+                    client=self.client,
                     virtual_ip_address=virtual_ip_address,
                     virtual_network_mask=virtual_network_mask,
                     virtual_network_interface=virtual_network_interface,
@@ -417,9 +436,13 @@ class ContainerConnection:
                 ).id
 
             def run(self) -> None:
+                image = "ghcr.io/szachovy/superset-cluster-superset-service:latest"
+                ContainerConnection.pull_or_build_image(
+                    self.client, image, "/opt/superset-cluster/superset"
+                )
                 self.client.services.create(
                     name="superset",
-                    image="ghcr.io/szachovy/superset-cluster-superset-service:latest",
+                    image=image,
                     networks=["superset-network"],
                     secrets=[
                         docker.types.SecretReference(

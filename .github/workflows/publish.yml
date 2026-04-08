@@ -1,0 +1,39 @@
+---
+name: "Publish"
+
+on:  # yamllint disable-line rule:truthy
+  push:
+    branches: "master"
+
+env:
+  REGISTRY: "ghcr.io"
+
+jobs:
+  publish:
+    runs-on: "ubuntu-22.04"
+    permissions:
+      contents: "read"
+      packages: "write"
+    strategy:
+      matrix:
+        include:
+          - image: "ghcr.io/szachovy/superset-cluster-mysql-server"
+            context: "services/mysql-server"
+          - image: "ghcr.io/szachovy/superset-cluster-mysql-mgmt"
+            context: "services/mysql-mgmt"
+          - image: "ghcr.io/szachovy/superset-cluster-superset-service"
+            context: "services/superset"
+    steps:
+      - uses: "actions/checkout@v4"
+
+      - name: "Log in to GitHub Container Registry"
+        uses: "docker/login-action@v3"
+        with:
+          registry: "${{ env.REGISTRY }}"
+          username: "${{ github.actor }}"
+          password: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: "Build and push image"
+        run: |
+          docker build --quiet -t "${{ matrix.image }}:latest" "${{ matrix.context }}"
+          docker push "${{ matrix.image }}:latest"
