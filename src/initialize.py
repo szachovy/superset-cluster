@@ -56,6 +56,7 @@ import itertools
 import sys
 import re
 import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import crypto
 import decorators
@@ -160,7 +161,12 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         raise ValueError("Fetched MYSQL_TEST_LOGIN_FILE invalid")
 
     def start_mysql_servers(self) -> None:
-        for node in self.mysql_nodes:
+        ca_key_pem = self.cert_manager.deserialization(self.ca_key)
+        ca_chain_pem = "".join(
+            self.cert_manager.deserialization(node.certificate) for node in self.mysql_nodes
+        ) + self.cert_manager.deserialization(self.ca_certificate)
+
+        def start_single_node(node: remote.RemoteConnection) -> None:
             node.upload_directory(
                 local_directory_path="./services/mysql-server",
                 remote_directory_path="/opt/superset-cluster/mysql-server"
@@ -170,11 +176,10 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 remote_file_path="/opt/superset-cluster/mysql-server/mysql_root_password"
             )
             node.upload_file(
-                content=self.cert_manager.deserialization(self.ca_key),
+                content=ca_key_pem,
                 remote_file_path="/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem")
             node.upload_file(
-                content="".join(self.cert_manager.deserialization(node.certificate) for node in self.mysql_nodes)
-                + self.cert_manager.deserialization(self.ca_certificate),
+                content=ca_chain_pem,
                 remote_file_path="/opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem"
             )
             node.upload_file(
@@ -190,6 +195,11 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                     container='mysql' \
                 ).run_mysql_server()"
             )
+
+        with ThreadPoolExecutor(max_workers=3) as executor:
+            futures = {executor.submit(start_single_node, node): node for node in self.mysql_nodes}
+            for future in as_completed(futures):
+                future.result()
 
     def start_mysql_mgmt(self, node: remote.RemoteConnection, state: str, priority: int) -> None:
         node.upload_directory(
