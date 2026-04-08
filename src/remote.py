@@ -128,8 +128,8 @@ class RemoteConnection:
             pyc_file = io.BytesIO()
             pyc_file.write(b'o\r\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
             marshal.dump(code_object, pyc_file)
-            self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
-        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
+            self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/superset-cluster/{nonce}.pyc')
+        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/superset-cluster/{nonce}.pyc")
         return {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()

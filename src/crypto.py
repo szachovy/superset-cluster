@@ -129,6 +129,21 @@ class OpenSSL:
         )
 
     @staticmethod
+    def serialization(pem: str
+                      ) -> cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey | cryptography.x509.Certificate:
+        pem_bytes = pem.encode('utf-8')
+        if 'PRIVATE KEY' in pem:
+            return cryptography.hazmat.primitives.serialization.load_pem_private_key(
+                pem_bytes,
+                password=None,
+                backend=cryptography.hazmat.backends.default_backend()
+            )
+        return cryptography.x509.load_pem_x509_certificate(
+            pem_bytes,
+            backend=cryptography.hazmat.backends.default_backend()
+        )
+
+    @staticmethod
     def deserialization(pki:
                         cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey |
                         cryptography.x509.base.CertificateSigningRequest |
