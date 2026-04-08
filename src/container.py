@@ -374,7 +374,8 @@ class ContainerConnection:
             )
         )
 
-    def run_superset(self, virtual_ip_address: str, superset_secret_key, mysql_superset_password) -> None:
+    def run_superset(self, virtual_ip_address: str, superset_secret_key,
+                     mysql_superset_password, superset_admin_password) -> None:
         class Redis(ContainerInstance):
             def __init__(self, client: docker.client.DockerClient, virtual_ip_address: str) -> None:
                 self.virtual_ip_address = virtual_ip_address
@@ -414,11 +415,13 @@ class ContainerConnection:
                     client: docker.client.DockerClient,
                     virtual_ip_address: str,
                     superset_secret_key,
-                    mysql_superset_password) -> None:
+                    mysql_superset_password,
+                    superset_admin_password) -> None:
                 self.client = client
                 self.virtual_ip_address = virtual_ip_address
                 self.superset_secret_key = superset_secret_key
                 self.mysql_superset_password = mysql_superset_password
+                self.superset_admin_password = superset_admin_password
                 self.healthcheck_start_period = 60
                 self.healthcheck_interval = 60
                 self.healthcheck_retries = 14
@@ -433,6 +436,12 @@ class ContainerConnection:
                 return self.client.secrets.create(
                     name="mysql_superset_password",
                     data=self.mysql_superset_password
+                ).id
+
+            def create_superset_admin_password_secret(self) -> str:
+                return self.client.secrets.create(
+                    name="superset_admin_password",
+                    data=self.superset_admin_password
                 ).id
 
             def run(self) -> None:
@@ -452,6 +461,10 @@ class ContainerConnection:
                         docker.types.SecretReference(
                             secret_id=self.create_mysql_superset_password_secret(),
                             secret_name="mysql_superset_password"
+                        ),
+                        docker.types.SecretReference(
+                            secret_id=self.create_superset_admin_password_secret(),
+                            secret_name="superset_admin_password"
                         )
                     ],
                     maxreplicas=1,
@@ -494,7 +507,8 @@ class ContainerConnection:
                     self.client,
                     virtual_ip_address,
                     superset_secret_key,
-                    mysql_superset_password
+                    mysql_superset_password,
+                    superset_admin_password
                 )  # type: ignore[arg-type]
             )
         )

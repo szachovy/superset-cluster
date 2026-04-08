@@ -11,7 +11,7 @@ if superset test_db \
   --firstname "superset" \
   --lastname "superset" \
   --email "superset@cluster.com" \
-  --password "cluster"
+  --password "$(< /run/secrets/superset_admin_password)"
 
   superset db upgrade
   superset init
