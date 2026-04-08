@@ -280,11 +280,37 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                           mysql_superset_password=self.mysql_superset_password)
             )
 
+    def _verify_mysql_cluster_ready(self) -> None:
+        for node in self.mysql_nodes:
+            _, stdout, stderr = node.ssh_client.exec_command(
+                "docker inspect --format='{{.State.Health.Status}}' mysql"
+            )
+            health = stdout.read().decode().strip()
+            if health != "healthy":
+                raise RuntimeError(
+                    f"MySQL health gate failed on {node.node}: status is '{health}'"
+                )
+            print(f"MySQL on {node.node} is healthy")
+
+    def _verify_mgmt_ready(self, node: remote.RemoteConnection) -> None:
+        _, stdout, stderr = node.ssh_client.exec_command(
+            "docker inspect --format='{{.State.Health.Status}}' mysql-mgmt"
+        )
+        health = stdout.read().decode().strip()
+        if health != "healthy":
+            raise RuntimeError(
+                f"Management health gate failed on {node.node}: status is '{health}'"
+            )
+        print(f"mysql-mgmt on {node.node} is healthy")
+
     def start_cluster(self) -> None:
         try:
             self.start_mysql_servers()
+            self._verify_mysql_cluster_ready()
             self.start_mysql_mgmt(node=self.mgmt_nodes[0], state="MASTER", priority=100)
+            self._verify_mgmt_ready(self.mgmt_nodes[0])
             self.start_mysql_mgmt(node=self.mgmt_nodes[1], state="BACKUP", priority=90)
+            self._verify_mgmt_ready(self.mgmt_nodes[1])
             self.start_superset()
         finally:
             for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
