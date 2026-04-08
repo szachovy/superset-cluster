@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Dependabot updates for `github-actions` and `terraform` ecosystems. (#29)
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
+* MySQL Router max_connections=40 on bootstrap_rw to reserve connections for cluster operations. (#82)
 
 ### Changed
 
