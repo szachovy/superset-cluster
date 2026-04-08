@@ -14,12 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CodeQL code scanning workflow for Python static analysis. (#29)
 * Dependabot updates for `github-actions` and `terraform` ecosystems. (#29)
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
+* Pull-first with local build fallback for container images during deployment. (#97)
 
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
-* Test workflow pulls pre-built images from GHCR with local build fallback. (#97)
+* Test workflow always builds service images locally for reproducibility. (#97)
 
 ### Fixed
 

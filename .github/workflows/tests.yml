@@ -47,28 +47,25 @@ jobs:
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
-      - name: "Pull or build service images and pre-load into test containers"
+      - name: "Build and pre-load service images into test containers"
         run: |
-          pull_or_build_and_load() {
+          build_and_load() {
             local image_name="$1"
             local build_context="$2"
             shift 2
             local nodes=("$@")
-            if ! docker pull "${image_name}:latest" 2>/dev/null; then
-              echo "Pull failed for ${image_name}:latest, building locally"
-              docker build --quiet -t "${image_name}:latest" "$build_context"
-            fi
+            docker build --quiet -t "${image_name}:latest" "$build_context"
             for node in "${nodes[@]}"; do
               docker save "${image_name}:latest" | docker exec -i "$node" docker load
             done
             docker rmi "${image_name}:latest" || true
             docker image prune --force
           }
-          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server" \
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server" \
             "services/mysql-server" node-2 node-3 node-4
-          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt" \
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt" \
             "services/mysql-mgmt" node-0 node-1
-          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-superset-service" \
+          build_and_load "ghcr.io/szachovy/superset-cluster-superset-service" \
             "services/superset" node-0 node-1
           docker image prune --all --force
 
