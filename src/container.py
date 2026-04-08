@@ -394,11 +394,18 @@ class ContainerConnection:
                 self.create_network()
                 self.client.containers.run(
                     "redis",
+                    command=["redis-server", "/etc/redis/redis.conf"],
                     detach=True,
                     restart_policy={"Name": "always"},
                     name="redis",
                     hostname="redis",
                     network="superset-network",
+                    volumes={
+                        "/opt/superset-cluster/superset/redis.conf": {
+                            "bind": "/etc/redis/redis.conf",
+                            "mode": "ro"
+                        }
+                    },
                     healthcheck={
                         'test': ["CMD", "redis-cli", "ping"],
                         'interval': self.healthcheck_interval * 1000000000,
