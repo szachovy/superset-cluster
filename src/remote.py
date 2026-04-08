@@ -95,7 +95,12 @@ class RemoteConnection:
             result = func(*args, **kwargs)
             if result["output"]:
                 logger.info(
-                    "[Node: %s] Command: %s - Output:\n%s",
+                    "[Node: %s] Command: %s completed",
+                    getattr(self, 'node', 'UnknownNode'),
+                    command
+                )
+                logger.debug(
+                    "[Node: %s] Command: %s - stdout:\n%s",
                     getattr(self, 'node', 'UnknownNode'),
                     command,
                     result["output"]
@@ -103,6 +108,12 @@ class RemoteConnection:
             if result["error"]:
                 logger.error(
                     "[Node: %s] Command: %s - Error:\n%s",
+                    getattr(self, "node", "UnknownNode"),
+                    command,
+                    result["error"]
+                )
+                logger.debug(
+                    "[Node: %s] Command: %s - stderr:\n%s",
                     getattr(self, "node", "UnknownNode"),
                     command,
                     result["error"]
