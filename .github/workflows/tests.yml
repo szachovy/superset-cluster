@@ -80,6 +80,16 @@ jobs:
         with:
           path: "/tmp/superset_cluster_testsuite.log"
 
+      - name: "Clean up keepalived routes"
+        run: |
+          sudo ip route | grep -E 'proto keepalived|172\.18\.0\.10' | while read -r route; do
+            sudo ip route del $route 2>/dev/null || true
+          done
+          sudo ip addr show | grep -oP '172\.18\.0\.10/\d+' | while read -r addr; do
+            sudo ip addr del "$addr" dev $(ip route get 172.18.0.10 2>/dev/null | grep -oP 'dev \K\S+' || echo lo) 2>/dev/null || true
+          done
+        if: "${{ always() }}"
+
       - name: "Destroy Terraform environment"
         run: "terraform destroy --auto-approve"
         if: "${{ always() }}"
