@@ -47,34 +47,28 @@ jobs:
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
-      - name: "Build and pre-load service images into test containers"
+      - name: "Pull or build service images and pre-load into test containers"
         run: |
-          if [ "$GITHUB_REF_NAME" = "master" ]; then
-            IMAGE_TAG="latest"
-          else
-            IMAGE_TAG="${GITHUB_REF_NAME//\//-}"
-          fi
-          build_and_load() {
+          pull_or_build_and_load() {
             local image_name="$1"
             local build_context="$2"
             shift 2
             local nodes=("$@")
-            docker build --quiet -t "${image_name}:${IMAGE_TAG}" "$build_context"
-            if [ "$IMAGE_TAG" != "latest" ]; then
-              docker tag "${image_name}:${IMAGE_TAG}" "${image_name}:latest"
+            if ! docker pull "${image_name}:latest" 2>/dev/null; then
+              echo "Pull failed for ${image_name}:latest, building locally"
+              docker build --quiet -t "${image_name}:latest" "$build_context"
             fi
             for node in "${nodes[@]}"; do
               docker save "${image_name}:latest" | docker exec -i "$node" docker load
             done
-            docker rmi "${image_name}:${IMAGE_TAG}" || true
             docker rmi "${image_name}:latest" || true
             docker image prune --force
           }
-          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server" \
+          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server" \
             "services/mysql-server" node-2 node-3 node-4
-          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt" \
+          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt" \
             "services/mysql-mgmt" node-0 node-1
-          build_and_load "ghcr.io/szachovy/superset-cluster-superset-service" \
+          pull_or_build_and_load "ghcr.io/szachovy/superset-cluster-superset-service" \
             "services/superset" node-0 node-1
           docker image prune --all --force
 
