@@ -100,6 +100,10 @@ services:
     image: "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest"
     pull_policy: "missing"
     user: "superset"
+    mem_limit: "1g"
+    memswap_limit: "1g"
+    cpus: 1.0
+    pids_limit: 200
     entrypoint:
       - "/bin/bash"
       - "-c"
