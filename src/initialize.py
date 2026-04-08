@@ -56,6 +56,7 @@ import itertools
 import sys
 import re
 import socket
+from concurrent.futures import ThreadPoolExecutor
 
 import crypto
 import decorators
@@ -131,7 +132,9 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             node.certificate = self.cert_manager.generate_certificate(f'Superset-Cluster-{node.node}',
                                                                       node.csr,
                                                                       self.ca_key)
-            node.create_directory('/opt/superset-cluster')
+        with ThreadPoolExecutor(max_workers=5) as executor:
+            for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
+                executor.submit(node.create_directory, '/opt/superset-cluster')
         for node in self.mgmt_nodes:
             node.superset_key = self.cert_manager.generate_private_key()
             node.superset_csr = self.cert_manager.generate_csr(self.virtual_ip_address, node.superset_key)
