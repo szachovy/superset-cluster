@@ -72,6 +72,10 @@ class OpenSSL:
         return base64.b64encode(os.urandom(42)).decode('utf-8')
 
     @staticmethod
+    def generate_redis_password() -> str:
+        return base64.b64encode(os.urandom(24)).decode('utf-8')
+
+    @staticmethod
     def generate_private_key() -> cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey:
         return cryptography.hazmat.primitives.asymmetric.rsa.generate_private_key(
             public_exponent=65537,
