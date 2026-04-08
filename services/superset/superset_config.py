@@ -18,13 +18,17 @@ import os
 import flask_caching.backends.rediscache  # pylint: disable=import-error
 
 
+with open(file="/run/secrets/redis_password", mode="r", encoding="utf-8") as redis_password_file:
+    REDIS_PASSWORD = redis_password_file.read().strip()
+
+
 class CeleryConfig:  # pylint: disable=too-few-public-methods
-    broker_url = "redis://redis:6379/0"
+    broker_url = f"redis://:{REDIS_PASSWORD}@redis:6379/0"
     imports = (
         "superset.sql_lab",
         "superset.tasks.scheduler",
     )
-    result_backend = "redis://redis:6379/0"
+    result_backend = f"redis://:{REDIS_PASSWORD}@redis:6379/0"
     worker_prefetch_multiplier = 10
     task_acks_late = True
     task_annotations = {
@@ -42,10 +46,12 @@ with open(file="/run/secrets/mysql_superset_password", mode="r", encoding="utf-8
     SQLALCHEMY_DATABASE_URI = f"mysql+mysqlconnector://superset:{mysql_superset_password.read().strip()}@{os.environ.get('VIRTUAL_IP_ADDRESS')}:6446/superset"  # noqa: E501  pylint: disable=line-too-long
 
 CELERY_CONFIG = CeleryConfig  # pylint: disable=invalid-name
-RESULTS_BACKEND = flask_caching.backends.rediscache.RedisCache(host="redis", port=6379, key_prefix="superset_results")
+RESULTS_BACKEND = flask_caching.backends.rediscache.RedisCache(
+    host="redis", port=6379, key_prefix="superset_results", password=REDIS_PASSWORD
+)
 FILTER_STATE_CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",
     "CACHE_DEFAULT_TIMEOUT": 86400,
     "CACHE_KEY_PREFIX": "superset_filter_cache",
-    "CACHE_REDIS_URL": "redis://redis:6379/0"
+    "CACHE_REDIS_URL": f"redis://:{REDIS_PASSWORD}@redis:6379/0"
 }

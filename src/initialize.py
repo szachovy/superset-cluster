@@ -125,6 +125,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         self.mysql_root_password = self.cert_manager.generate_mysql_root_password()
         self.mysql_superset_password = self.cert_manager.generate_mysql_superset_password()
         self.superset_secret_key = self.cert_manager.generate_superset_secret_key()
+        self.redis_password = self.cert_manager.generate_redis_password()
         for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
             node.key = self.cert_manager.generate_private_key()
             node.csr = self.cert_manager.generate_csr(f'Superset-Cluster-{node.node}', node.key)
@@ -268,16 +269,22 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 content=self.cert_manager.deserialization(node.superset_certificate),
                 remote_file_path="/opt/superset-cluster/superset/superset_cluster_certificate.pem"
             )
+            node.upload_file(
+                content=self.redis_password,
+                remote_file_path="/opt/superset-cluster/superset/redis_password"
+            )
             node.run_python_container_command(
                 "ContainerConnection( \
                     container='superset' \
                 ).run_superset( \
                     '{virtual_ip_address}', \
                     '{superset_secret_key}', \
-                    '{mysql_superset_password}' \
+                    '{mysql_superset_password}', \
+                    '{redis_password}' \
                 )".format(virtual_ip_address=self.virtual_ip_address,
                           superset_secret_key=self.superset_secret_key,
-                          mysql_superset_password=self.mysql_superset_password)
+                          mysql_superset_password=self.mysql_superset_password,
+                          redis_password=self.redis_password)
             )
 
     def start_cluster(self) -> None:

@@ -374,11 +374,14 @@ class ContainerConnection:
             )
         )
 
-    def run_superset(self, virtual_ip_address: str, superset_secret_key, mysql_superset_password) -> None:
+    def run_superset(self, virtual_ip_address: str, superset_secret_key,
+                     mysql_superset_password, redis_password) -> None:
         class Redis(ContainerInstance):
-            def __init__(self, client: docker.client.DockerClient, virtual_ip_address: str) -> None:
+            def __init__(self, client: docker.client.DockerClient, virtual_ip_address: str,
+                         redis_password: str) -> None:
                 self.virtual_ip_address = virtual_ip_address
                 self.client = client
+                self.redis_password = redis_password
                 self.healthcheck_start_period = 10
                 self.healthcheck_interval = 10
                 self.healthcheck_retries = 5
@@ -389,18 +392,32 @@ class ContainerConnection:
             def create_network(self) -> None:
                 self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
 
+            def generate_redis_conf(self) -> None:
+                with open("/opt/superset-cluster/superset/redis.conf.tpl", "r", encoding="utf-8") as tpl:
+                    conf = tpl.read().replace("${REDIS_PASSWORD}", self.redis_password)
+                with open("/opt/superset-cluster/superset/redis.conf", "w", encoding="utf-8") as out:
+                    out.write(conf)
+
             def run(self) -> None:
                 self.initialize_swarm()
                 self.create_network()
+                self.generate_redis_conf()
                 self.client.containers.run(
                     "redis",
+                    command=["redis-server", "/usr/local/etc/redis/redis.conf"],
                     detach=True,
                     restart_policy={"Name": "always"},
                     name="redis",
                     hostname="redis",
                     network="superset-network",
+                    volumes={
+                        "/opt/superset-cluster/superset/redis.conf": {
+                            "bind": "/usr/local/etc/redis/redis.conf",
+                            "mode": "ro"
+                        }
+                    },
                     healthcheck={
-                        'test': ["CMD", "redis-cli", "ping"],
+                        'test': ["CMD", "redis-cli", "-a", self.redis_password, "ping"],
                         'interval': self.healthcheck_interval * 1000000000,
                         'timeout': 5 * 1000000000,
                         'retries': self.healthcheck_retries,
@@ -414,11 +431,13 @@ class ContainerConnection:
                     client: docker.client.DockerClient,
                     virtual_ip_address: str,
                     superset_secret_key,
-                    mysql_superset_password) -> None:
+                    mysql_superset_password,
+                    redis_password) -> None:
                 self.client = client
                 self.virtual_ip_address = virtual_ip_address
                 self.superset_secret_key = superset_secret_key
                 self.mysql_superset_password = mysql_superset_password
+                self.redis_password = redis_password
                 self.healthcheck_start_period = 60
                 self.healthcheck_interval = 60
                 self.healthcheck_retries = 14
@@ -433,6 +452,12 @@ class ContainerConnection:
                 return self.client.secrets.create(
                     name="mysql_superset_password",
                     data=self.mysql_superset_password
+                ).id
+
+            def create_redis_password_secret(self) -> str:
+                return self.client.secrets.create(
+                    name="redis_password",
+                    data=self.redis_password
                 ).id
 
             def run(self) -> None:
@@ -452,6 +477,10 @@ class ContainerConnection:
                         docker.types.SecretReference(
                             secret_id=self.create_mysql_superset_password_secret(),
                             secret_name="mysql_superset_password"
+                        ),
+                        docker.types.SecretReference(
+                            secret_id=self.create_redis_password_secret(),
+                            secret_name="redis_password"
                         )
                     ],
                     maxreplicas=1,
@@ -484,7 +513,7 @@ class ContainerConnection:
         self.container = "redis"
         print(
             self.wait_until_healthy(
-                Redis(self.client, virtual_ip_address)  # type: ignore[arg-type]
+                Redis(self.client, virtual_ip_address, redis_password)  # type: ignore[arg-type]
             )
         )
         self.container = "superset"
@@ -494,7 +523,8 @@ class ContainerConnection:
                     self.client,
                     virtual_ip_address,
                     superset_secret_key,
-                    mysql_superset_password
+                    mysql_superset_password,
+                    redis_password
                 )  # type: ignore[arg-type]
             )
         )
