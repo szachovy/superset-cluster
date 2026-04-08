@@ -68,6 +68,10 @@ class OpenSSL:
         return "".join(random.choice(string.ascii_lowercase) for _ in range(12))
 
     @staticmethod
+    def generate_superset_admin_password() -> str:
+        return base64.b64encode(os.urandom(16)).decode('utf-8')
+
+    @staticmethod
     def generate_superset_secret_key() -> str:
         return base64.b64encode(os.urandom(42)).decode('utf-8')
 
