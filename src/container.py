@@ -236,6 +236,10 @@ class ContainerConnection:
                     network="host",
                     cap_add=["SYS_NICE"],
                     security_opt=[f"seccomp={seccomp_parsed}"],
+                    mem_limit="2g",
+                    memswap_limit="2g",
+                    nano_cpus=2000000000,
+                    pids_limit=500,
                     environment={
                         "MYSQL_INITDB_SKIP_TZINFO": "true",
                         "MYSQL_ROOT_PASSWORD_FILE": "/var/run/mysqld/mysql_root_password",
@@ -399,6 +403,10 @@ class ContainerConnection:
                     name="redis",
                     hostname="redis",
                     network="superset-network",
+                    mem_limit="768m",
+                    memswap_limit="768m",
+                    nano_cpus=500000000,
+                    pids_limit=100,
                     healthcheck={
                         'test': ["CMD", "redis-cli", "ping"],
                         'interval': self.healthcheck_interval * 1000000000,
@@ -456,6 +464,10 @@ class ContainerConnection:
                     ],
                     maxreplicas=1,
                     env=[f"VIRTUAL_IP_ADDRESS={self.virtual_ip_address}"],
+                    resources=docker.types.Resources(
+                        mem_limit=2147483648,
+                        nano_cpus=2000000000
+                    ),
                     endpoint_spec=docker.types.EndpointSpec(
                         mode="vip",
                         ports={443: 443}
