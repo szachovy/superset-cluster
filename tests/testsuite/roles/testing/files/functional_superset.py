@@ -325,7 +325,6 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
         raise ValueError(f"Could not find query details in {sqllab_run_query!r}")
 
     def get_query_results(self, dttm_time_query_identifier: float) -> None:
-        time.sleep(45)  # state refreshing
         ts = int(dttm_time_query_identifier) - 5000
         command = f"""
             curl \
@@ -339,14 +338,14 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                 --header 'Referer: https://{self.virtual_ip_address}' \
                 --header '{self.api_csrf_header}'
         """
-        for _ in range(10):
+        for _ in range(12):
+            time.sleep(15)
             query_result = self.decode_command_output(
                 self.run_command_on_the_container(command)
             )
             list_of_results = query_result.get("result")
             if isinstance(list_of_results, list) and len(list_of_results) > 0:
                 break
-            time.sleep(30)
         else:
             raise ValueError(f"Could not get non-empty results after retries from {query_result}")
         first_result = list_of_results[0]
