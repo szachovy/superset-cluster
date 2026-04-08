@@ -104,7 +104,7 @@ class ContainerConnection:
     def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
         try:
             client.images.pull(image)
-        except docker.errors.APIError:
+        except (docker.errors.DockerException, requests.exceptions.RequestException):
             client.images.build(path=build_context, tag=image)
 
     def run_command_on_the_container(
@@ -288,6 +288,7 @@ class ContainerConnection:
             # pylint: disable=too-many-instance-attributes
             def __init__(
                         self,
+                        client: docker.client.DockerClient,
                         virtual_ip_address: str,
                         virtual_network_mask: str,
                         virtual_network_interface: str,
@@ -297,6 +298,7 @@ class ContainerConnection:
                         state: str,
                         priority: str
                     ) -> None:
+                self.client = client
                 self.virtual_ip_address = virtual_ip_address
                 self.virtual_network_mask = virtual_network_mask
                 self.virtual_network_interface = virtual_network_interface
@@ -329,7 +331,7 @@ class ContainerConnection:
             def run(self) -> None:
                 self.setup_env()
                 ContainerConnection.pull_or_build_image(
-                    docker.from_env(),
+                    self.client,
                     "ghcr.io/szachovy/superset-cluster-mysql-mgmt:latest",
                     "/opt/superset-cluster/mysql-mgmt"
                 )
@@ -359,6 +361,7 @@ class ContainerConnection:
         return print(
             self.wait_until_healthy(
                 MySQLMgmt(  # type: ignore[arg-type]
+                    client=self.client,
                     virtual_ip_address=virtual_ip_address,
                     virtual_network_mask=virtual_network_mask,
                     virtual_network_interface=virtual_network_interface,
