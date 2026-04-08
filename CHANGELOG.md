@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Dependabot updates for `github-actions` and `terraform` ecosystems. (#29)
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
+* Redis memory limit (512MB) and LRU eviction policy via redis.conf. (#78)
 
 ### Changed
 
