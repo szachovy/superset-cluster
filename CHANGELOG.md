@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * [PERFORMANCE.md](./docs/PERFORMANCE.md), [SECURITY.md](./docs/SECURITY.md) and
   [RELIABILITY.md](./docs/RELIABILITY.md) documents in the documentation. (#93)
+* CodeQL code scanning workflow for Python static analysis. (#29)
+* Dependabot updates for `github-actions` and `terraform` ecosystems. (#29)
 
 ### Changed
 
