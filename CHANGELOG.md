@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+* Bump test Dockerfile base image from ubuntu:22.04 to ubuntu:24.04. (#39)
+
+### Changed
+
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
