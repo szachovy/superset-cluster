@@ -94,9 +94,9 @@ class ArgumentParser:
 
         def validate_hostname(hostname: str) -> str:
             """(RFC 1123 compliance)."""
-            allowed_characters = re.compile(r"[A-Z\d-]{1,63}", re.IGNORECASE)
+            allowed_characters = re.compile(r"^[A-Z\d-]{1,63}$", re.IGNORECASE)
             if not ((len(hostname) > 255) or ("." in hostname)):
-                if all(allowed_characters.match(x) for x in hostname):
+                if allowed_characters.match(hostname):
                     return hostname
             raise ValueError("Invalid node hostname provided")
 
@@ -152,7 +152,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                         {{'MYSQL_TEST_LOGIN_FILE': '/var/run/mysqld/.mylogin.cnf'}} \
                     ) \
                 )".format(
-                    mysql_nodes=" ".join(node.node for node in self.mysql_nodes))
+                    mysql_nodes=" ".join(repr(node.node) for node in self.mysql_nodes))
                 )["output"]
             mylogin_cnf = base64.b64decode(output[2:-2].replace("\\n", ""))
             if len(mylogin_cnf) > 320:
@@ -228,22 +228,22 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             "ContainerConnection( \
                 container='mysql-mgmt' \
             ).run_mysql_mgmt( \
-                '{virtual_ip_address}', \
-                '{virtual_network_mask}', \
-                '{virtual_network_interface}', \
-                '{primary_mysql_node}', \
-                '{secondary_first_mysql_node}', \
-                '{secondary_second_mysql_node}', \
-                '{state}', \
-                '{priority}' \
-            )".format(virtual_ip_address=self.virtual_ip_address,
-                      virtual_network_mask=self.virtual_network_mask,
-                      virtual_network_interface=self.virtual_network_interface,
-                      primary_mysql_node=self.mysql_nodes[0].node,
-                      secondary_first_mysql_node=self.mysql_nodes[1].node,
-                      secondary_second_mysql_node=self.mysql_nodes[2].node,
-                      state=state,
-                      priority=priority)
+                {virtual_ip_address}, \
+                {virtual_network_mask}, \
+                {virtual_network_interface}, \
+                {primary_mysql_node}, \
+                {secondary_first_mysql_node}, \
+                {secondary_second_mysql_node}, \
+                {state}, \
+                {priority} \
+            )".format(virtual_ip_address=repr(self.virtual_ip_address),
+                      virtual_network_mask=repr(str(self.virtual_network_mask)),
+                      virtual_network_interface=repr(self.virtual_network_interface),
+                      primary_mysql_node=repr(self.mysql_nodes[0].node),
+                      secondary_first_mysql_node=repr(self.mysql_nodes[1].node),
+                      secondary_second_mysql_node=repr(self.mysql_nodes[2].node),
+                      state=repr(state),
+                      priority=repr(str(priority)))
         )
 
     def start_superset(self) -> None:
@@ -272,12 +272,12 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 "ContainerConnection( \
                     container='superset' \
                 ).run_superset( \
-                    '{virtual_ip_address}', \
-                    '{superset_secret_key}', \
-                    '{mysql_superset_password}' \
-                )".format(virtual_ip_address=self.virtual_ip_address,
-                          superset_secret_key=self.superset_secret_key,
-                          mysql_superset_password=self.mysql_superset_password)
+                    {virtual_ip_address}, \
+                    {superset_secret_key}, \
+                    {mysql_superset_password} \
+                )".format(virtual_ip_address=repr(self.virtual_ip_address),
+                          superset_secret_key=repr(self.superset_secret_key),
+                          mysql_superset_password=repr(self.mysql_superset_password))
             )
 
     def start_cluster(self) -> None:
