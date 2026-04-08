@@ -56,6 +56,7 @@ import itertools
 import sys
 import re
 import socket
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import crypto
 import decorators
@@ -247,17 +248,20 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         )
 
     def start_superset(self) -> None:
-        for node in self.mgmt_nodes:
+        ca_key_pem = self.cert_manager.deserialization(self.ca_key)
+        ca_cert_pem = self.cert_manager.deserialization(self.ca_certificate)
+
+        def start_single_node(node: remote.RemoteConnection) -> None:
             node.upload_directory(
                 local_directory_path="./services/superset",
                 remote_directory_path='/opt/superset-cluster/superset'
             )
             node.upload_file(
-                content=self.cert_manager.deserialization(self.ca_key),
+                content=ca_key_pem,
                 remote_file_path="/opt/superset-cluster/superset/superset_cluster_ca_key.pem"
             )
             node.upload_file(
-                content=self.cert_manager.deserialization(self.ca_certificate),
+                content=ca_cert_pem,
                 remote_file_path="/opt/superset-cluster/superset/superset_cluster_ca_certificate.pem"
             )
             node.upload_file(
@@ -279,6 +283,11 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                           superset_secret_key=self.superset_secret_key,
                           mysql_superset_password=self.mysql_superset_password)
             )
+
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            futures = {executor.submit(start_single_node, node): node for node in self.mgmt_nodes}
+            for future in as_completed(futures):
+                future.result()
 
     def start_cluster(self) -> None:
         try:
