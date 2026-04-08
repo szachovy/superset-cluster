@@ -32,9 +32,9 @@ RUN \
   apt-get \
     install \
       --yes \
-      "expect=5.45.4-2+b1" \
-      "gosu=1.14-1+b10" \
-      "nginx=1.22.1-9" \
+      "expect" \
+      "gosu" \
+      "nginx" \
   && \
   chown \
     --recursive \

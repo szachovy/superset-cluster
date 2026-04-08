@@ -11,8 +11,20 @@ env:
 
 jobs:
   tests:
-    runs-on: "self-hosted"
+    runs-on: "ubuntu-22.04"
     steps:
+      - name: "Free disk space"
+        run: |
+          sudo rm -rf \
+            /usr/local/lib/android \
+            /usr/share/dotnet \
+            /opt/ghc \
+            /usr/local/share/boost \
+            /usr/local/graalvm \
+            /usr/local/share/chromium \
+            /usr/local/share/powershell
+          sudo docker image prune --all --force
+
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-node@v3"
         with:
@@ -25,7 +37,7 @@ jobs:
           python-version: "3.10.12"
 
       - name: "Install Python dependencies"
-        run: "pip install --no-cache-dir --user ansible==9.5.1"
+        run: "pip install --no-cache-dir --user ansible==9.5.1 paramiko==3.5.0"
 
       - name: "Initialize Terraform infrastructure"
         run: "terraform init"
@@ -35,9 +47,42 @@ jobs:
         run: "terraform apply --auto-approve"
         working-directory: "${{ env.TERRAFORM_WORKING_DIRECTORY }}"
 
+      - name: "Build and pre-load service images into test containers"
+        run: |
+          if [ "$GITHUB_REF_NAME" = "master" ]; then
+            IMAGE_TAG="latest"
+          else
+            IMAGE_TAG="${GITHUB_REF_NAME//\//-}"
+          fi
+          build_and_load() {
+            local image_name="$1"
+            local build_context="$2"
+            shift 2
+            local nodes=("$@")
+            docker build --quiet -t "${image_name}:${IMAGE_TAG}" "$build_context"
+            if [ "$IMAGE_TAG" != "latest" ]; then
+              docker tag "${image_name}:${IMAGE_TAG}" "${image_name}:latest"
+            fi
+            for node in "${nodes[@]}"; do
+              docker save "${image_name}:latest" | docker exec -i "$node" docker load
+            done
+            docker rmi "${image_name}:${IMAGE_TAG}" || true
+            docker rmi "${image_name}:latest" || true
+            docker image prune --force
+          }
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-server" \
+            "services/mysql-server" node-2 node-3 node-4
+          build_and_load "ghcr.io/szachovy/superset-cluster-mysql-mgmt" \
+            "services/mysql-mgmt" node-0 node-1
+          build_and_load "ghcr.io/szachovy/superset-cluster-superset-service" \
+            "services/superset" node-0 node-1
+          docker image prune --all --force
+
       - name: "Run Ansible testsuite"
-        run: "ansible-playbook --inventory inventory.yml deploy.yml"
-        working-directory: ${{ env.ANSIBLE_WORKING_DIRECTORY }}
+        run: |
+          ansible-playbook --inventory inventory.yml deploy.yml \
+            2>&1 | tee -a /tmp/superset_cluster_testsuite.log
+        working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"
 
       - uses: "actions/upload-artifact@v4"
         if: "${{ always() }}"

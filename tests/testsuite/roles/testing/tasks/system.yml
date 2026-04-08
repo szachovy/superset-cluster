@@ -9,7 +9,7 @@
         --virtual-ip-address {{ virtual_ip_address }} \
         --virtual-network-interface {{ virtual_network_interface }} \
         --virtual-network-mask {{ virtual_network_mask }}
-    } > /tmp/superset_cluster_testsuite.log 2>&1
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
   args:
     executable: "/bin/bash"
     chdir: "../../"
@@ -17,3 +17,29 @@
   poll: 60
   register: "run_command"
   changed_when: "run_command.rc != 0"
+
+- name: "Collect container health from each node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'docker ps -a
+      --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'
+      {% endraw %}
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "container_health"
+  changed_when: false
+  failed_when: false
+
+- name: "Container health status after cluster init"
+  ansible.builtin.debug:
+    msg: "{{ item.stdout_lines }}"
+  loop: "{{ container_health.results }}"
+  loop_control:
+    label: "{{ item.item }}"

@@ -29,14 +29,14 @@ RUN \
   apt-get \
     install \
       --yes \
-      "gpg=2.2.27-3ubuntu2.1" \
-      "ifmetric=0.3-5" \
-      "keepalived=1:2.2.4-0.2build1" \
-      "libkeyutils1=1.6.1-2ubuntu3" \
-      "mysql-client=8.0.39-0ubuntu0.22.04.1" \
-      "sudo=1.9.9-1ubuntu2.4" \
-      "wget=1.21.2-2ubuntu1.1" \
-      "xz-utils=5.2.5-2ubuntu1" \
+      "gpg" \
+      "ifmetric" \
+      "keepalived" \
+      "libkeyutils1" \
+      "mysql-client" \
+      "sudo" \
+      "wget" \
+      "xz-utils" \
   && \
   groupadd \
     --system \

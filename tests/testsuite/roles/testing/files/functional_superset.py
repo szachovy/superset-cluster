@@ -215,7 +215,19 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
                 \nCommand: {command!r}\nReturned: {csrf_login_request!r}
             """
         session_request_cookie = self.extract_session_cookie(csrf_login_request)
-        csrf_token = json.loads(csrf_login_request.decode('utf-8').split('\r\n\r\n')[1]).get("result")
+        body = csrf_login_request.decode('utf-8').split('\r\n\r\n', 1)[1]
+        start, end = body.find('{'), body.rfind('}')
+        if start == -1 or end == -1 or end < start:
+            raise ValueError(
+                f"No valid JSON object in CSRF response: {body!r}"
+            )
+        try:
+            csrf_response = json.loads(body[start:end + 1])
+        except json.JSONDecodeError as error:
+            raise ValueError(
+                f"Invalid JSON in CSRF response: {body!r}"
+            ) from error
+        csrf_token = csrf_response.get("result")
         command = f"""
             curl \
                 --location \
@@ -314,38 +326,42 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
 
     def get_query_results(self, dttm_time_query_identifier: float) -> None:
         time.sleep(45)  # state refreshing
+        ts = int(dttm_time_query_identifier) - 5000
         command = f"""
             curl \
                 --location \
                 --cacert /app/server_certificate.pem \
                 --silent \
-                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{dttm_time_query_identifier})' \
+                '{self.api_default_url}/query/updated_since?q=(last_updated_ms:{ts})' \
                 --header 'Accept: application/json' \
                 --header '{self.api_authorization_header}' \
                 --header '{self.api_session_header}' \
                 --header 'Referer: https://{self.virtual_ip_address}' \
                 --header '{self.api_csrf_header}'
         """
-        query_result = self.decode_command_output(
-            self.run_command_on_the_container(command)
-        )
-        list_of_results = query_result.get("result")
-        if isinstance(list_of_results, list):
-            first_result = list_of_results[0]
-            if isinstance(first_result, dict):
-                assert \
-                    first_result["state"] == "success", \
-                    f"""Could not find query state or returned unsuccessful
-                        \nCommand: {command}\nReturned decoded: {query_result}
-                    """
-                results_key = f"superset_results{first_result['resultsKey']}"
-                assert \
-                    self.redis.fetch_query_result(results_key), \
-                    f"Query result with the {results_key} key can not be found in Redis after\nCommand: {command}"
-                assert \
-                    self.celery.find_processed_queries(), \
-                    f"Query seems to be processed outside Celery worker after\nCommand: {command}"
-            else:
-                raise ValueError(f"Could not fetch first result from {query_result} or the result is empty")
+        for _ in range(10):
+            query_result = self.decode_command_output(
+                self.run_command_on_the_container(command)
+            )
+            list_of_results = query_result.get("result")
+            if isinstance(list_of_results, list) and len(list_of_results) > 0:
+                break
+            time.sleep(30)
         else:
-            raise ValueError(f"Could not get list of results from {query_result}")
+            raise ValueError(f"Could not get non-empty results after retries from {query_result}")
+        first_result = list_of_results[0]
+        if isinstance(first_result, dict):
+            assert \
+                first_result["state"] == "success", \
+                f"""Could not find query state or returned unsuccessful
+                    \nCommand: {command}\nReturned decoded: {query_result}
+                """
+            results_key = f"superset_results{first_result['resultsKey']}"
+            assert \
+                self.redis.fetch_query_result(results_key), \
+                f"Query result with the {results_key} key can not be found in Redis after\nCommand: {command}"
+            assert \
+                self.celery.find_processed_queries(), \
+                f"Query seems to be processed outside Celery worker after\nCommand: {command}"
+        else:
+            raise ValueError(f"Could not fetch first result from {query_result} or the result is empty")

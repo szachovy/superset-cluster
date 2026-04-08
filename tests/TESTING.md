@@ -33,8 +33,7 @@ Ansible playbook running testsuite against applied terraform infrastructure, tha
 
 ### Required software
 
-Testing host is the `ubuntu:22.04` runner with 1 core of AMD EPYC 7773X x86_64 CPU and 8GiB of RAM
-with the [software installed](../README.md#installed-software)
+Testing host is the `ubuntu:22.04` runner with the [software installed](../README.md#installed-software)
 meeting the [required criteria](../README.md/#hosts-specification)
 with the following software installed for testing:
 

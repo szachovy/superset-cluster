@@ -6,48 +6,40 @@ on:  # yamllint disable-line rule:truthy
     branches: "**"
 
 jobs:
-  setup:
-    runs-on: "self-hosted"
+  run-markdown-lint:
+    runs-on: "ubuntu-22.04"
     steps:
       - uses: "actions/checkout@v4"
-      - uses: "actions/setup-python@v3"
-        with:
-          python-version: "3.10.12"
-
-      - name: "Install Python dependencies"
-        run: |
-          pip install --no-cache-dir --user \
-            pylint==3.2.4 mypy==1.10.1 flake8==7.1.0 yamllint==1.35.1
-
-  run-markdown-lint:
-    runs-on: "self-hosted"
-    needs: "setup"
-    steps:
       - name: "Lint Markdown files"
         uses: "articulate/actions-markdownlint@v1"
         with:
           version: "0.41.0"
 
   run-yaml-lint:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
+        with:
+          python-version: "3.10.12"
+      - name: "Install yamllint"
+        run: "pip install --no-cache-dir --user yamllint==1.35.1"
       - name: "Lint YAML files"
         run: "yamllint ."
 
   run-shell-check:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
       - name: "Lint shell scripts"
         uses: "ludeeus/action-shellcheck@master"
         with:
           version: "v0.10.0"
 
   run-docker-hadolint:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
       - name: "Lint Dockerfiles"
         uses: "hadolint/hadolint-action@v3.1.0"
         with:
@@ -55,41 +47,60 @@ jobs:
           recursive: true
 
   run-terraform-tflint:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
       - uses: "terraform-linters/setup-tflint@v4"
         with:
           tflint_version: "v0.51.1"
-
       - name: "Lint Terraform testing infrastructure"
         run: "tflint --init && tflint"
         working-directory: "./tests/setup"
 
   run-ansible-lint:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
+        with:
+          python-version: "3.10.12"
+      - name: "Install ansible-lint"
+        run: "pip install --no-cache-dir --user 'ansible-lint==24.6.1' 'ansible-core>=2.16,<2.18'"
       - name: "Lint ansible testing playbook"
-        uses: "ansible/ansible-lint@v24.6.1"
+        run: "ansible-lint"
 
   run-python-pylint:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
+        with:
+          python-version: "3.10.12"
+      - name: "Install pylint and project dependencies"
+        run: "pip install --no-cache-dir --user pylint==3.2.4 paramiko==3.5.0 docker==7.1.0"
       - name: "Lint Python files with pylint"
-        run: "pylint $(find . -name '*.py')"
+        run: "pylint --fail-under=9.0 $(find . -name '*.py')"
 
   run-python-mypy:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
+        with:
+          python-version: "3.10.12"
+      - name: "Install mypy"
+        run: "pip install --no-cache-dir --user mypy==1.10.1"
       - name: "Lint Python files with mypy"
         run: "mypy --install-types --non-interactive $(find . -name '*.py')"
 
   run-python-flake8:
-    runs-on: "self-hosted"
-    needs: "setup"
+    runs-on: "ubuntu-22.04"
     steps:
+      - uses: "actions/checkout@v4"
+      - uses: "actions/setup-python@v3"
+        with:
+          python-version: "3.10.12"
+      - name: "Install flake8"
+        run: "pip install --no-cache-dir --user flake8==7.1.0"
       - name: "Lint Python files with flake8"
         run: "flake8"

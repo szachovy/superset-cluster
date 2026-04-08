@@ -9,11 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-* [PERFORMANCE.md](./docs/PERFORMANCE.md), [SECURITY.md](./docs/SECURITY.md) and [RELIABILITY.md](./docs/RELIABILITY.md) documents in the documentation.
+* [PERFORMANCE.md](./docs/PERFORMANCE.md), [SECURITY.md](./docs/SECURITY.md) and
+  [RELIABILITY.md](./docs/RELIABILITY.md) documents in the documentation. (#93)
 
 ### Changed
 
-* Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md)
+* Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
+* Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
+
+### Fixed
+
+* Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
+* Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
 
 ## 1.0 - 2024-10-13
 
