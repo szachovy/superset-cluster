@@ -384,10 +384,18 @@ class ContainerConnection:
                 self.healthcheck_retries = 5
 
             def initialize_swarm(self) -> None:
-                self.client.swarm.init(advertise_addr=self.virtual_ip_address)
+                self.client.swarm.init(
+                    advertise_addr=self.virtual_ip_address,
+                    data_path_port=4789
+                )
 
             def create_network(self) -> None:
-                self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
+                self.client.networks.create(
+                    name='superset-network',
+                    driver='overlay',
+                    attachable=True,
+                    options={"encrypted": "true"}
+                )
 
             def run(self) -> None:
                 self.initialize_swarm()
