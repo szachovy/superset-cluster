@@ -154,10 +154,12 @@ class RemoteConnection:
     def create_directory(self, remote_directory_path: str) -> None:
         self.sftp_client.mkdir(remote_directory_path)
 
-    def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
+    def upload_file(self, content: str | bytes, remote_file_path: str, mode: int = 0o644) -> None:
         if isinstance(content, str):
             content = content.encode('utf-8')
-        self.sftp_client.putfo(io.BytesIO(content), remote_file_path)
+        with self.sftp_client.open(remote_file_path, 'wb') as remote_file:
+            remote_file.set_pmode(mode)
+            remote_file.write(content)
 
     def change_permissions_to_root(self, filepath: str) -> None:
         self.ssh_client.exec_command(f"chmod 600 {filepath}")
