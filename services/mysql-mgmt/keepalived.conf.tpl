@@ -19,6 +19,10 @@ vrrp_instance virtual_instance {
     advert_int 1
     nopreempt
     garp_master_delay 2
+    authentication {
+        auth_type PASS
+        auth_pass ${VRRP_PASSWORD}
+    }
     track_script {
         status
     }

@@ -125,6 +125,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         self.mysql_root_password = self.cert_manager.generate_mysql_root_password()
         self.mysql_superset_password = self.cert_manager.generate_mysql_superset_password()
         self.superset_secret_key = self.cert_manager.generate_superset_secret_key()
+        self.vrrp_password = self.cert_manager.generate_vrrp_password()
         for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
             node.key = self.cert_manager.generate_private_key()
             node.csr = self.cert_manager.generate_csr(f'Superset-Cluster-{node.node}', node.key)
@@ -235,7 +236,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 '{secondary_first_mysql_node}', \
                 '{secondary_second_mysql_node}', \
                 '{state}', \
-                '{priority}' \
+                '{priority}', \
+                '{vrrp_password}' \
             )".format(virtual_ip_address=self.virtual_ip_address,
                       virtual_network_mask=self.virtual_network_mask,
                       virtual_network_interface=self.virtual_network_interface,
@@ -243,7 +245,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                       secondary_first_mysql_node=self.mysql_nodes[1].node,
                       secondary_second_mysql_node=self.mysql_nodes[2].node,
                       state=state,
-                      priority=priority)
+                      priority=priority,
+                      vrrp_password=self.vrrp_password)
         )
 
     def start_superset(self) -> None:
