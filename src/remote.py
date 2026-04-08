@@ -152,7 +152,10 @@ class RemoteConnection:
                     self.sftp_client.put(local_item_path, remote_item_path)
 
     def create_directory(self, remote_directory_path: str) -> None:
-        self.sftp_client.mkdir(remote_directory_path)
+        try:
+            self.sftp_client.mkdir(remote_directory_path)
+        except IOError:
+            pass
 
     def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
         if isinstance(content, str):
