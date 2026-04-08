@@ -32,20 +32,18 @@ Follow [ARCHITECTURE.md](docs/ARCHITECTURE.md) for more.
 
 The following software needs to be installed on the user's host:
 
-* `python v3.10.12` with the following third party packages:
-  * `paramiko v3.5.0`
+* `Python >= 3.10` with the following third party packages:
+  * `paramiko >= 3.5.0`
+  * `cryptography >= 42.0.0`
+* `Terraform 1.0.10` (for testing) — install via [tfenv](https://github.com/tfutils/tfenv)
+* `Ansible >= 9.5.1` (for testing)
 
 The following software needs to be installed on the external nodes:
 
-* `ca-certificates v20230311ubuntu0.22.04.1`
-* `containerd.io v1.6.31-1`
-* `curl v7.81.0-1ubuntu1.16`
-* `docker-buildx-plugin v0.14.0-1~ubuntu.22.04~jammy`
-* `docker-ce v5:26.1.0-1~ubuntu.22.04~jammy`
-* `docker-ce-cli v5:26.1.0-1~ubuntu.22.04~jammy`
-* `openssh-server v1:8.9p1-3ubuntu0.10`
-* `python v3.10.12` with the following third party packages:
-  * `docker v7.1.0`
+* `Docker CE >= 24.0` (with containerd, buildx plugin, and CLI)
+* `openssh-server`
+* `Python >= 3.10` with the following third party packages:
+  * `docker >= 7.1.0`
 
 ## Usage
 
