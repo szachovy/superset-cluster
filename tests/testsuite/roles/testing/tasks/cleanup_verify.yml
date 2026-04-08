@@ -1,0 +1,62 @@
+---
+- name: "Verify no running containers on any node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test $(docker ps -q | wc -l) -eq 0'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_containers"
+
+- name: "Verify no docker volumes on any node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test $(docker volume ls -q | wc -l) -eq 0'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_volumes"
+
+- name: "Verify deployment directory removed from all nodes"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test ! -d /opt/superset-cluster'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_deploy_dir"
+
+- name: "Verify no .pyc files in /opt/superset-cluster on any node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: >-
+      /bin/bash -c
+      'test $(find /opt/superset-cluster -maxdepth 1 -name "*.pyc" 2>/dev/null | wc -l) -eq 0'
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_pyc_files"
+
+- name: "Verify VIP removed from management nodes"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: >-
+      /bin/bash -c
+      '! ip addr show dev {{ virtual_network_interface }}
+      | grep -q "{{ virtual_ip_address }}/"'
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+  register: "no_vip"
