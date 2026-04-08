@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
 
+### Fixed
+
+* Replace fixed 45s wait in get_query_results() with polling loop (12×15s). (#58)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
