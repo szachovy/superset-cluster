@@ -12,6 +12,12 @@ services:
       - "-c"
       - |
         set -euo pipefail
+        ip route | grep -E 'proto keepalived|${VIRTUAL_IP_ADDRESS}' | while read -r route; do
+          ip route del $route 2>/dev/null || true
+        done
+        ip addr show dev "${VIRTUAL_NETWORK_INTERFACE}" | grep -oP "${VIRTUAL_IP_ADDRESS}/\d+" | while read -r addr; do
+          ip addr del "$addr" dev "${VIRTUAL_NETWORK_INTERFACE}" 2>/dev/null || true
+        done
         export MYSQL_SUPERSET_PASSWORD=$(</run/secrets/mysql_superset_password)
         if ! mysqlsh \
                --login-path="${PRIMARY_MYSQL_NODE}" \
