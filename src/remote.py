@@ -160,4 +160,4 @@ class RemoteConnection:
         self.sftp_client.putfo(io.BytesIO(content), remote_file_path)
 
     def change_permissions_to_root(self, filepath: str) -> None:
-        self.ssh_client.exec_command(f"chmod 600 {filepath}")
+        self.sftp_client.chmod(filepath, 0o600)
