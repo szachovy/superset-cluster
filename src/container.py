@@ -384,10 +384,15 @@ class ContainerConnection:
                 self.healthcheck_retries = 5
 
             def initialize_swarm(self) -> None:
-                self.client.swarm.init(advertise_addr=self.virtual_ip_address)
+                try:
+                    self.client.swarm.init(advertise_addr=self.virtual_ip_address)
+                except docker.errors.APIError:
+                    pass  # Already in a swarm
 
             def create_network(self) -> None:
-                self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
+                existing = self.client.networks.list(names=['superset-network'])
+                if not existing:
+                    self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
 
             def run(self) -> None:
                 self.initialize_swarm()

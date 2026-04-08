@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
 
+### Fixed
+
+* Make swarm.init() and network.create() idempotent for re-run support. (#50)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
