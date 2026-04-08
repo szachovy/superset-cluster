@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
 
+### Added
+
+* `--cleanup` CLI flag and `deploy`/`cleanup` actions with proper teardown. (#49)
+* Redeploy and cleanup test stages with post-disaster recovery verification. (#49)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)

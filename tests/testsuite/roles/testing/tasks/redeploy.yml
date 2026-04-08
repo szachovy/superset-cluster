@@ -1,0 +1,147 @@
+---
+- name: "Restart stopped nodes for redeploy testing"
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: "started"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-2"
+
+- name: "Start services in restarted nodes"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'service ssh start && service docker start'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-2"
+  changed_when: false
+
+- name: "Wait for Docker daemon readiness in restarted nodes"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: >-
+      /bin/bash -c
+      'for i in $(seq 1 30); do
+      docker info >/dev/null 2>&1 && exit 0; sleep 2; done; exit 1'
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-2"
+  register: "docker_readiness"
+  changed_when: false
+
+- name: "Run redeploy (deploy cleans existing state first)"
+  ansible.builtin.shell: |
+    set -euxo pipefail
+    {
+      ./superset-cluster \
+        --mgmt-nodes {{ node_prefix }}-0,{{ node_prefix }}-1 \
+        --mysql-nodes {{ node_prefix }}-2,{{ node_prefix }}-3,{{ node_prefix }}-4 \
+        --virtual-ip-address {{ virtual_ip_address }} \
+        --virtual-network-interface {{ virtual_network_interface }} \
+        --virtual-network-mask {{ virtual_network_mask }}
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+    chdir: "../../"
+  async: 2100
+  poll: 60
+  register: "redeploy_command"
+  changed_when: "redeploy_command.rc != 0"
+
+- name: "Collect container health after redeploy"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'docker ps -a
+      --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'
+      {% endraw %}
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "redeploy_health"
+  changed_when: false
+  failed_when: false
+
+- name: "Container health status after redeploy"
+  ansible.builtin.debug:
+    msg: "{{ item.stdout_lines }}"
+  loop: "{{ redeploy_health.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+
+- name: "Find superset container name after redeploy"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'echo $(docker ps --filter "name=superset" --format "{{.Names}}")'
+      {% endraw %}
+  register: "superset_container_name_redeploy"
+
+- name: "Run functional verification after redeploy"
+  block:
+    - name: "Run functional tests on superset after redeploy"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_superset;
+          superset_functional = functional_superset.Superset(
+            superset_container=\"{{ superset_container_name_redeploy.stdout.strip() }}\",
+            virtual_ip_address=\"{{ virtual_ip_address }}\"
+          );
+          query_dttm = superset_functional.run_query();
+          superset_functional.get_query_results(query_dttm)'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_superset_redeploy"
+
+    - name: "Run functional tests on mgmt after redeploy"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_mgmt;
+          mgmt_functional = functional_mgmt.Mgmt(
+            virtual_ip_address=\"{{ virtual_ip_address }}\",
+            node_prefix=\"{{ node_prefix }}\",
+            after_disaster=False
+          );'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_mgmt_redeploy"
+
+  always:
+    - name: "Superset functional test results (redeploy)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_superset_redeploy.rc }}"
+      when: "functional_superset_redeploy is defined"
+
+    - name: "Superset functional test failure details (redeploy)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_superset_redeploy.stdout }}"
+          - "stderr: {{ functional_superset_redeploy.stderr }}"
+      when:
+        - "functional_superset_redeploy is defined"
+        - "functional_superset_redeploy.rc != 0"
+
+    - name: "Management functional test results (redeploy)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_mgmt_redeploy.rc }}"
+      when: "functional_mgmt_redeploy is defined"
+
+    - name: "Management functional test failure details (redeploy)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_mgmt_redeploy.stdout }}"
+          - "stderr: {{ functional_mgmt_redeploy.stderr }}"
+      when:
+        - "functional_mgmt_redeploy is defined"
+        - "functional_mgmt_redeploy.rc != 0"

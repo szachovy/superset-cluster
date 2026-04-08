@@ -22,3 +22,19 @@
   tasks:
     - name: "Run functional tasks from testing role"
       ansible.builtin.include_role: {name: "testing", tasks_from: "functional"}
+
+- name: "Redeploy testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run redeploy tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "redeploy"}
+
+- name: "Cleanup testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run cleanup tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "cleanup"}

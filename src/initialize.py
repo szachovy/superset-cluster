@@ -131,7 +131,10 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             node.certificate = self.cert_manager.generate_certificate(f'Superset-Cluster-{node.node}',
                                                                       node.csr,
                                                                       self.ca_key)
-            node.create_directory('/opt/superset-cluster')
+            try:
+                node.create_directory('/opt/superset-cluster')
+            except IOError:
+                pass
         for node in self.mgmt_nodes:
             node.superset_key = self.cert_manager.generate_private_key()
             node.superset_csr = self.cert_manager.generate_csr(self.virtual_ip_address, node.superset_key)
@@ -280,20 +283,92 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                           mysql_superset_password=self.mysql_superset_password)
             )
 
+    def _close_connections(self) -> None:
+        for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
+            node.ssh_client.close()
+            node.sftp_client.close()
+
+    def _run_ssh_command(self, node: remote.RemoteConnection, command: str) -> None:
+        _, stdout, stderr = node.ssh_client.exec_command(command)
+        exit_status = stdout.channel.recv_exit_status()
+        if exit_status != 0:
+            raise RuntimeError(
+                f"Command failed on {node.node} (exit {exit_status}): "
+                f"{command}\n{stderr.read().decode().strip()}"
+            )
+
+    def _prepare_nodes(self) -> None:
+        for node in itertools.chain(self.mysql_nodes, self.mgmt_nodes):
+            try:
+                node.sftp_client.mkdir('/opt/superset-cluster')
+            except IOError:
+                pass
+
+    def teardown_node(self, node: remote.RemoteConnection, is_mgmt: bool = False) -> None:
+        commands = [
+            "if docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null"
+            " | grep -qvx inactive; then docker swarm leave --force; fi",
+            "docker ps -aq | xargs -r docker rm -f",
+            "docker volume ls -q | xargs -r docker volume rm",
+            "docker network ls --filter name=superset-network -q"
+            " | xargs -r docker network rm",
+            "docker network ls --filter name=docker_gwbridge -q"
+            " | xargs -r docker network rm",
+            "if [ -d /opt/superset-cluster ]; then"
+            " rm -rf /opt/superset-cluster; fi",
+            "find /opt -maxdepth 1 -name '*.pyc' -delete",
+        ]
+        if is_mgmt:
+            commands.extend([
+                "if ip addr show dev {iface} 2>/dev/null"
+                " | grep -q '{vip}/'; then"
+                " ip addr del {vip}/{mask} dev {iface}; fi".format(
+                    iface=self.virtual_network_interface,
+                    vip=self.virtual_ip_address,
+                    mask=self.virtual_network_mask),
+                "if ip route show | grep -q '{vip} '; then"
+                " ip route del {vip}; fi".format(
+                    vip=self.virtual_ip_address),
+            ])
+        for cmd in commands:
+            self._run_ssh_command(node, cmd)
+
+    def teardown_cluster(self) -> None:
+        for node in self.mgmt_nodes:
+            self.teardown_node(node, is_mgmt=True)
+        for node in self.mysql_nodes:
+            self.teardown_node(node, is_mgmt=False)
+
     def start_cluster(self) -> None:
+        self.start_mysql_servers()
+        self.start_mysql_mgmt(node=self.mgmt_nodes[0], state="MASTER", priority=100)
+        self.start_mysql_mgmt(node=self.mgmt_nodes[1], state="BACKUP", priority=90)
+        self.start_superset()
+
+    def deploy(self) -> None:
         try:
-            self.start_mysql_servers()
-            self.start_mysql_mgmt(node=self.mgmt_nodes[0], state="MASTER", priority=100)
-            self.start_mysql_mgmt(node=self.mgmt_nodes[1], state="BACKUP", priority=90)
-            self.start_superset()
+            self.teardown_cluster()
+            self._prepare_nodes()
+            self.start_cluster()
         finally:
-            for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
-                node.ssh_client.close()
-                node.sftp_client.close()
+            self._close_connections()
+
+    def cleanup(self) -> None:
+        try:
+            self.teardown_cluster()
+        finally:
+            self._close_connections()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    if len(sys.argv) < 6:
         print("Invalid form of arguments provided")
         sys.exit(1)
-    Controller().start_cluster()
+
+    action = sys.argv[6] if len(sys.argv) > 6 else "deploy"
+    controller = Controller()
+
+    if action == "cleanup":
+        controller.cleanup()
+    else:
+        controller.deploy()
