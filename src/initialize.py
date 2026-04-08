@@ -141,7 +141,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
 
     @functools.lru_cache(maxsize=1)
     def get_mylogin_cnf(self, node: remote.RemoteConnection) -> bytes:
-        for _ in range(3):
+        for attempt in range(3):
             output = node.run_python_container_command(
                 "print( \
                     ContainerConnection( \
@@ -157,6 +157,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             mylogin_cnf = base64.b64decode(output[2:-2].replace("\\n", ""))
             if len(mylogin_cnf) > 320:
                 return mylogin_cnf
+            import time  # pylint: disable=import-outside-toplevel
+            time.sleep(min(5 * (2 ** attempt), 30))
         raise ValueError("Fetched MYSQL_TEST_LOGIN_FILE invalid")
 
     def start_mysql_servers(self) -> None:

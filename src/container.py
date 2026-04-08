@@ -197,14 +197,16 @@ class ContainerConnection:
     def wait_until_healthy(self, cls: typing.Type[ContainerInstance]) -> str:
         cls.run()  # type: ignore[call-arg]
         time.sleep(cls.healthcheck_start_period)
-        for _ in range(cls.healthcheck_retries):
+        max_interval = 60
+        for attempt in range(cls.healthcheck_retries):
             if self.container == "superset":
                 if self.client.api.tasks(filters={"service": "superset"})[0]["Status"]["State"] == "running":
                     return f"{self.get_logs()}\nContainer {self.container} is healthy"
             else:
                 if self.client.containers.get(self.container).attrs["State"]["Health"]["Status"] == "healthy":
                     return f"{self.get_logs()}\nContainer {self.container} is healthy"
-            time.sleep(cls.healthcheck_interval)
+            backoff = min(cls.healthcheck_interval * (2 ** attempt), max_interval)
+            time.sleep(backoff)
         return f"{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck to be healthy"
 
     def run_mysql_server(self) -> None:
