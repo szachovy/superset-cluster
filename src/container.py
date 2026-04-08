@@ -385,6 +385,13 @@ class ContainerConnection:
 
             def initialize_swarm(self) -> None:
                 self.client.swarm.init(advertise_addr=self.virtual_ip_address)
+                gwbridge = self.client.networks.get('docker_gwbridge')
+                gwbridge_subnet = gwbridge.attrs['IPAM']['Config'][0]['Subnet']
+                subprocess.run([
+                    'iptables', '-t', 'nat', '-A', 'POSTROUTING',
+                    '-s', gwbridge_subnet, '-d', gwbridge_subnet,
+                    '-j', 'MASQUERADE'
+                ], check=True)
 
             def create_network(self) -> None:
                 self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
