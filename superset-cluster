@@ -20,6 +20,8 @@ display_help() {
     echo "  --virtual-network-mask <mask>           Network mask for the virtual network gateway."
     echo "                                          Example: --virtual-network-mask 24"
     echo
+    echo "  --debug                               Enable debug-level logging."
+    echo
     echo "  -h, --help                              Show this help message and exit."
     echo
     echo "Example:"
@@ -58,6 +60,9 @@ parse_arguments() {
             -h|--help)
                 display_help
                 exit 0
+                ;;
+            --debug)
+                export SUPERSET_CLUSTER_DEBUG=1
                 ;;
             *)
                 echo "Unknown option: $1"
