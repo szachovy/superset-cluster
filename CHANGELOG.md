@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
+* Increased system test async timeout from 35 to 70 minutes. (#47)
 
 ## 1.0 - 2024-10-13
 
