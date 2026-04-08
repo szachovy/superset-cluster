@@ -6,9 +6,11 @@ global_defs {
 }
 
 vrrp_script status {
-    script "/bin/killall -0 mysqlrouter"
-    interval 1
-    weight 2
+    script "/opt/default/healthcheck.sh"
+    interval 5
+    weight -20
+    fall 3
+    rise 2
 }
 
 vrrp_instance virtual_instance {
