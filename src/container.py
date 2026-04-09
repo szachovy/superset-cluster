@@ -196,14 +196,17 @@ class ContainerConnection:
 
     def wait_until_healthy(self, cls: typing.Type[ContainerInstance]) -> str:
         cls.run()  # type: ignore[call-arg]
-        time.sleep(cls.healthcheck_start_period)
-        for _ in range(cls.healthcheck_retries):
-            if self.container == "superset":
-                if self.client.api.tasks(filters={"service": "superset"})[0]["Status"]["State"] == "running":
-                    return f"{self.get_logs()}\nContainer {self.container} is healthy"
-            else:
-                if self.client.containers.get(self.container).attrs["State"]["Health"]["Status"] == "healthy":
-                    return f"{self.get_logs()}\nContainer {self.container} is healthy"
+        total_retries = cls.healthcheck_retries + cls.healthcheck_start_period // cls.healthcheck_interval
+        for _ in range(total_retries):
+            try:
+                if self.container == "superset":
+                    if self.client.api.tasks(filters={"service": "superset"})[0]["Status"]["State"] == "running":
+                        return f"{self.get_logs()}\nContainer {self.container} is healthy"
+                else:
+                    if self.client.containers.get(self.container).attrs["State"]["Health"]["Status"] == "healthy":
+                        return f"{self.get_logs()}\nContainer {self.container} is healthy"
+            except (docker.errors.APIError, KeyError, IndexError):
+                pass
             time.sleep(cls.healthcheck_interval)
         return f"{self.get_logs()}\nTimeout while waiting for {self.container} healthcheck to be healthy"
 
