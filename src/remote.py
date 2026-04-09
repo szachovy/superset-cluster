@@ -39,7 +39,6 @@ remote_node.change_permissions_to_root("/opt/example/content/run.py")
 import functools
 import io
 import logging
-import marshal
 import os
 import pathlib
 import random
@@ -124,16 +123,15 @@ class RemoteConnection:
             mode="r",
             encoding="utf-8"
         ) as memfile:
-            code_object = compile(memfile.read() + command, filename=nonce, mode="exec")
-            pyc_file = io.BytesIO()
-            pyc_file.write(b'o\r\r\n\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00')
-            marshal.dump(code_object, pyc_file)
-            self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
-        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
-        return {
+            source = memfile.read() + command
+        self.upload_file(content=source, remote_file_path=f'/opt/{nonce}.py')
+        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.py")
+        result = {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()
         }
+        self.ssh_client.exec_command(f"rm -f /opt/{nonce}.py")
+        return result
 
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:
         stack = [(local_directory_path, remote_directory_path)]
@@ -152,7 +150,7 @@ class RemoteConnection:
                     self.sftp_client.put(local_item_path, remote_item_path)
 
     def create_directory(self, remote_directory_path: str) -> None:
-        self.sftp_client.mkdir(remote_directory_path)
+        self.ssh_client.exec_command(f"mkdir -p {remote_directory_path}")
 
     def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
         if isinstance(content, str):
