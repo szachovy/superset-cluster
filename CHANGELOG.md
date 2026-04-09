@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
+* Made `create_directory()` idempotent to support deployment re-runs. (#35)
 * Added default inventory directive to `ansible.cfg`. (#42)
 * Fixed Publish workflow `write_package` permission denied by adding OCI source labels for GHCR repository linking. (#99)
 
