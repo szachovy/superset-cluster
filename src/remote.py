@@ -152,7 +152,7 @@ class RemoteConnection:
                     self.sftp_client.put(local_item_path, remote_item_path)
 
     def create_directory(self, remote_directory_path: str) -> None:
-        self.sftp_client.mkdir(remote_directory_path)
+        self.ssh_client.exec_command(f"mkdir -p {remote_directory_path}")
 
     def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
         if isinstance(content, str):
