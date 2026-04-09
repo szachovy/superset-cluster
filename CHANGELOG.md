@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
+* Enabled parallel replication applier threads on secondary MySQL nodes. (#75)
 * Clean up temporary `.pyc` files on remote nodes after execution. (#51)
 * Set `innodb_flush_method=O_DIRECT` to eliminate double caching in containers. (#74)
 * Reduced InnoDB change buffer size for read-heavy BI workload. (#72)
