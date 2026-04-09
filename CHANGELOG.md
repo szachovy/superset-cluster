@@ -22,7 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
 * Clean up temporary `.pyc` files on remote nodes after execution. (#51)
+* Set `innodb_flush_method=O_DIRECT` to eliminate double caching in containers. (#74)
+* Reduced InnoDB change buffer size for read-heavy BI workload. (#72)
+* Set InnoDB buffer pool size to 1G for improved query performance. (#71)
 * Relaxed Terraform version constraint to accept any 1.x release. (#40)
+
+### Removed
+
+* Removed personal contact section from README. (#159)
 
 ### Fixed
 
