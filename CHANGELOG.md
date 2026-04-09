@@ -22,11 +22,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
 * Reduced InnoDB change buffer size for read-heavy BI workload. (#72)
+* Set InnoDB buffer pool size to 1G for improved query performance. (#71)
+* Relaxed Terraform version constraint to accept any 1.x release. (#40)
+
+### Removed
+
+* Removed personal contact section from README. (#159)
 
 ### Fixed
 
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
+* Made `create_directory()` idempotent to support deployment re-runs. (#35)
+* Added default inventory directive to `ansible.cfg`. (#42)
+* Fixed Publish workflow `write_package` permission denied by adding OCI source labels for GHCR repository linking. (#99)
 
 ## 1.0 - 2024-10-13
 
