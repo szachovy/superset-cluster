@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Unified `wait_until_healthy()` polling loop to handle transient Docker API errors during stabilization. (#43)
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
 
