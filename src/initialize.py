@@ -48,12 +48,17 @@ python initialize.py 192.168.1.100 eth0 24 mgmt1,mgmt2 mysql1,mysql2,mysql3
 
 # pylint: disable=consider-using-f-string
 # pylint: disable=attribute-defined-outside-init
+# pylint: disable=wrong-import-position
+
+import sys
+
+if sys.version_info < (3, 10):
+    sys.exit(f"Python >= 3.10 required (found {sys.version_info.major}.{sys.version_info.minor})")
 
 import base64
 import functools
 import ipaddress
 import itertools
-import sys
 import re
 import socket
 
