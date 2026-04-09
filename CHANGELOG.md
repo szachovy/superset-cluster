@@ -16,17 +16,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
 * Swarm overlay network encryption via IPsec and explicit data path port. (#92)
+* MySQL slow query log for queries exceeding 10 seconds or not using indexes. (#76)
+* Strengthen MySQL superset password: secrets module, expanded charset, 24 chars. (#89)
+* SQL Lab query row limits, timeout caps, and validation timeout. (#81)
+* Superset metastore and explore form data caching via Redis. (#79)
 
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
+* Enabled parallel replication applier threads on secondary MySQL nodes. (#75)
+* Clean up temporary `.pyc` files on remote nodes after execution. (#51)
+* Set `innodb_flush_method=O_DIRECT` to eliminate double caching in containers. (#74)
+* Reduced InnoDB change buffer size for read-heavy BI workload. (#72)
+* Set InnoDB buffer pool size to 1G for improved query performance. (#71)
+* Relaxed Terraform version constraint to accept any 1.x release. (#40)
+
+### Removed
+
+* Removed personal contact section from README. (#159)
 
 ### Fixed
 
+* Upload `.py` source instead of `.pyc` bytecode to decouple host Python version. (#38, #41)
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
+* Made `create_directory()` idempotent to support deployment re-runs. (#35)
+* Added default inventory directive to `ansible.cfg`. (#42)
+* Fixed Publish workflow `write_package` permission denied by adding OCI source labels for GHCR repository linking. (#99)
 
 ## 1.0 - 2024-10-13
 

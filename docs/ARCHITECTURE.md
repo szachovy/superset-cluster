@@ -114,9 +114,9 @@ The controller runs on the user's workstation and communicates with cluster node
 [Paramiko](https://www.paramiko.org/). The `RemoteConnection` class provides:
 
 * **SSH/SFTP connections**: connects as the `superset` user, either directly or through `~/.ssh/config`.
-* **Python bytecode execution**: `container.py` source is compiled to `.pyc`, uploaded to the remote node,
-  and executed via `python3 /opt/<nonce>.pyc`. This allows running Docker API commands on remote nodes
-  without installing additional management software.
+* **Python source execution**: `container.py` source is uploaded to the remote node along with the
+  command to execute, and run via `python3 /opt/<nonce>.py`. This allows running Docker API commands on
+  remote nodes without installing additional management software.
 * **Directory and file uploads**: recursive SFTP-based uploads of service directories, certificates,
   and passwords.
 
