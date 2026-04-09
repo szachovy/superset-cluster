@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Test workflow always builds service images locally for reproducibility. (#97)
 * Relaxed Terraform version constraint to accept any 1.x release. (#40)
 
+### Removed
+
+* Removed personal contact section from README. (#159)
+
 ### Fixed
 
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
