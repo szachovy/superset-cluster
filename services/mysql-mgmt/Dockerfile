@@ -1,7 +1,8 @@
 ARG BUILDPLATFORM="amd64"
 FROM --platform=${BUILDPLATFORM} ubuntu:22.04
 
-LABEL version="1.0"
+LABEL version="1.0" \
+      org.opencontainers.image.source="https://github.com/szachovy/superset-cluster"
 
 ARG MYSQL_SHELL_VERSION="mysql-shell-8.3.0-linux-glibc2.28-x86-64bit" \
     MYSQL_SHELL_MD5_CHECKSUM="c71280416014b9340b34b90160f42e23" \
