@@ -130,10 +130,12 @@ class RemoteConnection:
             marshal.dump(code_object, pyc_file)
             self.upload_file(content=pyc_file.getvalue(), remote_file_path=f'/opt/{nonce}.pyc')
         _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.pyc")
-        return {
+        result = {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()
         }
+        self.ssh_client.exec_command(f"rm -f /opt/{nonce}.pyc")
+        return result
 
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:
         stack = [(local_directory_path, remote_directory_path)]
@@ -152,7 +154,7 @@ class RemoteConnection:
                     self.sftp_client.put(local_item_path, remote_item_path)
 
     def create_directory(self, remote_directory_path: str) -> None:
-        self.sftp_client.mkdir(remote_directory_path)
+        self.ssh_client.exec_command(f"mkdir -p {remote_directory_path}")
 
     def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
         if isinstance(content, str):

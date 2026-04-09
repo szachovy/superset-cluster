@@ -1,7 +1,8 @@
 ARG BUILDPLATFORM="amd64"
 FROM --platform=${BUILDPLATFORM} apache/superset:4.0.2
 
-LABEL version="1.0"
+LABEL version="1.0" \
+      org.opencontainers.image.source="https://github.com/szachovy/superset-cluster"
 
 COPY --chown=superset:superset "." "/app/"
 
