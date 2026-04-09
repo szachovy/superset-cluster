@@ -43,6 +43,13 @@ with open(file="/run/secrets/mysql_superset_password", mode="r", encoding="utf-8
 
 CELERY_CONFIG = CeleryConfig  # pylint: disable=invalid-name
 RESULTS_BACKEND = flask_caching.backends.rediscache.RedisCache(host="redis", port=6379, key_prefix="superset_results")
+SQL_MAX_ROW = 10000
+DEFAULT_SQLLAB_LIMIT = 1000
+SQLLAB_TIMEOUT = 300
+SQLLAB_VALIDATION_TIMEOUT = 60
+SQLLAB_DEFAULT_DBID = 1
+SQL_QUERY_MUTATOR = None
+
 FILTER_STATE_CACHE_CONFIG = {
     "CACHE_TYPE": "RedisCache",
     "CACHE_DEFAULT_TIMEOUT": 86400,
