@@ -126,10 +126,12 @@ class RemoteConnection:
             source = memfile.read() + command
         self.upload_file(content=source, remote_file_path=f'/opt/{nonce}.py')
         _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.py")
-        return {
+        result = {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()
         }
+        self.ssh_client.exec_command(f"rm -f /opt/{nonce}.py")
+        return result
 
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:
         stack = [(local_directory_path, remote_directory_path)]
@@ -148,7 +150,7 @@ class RemoteConnection:
                     self.sftp_client.put(local_item_path, remote_item_path)
 
     def create_directory(self, remote_directory_path: str) -> None:
-        self.sftp_client.mkdir(remote_directory_path)
+        self.ssh_client.exec_command(f"mkdir -p {remote_directory_path}")
 
     def upload_file(self, content: str | bytes, remote_file_path: str) -> None:
         if isinstance(content, str):
