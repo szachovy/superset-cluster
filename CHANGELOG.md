@@ -22,11 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
 * Clean up temporary `.pyc` files on remote nodes after execution. (#51)
+* Relaxed Terraform version constraint to accept any 1.x release. (#40)
 
 ### Fixed
 
 * Fixed `run_mysql_server()` not instantiating `MySQLServer` class. (#94)
 * Disabled MD060 markdownlint rule to fix table column style false positives in documentation. (#94)
+* Added default inventory directive to `ansible.cfg`. (#42)
 
 ## 1.0 - 2024-10-13
 
