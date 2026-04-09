@@ -71,6 +71,8 @@ services:
             "/opt/default/mysql_router_certificate.pem" \
           --client-ssl-key \
             "/opt/default/mysql_router_key.pem"
+        sed -i 's/\[routing:bootstrap_rw\]/[routing:bootstrap_rw]\nmax_connections=40/' \
+            /opt/default/mysql_router/mysqlrouter.conf
         mysqlsh \
           --login-path="${PRIMARY_MYSQL_NODE}" --sql \
           --execute="DROP USER 'superset'@'$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")';"
