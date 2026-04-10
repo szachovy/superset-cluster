@@ -22,8 +22,13 @@ jobs:
             /usr/local/share/boost \
             /usr/local/graalvm \
             /usr/local/share/chromium \
-            /usr/local/share/powershell
-          sudo docker image prune --all --force
+            /usr/local/share/powershell \
+            /usr/share/swift \
+            /usr/local/share/vcpkg \
+            /opt/hostedtoolcache
+          sudo apt-get clean
+          sudo docker system prune --all --volumes --force
+          df -h
 
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-node@v3"
