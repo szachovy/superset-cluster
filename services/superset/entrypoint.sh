@@ -17,10 +17,6 @@ if superset test_db \
   superset init
   
   /app/set_database_uri.exp
-  python3 -c "
-import superset.config as cfg
-print('DEBUG config.SQL_QUERY_MUTATOR =', repr(cfg.SQL_QUERY_MUTATOR))
-"
   /usr/bin/run-server.sh &
 
   celery \

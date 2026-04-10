@@ -443,9 +443,10 @@ class ContainerConnection:
                 ContainerConnection.pull_or_build_image(
                     self.client, image, "/opt/superset-cluster/superset"
                 )
+                image_id = self.client.images.get(image).id
                 self.client.services.create(
                     name="superset",
-                    image=image,
+                    image=image_id,
                     networks=["superset-network"],
                     secrets=[
                         docker.types.SecretReference(
