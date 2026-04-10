@@ -19,8 +19,8 @@ if superset test_db \
   /app/set_database_uri.exp
   /usr/bin/run-server.sh &
 
-  celery \
-    --app superset.tasks.celery_app:app worker \
+  PYTHONPATH="/app${PYTHONPATH:+:${PYTHONPATH}}" celery \
+    --app superset_celery_app:app worker \
     --pool prefork \
     --concurrency 4 \
     -O fair &
