@@ -65,7 +65,7 @@ class OpenSSL:
 
     @staticmethod
     def generate_mysql_superset_password() -> str:
-        charset = string.ascii_letters + string.digits + string.punctuation
+        charset = string.ascii_letters + string.digits + "!@#$%&*-_=+[]<>?"
         return "".join(secrets.choice(charset) for _ in range(24))
 
     @staticmethod

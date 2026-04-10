@@ -39,6 +39,14 @@ RUN \
   mkdir \
     "/etc/mysql/ssl" \
   && \
+  mkdir \
+    --parents \
+      "/var/log/mysql" \
+  && \
+  chown \
+    mysql:mysql \
+      "/var/log/mysql" \
+  && \
   apt-get \
     clean \
   && \
