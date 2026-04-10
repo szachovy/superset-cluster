@@ -13,7 +13,7 @@
   args:
     executable: "/bin/bash"
     chdir: "../../"
-  async: 2100
+  async: 3600
   poll: 60
   register: "run_command"
   changed_when: false
