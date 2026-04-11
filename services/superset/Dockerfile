@@ -5,7 +5,6 @@ LABEL version="1.0" \
       org.opencontainers.image.source="https://github.com/szachovy/superset-cluster"
 
 COPY --chown=superset:superset "." "/app/"
-RUN chmod +x "/app/entrypoint.sh" "/app/set_database_uri.exp"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 

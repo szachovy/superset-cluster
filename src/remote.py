@@ -127,7 +127,8 @@ class RemoteConnection:
         self.upload_file(content=source, remote_file_path=f'/opt/{nonce}.py')
         github_actions_env = "GITHUB_ACTIONS=true " if os.environ.get("GITHUB_ACTIONS") == "true" else ""
         _, stdout, stderr = self.ssh_client.exec_command(
-            f"{github_actions_env}PYTHONPATH=/home/superset/.local/lib/python3.10/site-packages python3 /opt/{nonce}.py"
+            f"{github_actions_env}PYTHONPATH=/home/superset/.local/lib/python3.10/site-packages "
+            f"python3 /opt/{nonce}.py"
         )
         result = {
             "output": stdout.read().decode(),

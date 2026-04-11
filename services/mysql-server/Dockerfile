@@ -9,7 +9,6 @@ ENV LANG="C.UTF-8" \
 
 COPY --chown=mysql:mysql "mysql_config.cnf.tpl" "/opt/"
 COPY "store_credentials.exp" "/opt/"
-RUN chmod +x "/opt/store_credentials.exp"
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
