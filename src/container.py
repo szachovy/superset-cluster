@@ -102,12 +102,9 @@ class ContainerConnection:
 
     @staticmethod
     def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
-        if os.environ.get("GITHUB_ACTIONS") == "true":
-            try:
-                client.images.get(image)
-            except docker.errors.ImageNotFound:
-                client.images.build(path=build_context, tag=image)
-        else:
+        try:
+            client.images.get(image)
+        except docker.errors.ImageNotFound:
             try:
                 client.images.pull(image)
             except (docker.errors.DockerException, requests.exceptions.RequestException):
