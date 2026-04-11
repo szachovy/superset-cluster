@@ -103,9 +103,12 @@ class ContainerConnection:
     @staticmethod
     def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
         try:
-            client.images.pull(image)
-        except (docker.errors.DockerException, requests.exceptions.RequestException):
-            client.images.build(path=build_context, tag=image)
+            client.images.get(image)
+        except docker.errors.ImageNotFound:
+            try:
+                client.images.pull(image)
+            except (docker.errors.DockerException, requests.exceptions.RequestException):
+                client.images.build(path=build_context, tag=image)
 
     def run_command_on_the_container(
             self,
@@ -448,9 +451,10 @@ class ContainerConnection:
                 ContainerConnection.pull_or_build_image(
                     self.client, image, "/opt/superset-cluster/superset"
                 )
+                image_id = self.client.images.get(image).id
                 self.client.services.create(
                     name="superset",
-                    image=image,
+                    image=image_id,
                     networks=["superset-network"],
                     secrets=[
                         docker.types.SecretReference(
