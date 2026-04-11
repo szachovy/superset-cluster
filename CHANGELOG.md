@@ -44,6 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Made `create_directory()` idempotent to support deployment re-runs. (#35)
 * Added default inventory directive to `ansible.cfg`. (#42)
 * Fixed Publish workflow `write_package` permission denied by adding OCI source labels for GHCR repository linking. (#99)
+* Restore `pipefail` in Tests workflow to propagate non-zero exit codes through pipes. (#160)
 
 ## 1.0 - 2024-10-13
 

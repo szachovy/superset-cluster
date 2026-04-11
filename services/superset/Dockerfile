@@ -19,7 +19,7 @@ RUN \
     install \
       --no-cache-dir \
       "redis==4.5.4" \
-      "mysql-connector-python==9.0.0"
+      "mysql-connector-python==8.4.0"
 
 USER root
 

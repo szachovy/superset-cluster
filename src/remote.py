@@ -125,7 +125,9 @@ class RemoteConnection:
         ) as memfile:
             source = memfile.read() + command
         self.upload_file(content=source, remote_file_path=f'/opt/{nonce}.py')
-        _, stdout, stderr = self.ssh_client.exec_command(f"python3 /opt/{nonce}.py")
+        _, stdout, stderr = self.ssh_client.exec_command(
+            f"PYTHONPATH=/home/superset/.local/lib/python3.10/site-packages python3 /opt/{nonce}.py"
+        )
         result = {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()
