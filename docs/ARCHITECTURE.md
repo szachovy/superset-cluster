@@ -133,6 +133,7 @@ Redis and Superset run on the `superset-network` overlay network, which provides
 
 * Service discovery: Superset connects to Redis using the hostname `redis`.
 * Port publishing: Swarm publishes port 443 on all Swarm nodes via VIP-based routing.
+* IPsec encryption: all inter-container traffic is encrypted at the network level (`encrypted: true`).
 
 | Port | Protocol | Service | Scope |
 |------|----------|---------|-------|

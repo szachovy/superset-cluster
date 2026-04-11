@@ -116,6 +116,8 @@ sources.
 - Only port **443** (HTTPS) is intended to be exposed externally on the management nodes.
 - MySQL (port 3306) and MySQL Router (port 6446) communicate over the internal network only.
 - Redis (port 6379) is accessible only within the Docker Swarm overlay network (`superset-network`).
+- The `superset-network` overlay is created with `encrypted: true`, enabling IPsec ESP encryption for all
+  inter-container traffic (Superset ↔ Redis). The Swarm data path uses port 4789 (VXLAN).
 - Gunicorn (port 8088) binds to `localhost` only, accessible exclusively through the Nginx reverse proxy.
 - IPv6 should be disabled or configured to be non-routable to prevent unintended network exposure.
 - DNS resolution between nodes is required for InnoDB Cluster group replication and SSH connectivity.
