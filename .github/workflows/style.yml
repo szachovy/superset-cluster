@@ -9,7 +9,7 @@ jobs:
   run-markdown-lint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - name: "Lint Markdown files"
         uses: "articulate/actions-markdownlint@v1"
         with:
@@ -18,7 +18,7 @@ jobs:
   run-yaml-lint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
@@ -30,7 +30,7 @@ jobs:
   run-shell-check:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - name: "Lint shell scripts"
         uses: "ludeeus/action-shellcheck@master"
         with:
@@ -39,7 +39,7 @@ jobs:
   run-docker-hadolint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - name: "Lint Dockerfiles"
         uses: "hadolint/hadolint-action@v3.1.0"
         with:
@@ -49,7 +49,7 @@ jobs:
   run-terraform-tflint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "terraform-linters/setup-tflint@v4"
         with:
           tflint_version: "v0.51.1"
@@ -60,7 +60,7 @@ jobs:
   run-ansible-lint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
@@ -72,7 +72,7 @@ jobs:
   run-python-pylint:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
@@ -84,7 +84,7 @@ jobs:
   run-python-mypy:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
@@ -96,7 +96,7 @@ jobs:
   run-python-flake8:
     runs-on: "ubuntu-22.04"
     steps:
-      - uses: "actions/checkout@v4"
+      - uses: "actions/checkout@v6"
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
