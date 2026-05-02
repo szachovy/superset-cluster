@@ -39,6 +39,8 @@ The MySQL server is configured for cluster workloads with the following performa
 | `binlog_transaction_dependency_tracking` | `WRITESET` | Enables parallel replication on secondaries |
 | `max_connections` | `50` | Limits concurrent connections per MySQL node |
 | `max_connect_errors` | `50` | Blocks hosts after 50 failed connection attempts |
+| `slow_query_log` | `ON` | Logs queries exceeding `long_query_time` or not using indexes |
+| `long_query_time` | `10` | Threshold in seconds for slow query classification |
 
 ## Nginx Tuning
 
@@ -67,3 +69,5 @@ The following tools and endpoints are available for cluster monitoring and diagn
 - **Celery monitoring**: `celery inspect ping` and `celery inspect stats` provide worker status. See
   [Celery Async Queries](https://superset.apache.org/docs/configuration/async-queries-celery/).
 - **Keepalived logs**: available at `/opt/default/mysql_router/log/keepalived.log` on management nodes.
+- **MySQL slow query log**: available at `/var/log/mysql/slow-queries.log` on each MySQL node. Captures queries
+  exceeding 10 seconds and queries not using indexes.

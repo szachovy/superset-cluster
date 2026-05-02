@@ -103,9 +103,12 @@ class ContainerConnection:
     @staticmethod
     def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
         try:
-            client.images.pull(image)
-        except (docker.errors.DockerException, requests.exceptions.RequestException):
-            client.images.build(path=build_context, tag=image)
+            client.images.get(image)
+        except docker.errors.ImageNotFound:
+            try:
+                client.images.pull(image)
+            except (docker.errors.DockerException, requests.exceptions.RequestException):
+                client.images.build(path=build_context, tag=image)
 
     def run_command_on_the_container(
             self,
@@ -384,10 +387,18 @@ class ContainerConnection:
                 self.healthcheck_retries = 5
 
             def initialize_swarm(self) -> None:
-                self.client.swarm.init(advertise_addr=self.virtual_ip_address)
+                self.client.swarm.init(
+                    advertise_addr=self.virtual_ip_address,
+                    data_path_port=4789
+                )
 
             def create_network(self) -> None:
-                self.client.networks.create(name='superset-network', driver='overlay', attachable=True)
+                self.client.networks.create(
+                    name='superset-network',
+                    driver='overlay',
+                    attachable=True,
+                    options={"encrypted": "true"}
+                )
 
             def run(self) -> None:
                 self.initialize_swarm()
@@ -440,9 +451,10 @@ class ContainerConnection:
                 ContainerConnection.pull_or_build_image(
                     self.client, image, "/opt/superset-cluster/superset"
                 )
+                image_id = self.client.images.get(image).id
                 self.client.services.create(
                     name="superset",
-                    image=image,
+                    image=image_id,
                     networks=["superset-network"],
                     secrets=[
                         docker.types.SecretReference(

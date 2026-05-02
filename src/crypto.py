@@ -48,7 +48,7 @@ print(obj.deserialize(certificate))
 import base64
 import datetime
 import os
-import random
+import secrets
 import string
 
 import cryptography
@@ -65,7 +65,8 @@ class OpenSSL:
 
     @staticmethod
     def generate_mysql_superset_password() -> str:
-        return "".join(random.choice(string.ascii_lowercase) for _ in range(12))
+        charset = string.ascii_letters + string.digits
+        return "".join(secrets.choice(charset) for _ in range(24))
 
     @staticmethod
     def generate_superset_secret_key() -> str:

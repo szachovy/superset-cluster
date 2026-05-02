@@ -32,7 +32,7 @@ Follow [ARCHITECTURE.md](docs/ARCHITECTURE.md) for more.
 
 The following software needs to be installed on the user's host:
 
-* `python v3.10.12` with the following third party packages:
+* `python >= 3.10` with the following third party packages:
   * `paramiko v3.5.0`
 
 The following software needs to be installed on the external nodes:
@@ -103,10 +103,6 @@ For more detailed information, please refer to [the testing guide](tests/TESTING
 If you notice anything missing, spot a bug, or have an enhancement proposal,
 feel free to open an issue with the appropriate label.
 Pull requests are welcome. Please ensure that the tests are updated as necessary.
-
-## Personal contact information
-
-In case of any inquiries, please write an email to: _wjmaj98@gmail.com_
 
 ## Additional resources
 
