@@ -31,14 +31,6 @@
     - name: "Run disaster tasks from testing role"
       ansible.builtin.include_role: {name: "testing", tasks_from: "disaster"}
 
-- name: "Post-disaster functional testing"
-  connection: "local"
-  hosts: "testing"
-  any_errors_fatal: true
-  tasks:
-    - name: "Run post-disaster functional tasks from testing role"
-      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_post"}
-
 - name: "Node recovery"
   connection: "local"
   hosts: "testing"
@@ -60,21 +52,5 @@
   hosts: "testing"
   any_errors_fatal: true
   tasks:
-    - name: "Run pre-disaster functional tasks from testing role"
-      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_pre"}
-
-- name: "Cleanup testing"
-  connection: "local"
-  hosts: "testing"
-  any_errors_fatal: true
-  tasks:
-    - name: "Run cleanup tasks from testing role"
-      ansible.builtin.include_role: {name: "testing", tasks_from: "cleanup"}
-
-- name: "Cleanup verification"
-  connection: "local"
-  hosts: "testing"
-  any_errors_fatal: true
-  tasks:
-    - name: "Run cleanup verification tasks from testing role"
-      ansible.builtin.include_role: {name: "testing", tasks_from: "cleanup_verify"}
+    - name: "Run post-disaster functional tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_post"}

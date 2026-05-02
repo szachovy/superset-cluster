@@ -31,8 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
-* Restructured test suite into 10-stage flow: sanity, deploy, functional, disaster, post-disaster,
-  recovery, redeploy, post-redeploy functional, cleanup, cleanup verification. (#49)
+* Restructured test suite into 7-stage flow: sanity, deploy, functional, disaster,
+  recovery, redeploy, post-redeploy functional. (#49)
 * InnoDB Cluster initcontainer scans all MySQL nodes to find existing cluster and adds missing
   members instead of only checking the primary node. (#49)
 * Made Terraform test infrastructure idempotent: removed `always_run` triggers, node recovery
