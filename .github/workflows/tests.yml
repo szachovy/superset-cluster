@@ -22,8 +22,13 @@ jobs:
             /usr/local/share/boost \
             /usr/local/graalvm \
             /usr/local/share/chromium \
-            /usr/local/share/powershell
-          sudo docker image prune --all --force
+            /usr/local/share/powershell \
+            /usr/share/swift \
+            /usr/local/share/vcpkg \
+            /opt/hostedtoolcache
+          sudo apt-get clean
+          sudo docker system prune --all --volumes --force
+          df -h
 
       - uses: "actions/checkout@v4"
       - uses: "actions/setup-node@v3"
@@ -32,6 +37,7 @@ jobs:
       - uses: "hashicorp/setup-terraform@v3"
         with:
           terraform_version: "1.0.10"
+          terraform_wrapper: false
       - uses: "actions/setup-python@v3"
         with:
           python-version: "3.10.12"
@@ -49,6 +55,7 @@ jobs:
 
       - name: "Build and pre-load service images into test containers"
         run: |
+          set -o pipefail
           build_and_load() {
             local image_name="$1"
             local build_context="$2"
@@ -71,6 +78,7 @@ jobs:
 
       - name: "Run Ansible testsuite"
         run: |
+          set -o pipefail
           ansible-playbook --inventory inventory.yml deploy.yml \
             2>&1 | tee -a /tmp/superset_cluster_testsuite.log
         working-directory: "${{ env.ANSIBLE_WORKING_DIRECTORY }}"

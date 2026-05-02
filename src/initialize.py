@@ -48,12 +48,17 @@ python initialize.py 192.168.1.100 eth0 24 mgmt1,mgmt2 mysql1,mysql2,mysql3
 
 # pylint: disable=consider-using-f-string
 # pylint: disable=attribute-defined-outside-init
+# pylint: disable=wrong-import-position
+
+import sys
+
+if sys.version_info < (3, 10):
+    sys.exit(f"Python >= 3.10 required (found {sys.version_info.major}.{sys.version_info.minor})")
 
 import base64
 import functools
 import ipaddress
 import itertools
-import sys
 import re
 import socket
 
@@ -185,10 +190,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             node.certificate = self.cert_manager.generate_certificate(f'Superset-Cluster-{node.node}',
                                                                       node.csr,
                                                                       self.ca_key)
-            try:
-                node.create_directory('/opt/superset-cluster')
-            except IOError:
-                pass
+            node.create_directory('/opt/superset-cluster')
         for node in self.mgmt_nodes:
             node.superset_key = self.cert_manager.generate_private_key()
             node.superset_csr = self.cert_manager.generate_csr(self.virtual_ip_address, node.superset_key)

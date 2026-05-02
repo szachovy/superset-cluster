@@ -1,7 +1,8 @@
 ARG BUILDPLATFORM="amd64"
 FROM --platform=${BUILDPLATFORM} apache/superset:4.0.2
 
-LABEL version="1.0"
+LABEL version="1.0" \
+      org.opencontainers.image.source="https://github.com/szachovy/superset-cluster"
 
 COPY --chown=superset:superset "." "/app/"
 
@@ -18,7 +19,7 @@ RUN \
     install \
       --no-cache-dir \
       "redis==4.5.4" \
-      "mysql-connector-python==9.0.0"
+      "mysql-connector-python==8.4.0"
 
 USER root
 

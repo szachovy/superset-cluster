@@ -1,7 +1,8 @@
 ARG BUILDPLATFORM="amd64"
 FROM --platform=${BUILDPLATFORM} mysql:8.0-debian
 
-LABEL version="1.0"
+LABEL version="1.0" \
+      org.opencontainers.image.source="https://github.com/szachovy/superset-cluster"
 
 ENV LANG="C.UTF-8" \
     LC_ALL="C.UTF-8"
@@ -37,6 +38,14 @@ RUN \
   && \
   mkdir \
     "/etc/mysql/ssl" \
+  && \
+  mkdir \
+    --parents \
+      "/var/log/mysql" \
+  && \
+  chown \
+    mysql:mysql \
+      "/var/log/mysql" \
   && \
   apt-get \
     clean \

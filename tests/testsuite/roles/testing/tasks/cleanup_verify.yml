@@ -35,12 +35,12 @@
     - "{{ node_prefix }}-4"
   register: "no_deploy_dir"
 
-- name: "Verify no .pyc files in /opt/superset-cluster on any node"
+- name: "Verify no .pyc or .py files in /opt/superset-cluster on any node"
   community.docker.docker_container_exec:
     container: "{{ item }}"
     command: >-
       /bin/bash -c
-      'test $(find /opt/superset-cluster -maxdepth 1 -name "*.pyc" 2>/dev/null | wc -l) -eq 0'
+      'test $(find /opt/superset-cluster -maxdepth 1 \( -name "*.pyc" -o -name "*.py" \) 2>/dev/null | wc -l) -eq 0'
   loop:
     - "{{ node_prefix }}-0"
     - "{{ node_prefix }}-1"
