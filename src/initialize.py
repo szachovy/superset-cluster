@@ -400,7 +400,9 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 " ip route del {vip}; fi".format(
                     vip=self.virtual_ip_address),
             ])
-        _, stdout, stderr = node.ssh_client.exec_command(" && ".join(commands))
+        _, stdout, stderr = node.ssh_client.exec_command(
+            "rc=0; " + "; ".join(f"{{ {cmd}; }} || rc=$?" for cmd in commands) + "; exit $rc"
+        )
         exit_status = stdout.channel.recv_exit_status()
         if exit_status != 0:
             raise RuntimeError(
