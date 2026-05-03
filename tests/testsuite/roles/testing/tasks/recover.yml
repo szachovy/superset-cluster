@@ -20,7 +20,7 @@
   changed_when: "terraform_apply.rc != 0"
 
 - name: "Verify SSH connectivity to recreated nodes"
-  ansible.builtin.command: "ssh -o ConnectTimeout=10 {{ item }} echo ok"
+  ansible.builtin.command: "ssh -o ConnectTimeout=10 superset@{{ item }} echo ok"
   loop:
     - "{{ node_prefix }}-0"
     - "{{ node_prefix }}-2"
