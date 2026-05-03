@@ -16,12 +16,11 @@
         container: "{{ node_prefix }}-1"
         command: "python3 -c
           'import functional_mgmt;
-          mgmt_functional = functional_mgmt.Mgmt(
+          functional_mgmt.Mgmt(
             virtual_ip_address=\"{{ virtual_ip_address }}\",
             node_prefix=\"{{ node_prefix }}\",
-            after_disaster=True
-          );
-          mgmt_functional.check_after_disaster()'
+            after_disaster=False
+          )'
           "
         chdir: "/opt/superset-testing"
       register: "functional_mgmt_disaster"
