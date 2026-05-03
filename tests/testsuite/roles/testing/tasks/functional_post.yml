@@ -42,6 +42,9 @@
           "
         chdir: "/opt/superset-testing"
       register: "functional_superset_disaster"
+      retries: 3
+      delay: 20
+      until: "functional_superset_disaster.rc == 0"
 
   always:
     - name: "Management functional test results (post-disaster)"
