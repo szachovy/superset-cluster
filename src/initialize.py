@@ -62,6 +62,8 @@ import itertools
 import re
 import socket
 
+import cryptography.hazmat.primitives.asymmetric.rsa
+
 import crypto
 import decorators
 import remote
@@ -145,7 +147,9 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 certs = ca_bundle.split('-----END CERTIFICATE-----')
                 ca_cert_pem = [c for c in certs if '-----BEGIN CERTIFICATE-----' in c][-1]
                 ca_cert_pem = ca_cert_pem.strip() + '\n-----END CERTIFICATE-----\n'
-                self.ca_key = self.cert_manager.serialization(ca_key_pem)
+                deserialized_key = self.cert_manager.serialization(ca_key_pem)
+                assert isinstance(deserialized_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+                self.ca_key = deserialized_key
                 self.ca_certificate = self.cert_manager.serialization(ca_cert_pem)
                 self.mysql_root_password = password
                 break
