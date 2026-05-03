@@ -1,7 +1,7 @@
 ---
 - name: "Find superset container name"
   community.docker.docker_container_exec:
-    container: "{{ node_prefix }}-1"
+    container: "{{ node_prefix }}-0"
     command: |
       {% raw %}
       /bin/bash -c
@@ -13,7 +13,7 @@
   block:
     - name: "Run functional tests on mgmt after disaster"
       community.docker.docker_container_exec:
-        container: "{{ node_prefix }}-1"
+        container: "{{ node_prefix }}-0"
         command: "python3 -c
           'import functional_mgmt;
           functional_mgmt.Mgmt(
@@ -30,7 +30,7 @@
 
     - name: "Run functional tests on superset after disaster"
       community.docker.docker_container_exec:
-        container: "{{ node_prefix }}-1"
+        container: "{{ node_prefix }}-0"
         command: "python3 -c
           'import functional_superset;
           superset_functional = functional_superset.Superset(
@@ -42,9 +42,6 @@
           "
         chdir: "/opt/superset-testing"
       register: "functional_superset_disaster"
-      retries: 3
-      delay: 20
-      until: "functional_superset_disaster.rc == 0"
 
   always:
     - name: "Management functional test results (post-disaster)"
