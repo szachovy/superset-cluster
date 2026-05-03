@@ -312,7 +312,7 @@ class ContainerConnection:
                 self.priority = priority
                 self.healthcheck_start_period = 25
                 self.healthcheck_interval = 5
-                self.healthcheck_retries = 3
+                self.healthcheck_retries = 24
 
             def calculate_virtual_network(self) -> str:
                 return str(ipaddress.IPv4Interface(f"{self.virtual_ip_address}/{self.virtual_network_mask}").network)

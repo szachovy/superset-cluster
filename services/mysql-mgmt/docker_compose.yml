@@ -14,11 +14,14 @@ services:
         set -euo pipefail
         export MYSQL_SUPERSET_PASSWORD=$(</run/secrets/mysql_superset_password)
         CLUSTER_NODE=""
-        for node in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
-          if mysqlsh --login-path="${node}" --execute="dba.getCluster();" 2>/dev/null; then
-            CLUSTER_NODE="${node}"
-            break
-          fi
+        for attempt in 1 2 3; do
+          for node in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
+            if mysqlsh --login-path="${node}" --execute="dba.getCluster('superset');" 2>/dev/null; then
+              CLUSTER_NODE="${node}"
+              break 2
+            fi
+          done
+          [ "${attempt}" -lt 3 ] && sleep 5 || true
         done
         if [ -z "${CLUSTER_NODE}" ]; then
           mysqlsh \
