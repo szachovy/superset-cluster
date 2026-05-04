@@ -124,15 +124,15 @@ class RemoteConnection:
             encoding="utf-8"
         ) as memfile:
             source = memfile.read() + command
-        self.upload_file(content=source, remote_file_path=f'/opt/{nonce}.py')
+        self.upload_file(content=source, remote_file_path=f'/opt/superset-cluster/{nonce}.py')
         _, stdout, stderr = self.ssh_client.exec_command(
-            f"PYTHONPATH=/home/superset/.local/lib/python3.10/site-packages python3 /opt/{nonce}.py"
+            f"PYTHONPATH=/home/superset/.local/lib/python3.10/site-packages python3 /opt/superset-cluster/{nonce}.py"
         )
         result = {
             "output": stdout.read().decode(),
             "error": stderr.read().decode()
         }
-        self.ssh_client.exec_command(f"rm -f /opt/{nonce}.py")
+        self.ssh_client.exec_command(f"rm -f /opt/superset-cluster/{nonce}.py")
         return result
 
     def upload_directory(self, local_directory_path: str, remote_directory_path: str) -> None:

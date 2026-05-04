@@ -1,0 +1,72 @@
+---
+- name: "Run cleanup"
+  ansible.builtin.shell: |
+    set -euxo pipefail
+    {
+      ./superset-cluster \
+        --mgmt-nodes {{ node_prefix }}-0,{{ node_prefix }}-1 \
+        --mysql-nodes {{ node_prefix }}-2,{{ node_prefix }}-3,{{ node_prefix }}-4 \
+        --virtual-ip-address {{ virtual_ip_address }} \
+        --virtual-network-interface {{ virtual_network_interface }} \
+        --virtual-network-mask {{ virtual_network_mask }} \
+        --cleanup
+    } >> /tmp/superset_cluster_testsuite.log 2>&1
+  args:
+    executable: "/bin/bash"
+    chdir: "../../"
+  async: 600
+  poll: 30
+  register: "cleanup_command"
+  changed_when: false
+
+- name: "Verify no containers remain on each node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test $(docker ps -aq | wc -l) -eq 0'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_containers"
+  changed_when: false
+
+- name: "Verify no Docker volumes remain on each node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test $(docker volume ls -q | wc -l) -eq 0'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_volumes"
+  changed_when: false
+
+- name: "Verify cluster directory removed on each node"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: "/bin/bash -c 'test ! -d /opt/superset-cluster'"
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-2"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "no_directory"
+  changed_when: false
+
+- name: "Verify VIP removed from mgmt nodes"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: >-
+      /bin/bash -c
+      '! ip addr show dev {{ virtual_network_interface }}
+      | grep -q "{{ virtual_ip_address }}/"'
+  loop:
+    - "{{ node_prefix }}-0"
+    - "{{ node_prefix }}-1"
+  register: "no_vip"
+  changed_when: false
