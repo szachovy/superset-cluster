@@ -1,0 +1,76 @@
+---
+- name: "Find superset container name"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-1"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'echo $(docker ps --filter "name=superset" --format "{{.Names}}")'
+      {% endraw %}
+  register: "superset_container_name"
+
+- name: "Run post-disaster functional tests (before recovery)"
+  block:
+    - name: "Run functional tests on mgmt after disaster"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-1"
+        command: "python3 -c
+          'import functional_mgmt;
+          mgmt_functional = functional_mgmt.Mgmt(
+            virtual_ip_address=\"{{ virtual_ip_address }}\",
+            node_prefix=\"{{ node_prefix }}\",
+            after_disaster=True
+          );
+          mgmt_functional.check_after_disaster()'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_mgmt_disaster"
+      retries: 6
+      delay: 10
+      until: "functional_mgmt_disaster.rc == 0"
+
+    - name: "Run functional tests on superset after disaster"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-1"
+        command: "python3 -c
+          'import functional_superset;
+          superset_functional = functional_superset.Superset(
+            superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+            virtual_ip_address=\"{{ virtual_ip_address }}\"
+          );
+          query_dttm = superset_functional.run_query();
+          superset_functional.get_query_results(query_dttm)'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_superset_disaster"
+
+  always:
+    - name: "Management functional test results (post-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_mgmt_disaster.rc }}"
+      when: "functional_mgmt_disaster is defined"
+
+    - name: "Management functional test failure details (post-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_mgmt_disaster.stdout }}"
+          - "stderr: {{ functional_mgmt_disaster.stderr }}"
+      when:
+        - "functional_mgmt_disaster is defined"
+        - "functional_mgmt_disaster.rc != 0"
+
+    - name: "Superset functional test results (post-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_superset_disaster.rc }}"
+      when: "functional_superset_disaster is defined"
+
+    - name: "Superset functional test failure details (post-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_superset_disaster.stdout }}"
+          - "stderr: {{ functional_superset_disaster.stderr }}"
+      when:
+        - "functional_superset_disaster is defined"
+        - "functional_superset_disaster.rc != 0"
