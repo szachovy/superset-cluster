@@ -20,9 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Strengthen MySQL superset password: secrets module, expanded charset, 24 chars. (#89)
 * SQL Lab query row limits, timeout caps, and validation timeout. (#81)
 * Superset metastore and explore form data caching via Redis. (#79)
-
-### Added
-
 * `--debug` flag and structured logging with `configure_logging()`. (#67)
 
 ### Changed
