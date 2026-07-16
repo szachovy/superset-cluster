@@ -1,11 +1,14 @@
 #!/bin/bash
 
-set -euxo pipefail
+set -euo pipefail
 
-if superset test_db \
-    "mysql+mysqlconnector://superset:$(< /run/secrets/mysql_superset_password)@${VIRTUAL_IP_ADDRESS}:6446/superset" \
-    --connect-args {}; then
-  
+DB_PASSWORD=$(< /run/secrets/mysql_superset_password)
+DB_URI="mysql+mysqlconnector://superset:${DB_PASSWORD}@${VIRTUAL_IP_ADDRESS}:6446/superset"
+
+if superset test_db "$DB_URI" --connect-args {} 2>&1 \
+    | DB_PASSWORD="$DB_PASSWORD" python3 /app/redact_secret.py; then
+  set -x
+
   superset fab create-admin \
   --username "superset" \
   --firstname "superset" \
