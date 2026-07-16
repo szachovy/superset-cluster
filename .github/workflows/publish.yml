@@ -14,6 +14,9 @@ jobs:
     permissions:
       contents: "read"
       packages: "write"
+    concurrency:
+      group: "publish-${{ matrix.image }}"
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:

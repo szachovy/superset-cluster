@@ -103,11 +103,11 @@ class ContainerConnection:
     @staticmethod
     def pull_or_build_image(client: docker.client.DockerClient, image: str, build_context: str) -> None:
         try:
-            client.images.get(image)
-        except docker.errors.ImageNotFound:
+            client.images.pull(image)
+        except (docker.errors.DockerException, requests.exceptions.RequestException):
             try:
-                client.images.pull(image)
-            except (docker.errors.DockerException, requests.exceptions.RequestException):
+                client.images.get(image)
+            except docker.errors.ImageNotFound:
                 client.images.build(path=build_context, tag=image)
 
     def run_command_on_the_container(
