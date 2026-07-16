@@ -294,6 +294,42 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
             swarm_info["ControlAvailable"] is True, \
             "The testing localhost is supposed to be a Swarm manager, but it is not"
 
+    @decorators.Overlay.run_selected_methods_once
+    def status_headers(self) -> None:
+        expected_headers = {
+            "strict-transport-security": "max-age=31536000; includeSubDomains; preload",
+            "x-content-type-options": "nosniff",
+            "x-frame-options": "DENY",
+            "x-xss-protection": "1; mode=block",
+            "referrer-policy": "strict-origin-when-cross-origin",
+        }
+        for path in ("/", "/this-path-does-not-exist-xyz"):
+            command = f"""
+                curl \
+                    --cacert /app/server_certificate.pem \
+                    --silent \
+                    --head \
+                    https://{self.virtual_ip_address}{path}
+            """
+            response = self.run_command_on_the_container(command).decode("utf-8")
+            response_lines = [line.strip() for line in response.splitlines() if ":" in line]
+            for header_name, expected_value in expected_headers.items():
+                matches = [
+                    line.split(":", 1)[1].strip()
+                    for line in response_lines
+                    if line.split(":", 1)[0].strip().lower() == header_name
+                ]
+                assert \
+                    len(matches) == 1, \
+                    f"""Expected exactly one {header_name} header on {path}, found {len(matches)}: {matches}
+                        \nCommand: {command!r}\nReturned: {response!r}
+                    """
+                assert \
+                    matches[0] == expected_value, \
+                    f"""Expected {header_name} to be {expected_value!r} on {path}, got {matches[0]!r}
+                        \nCommand: {command!r}\nReturned: {response!r}
+                    """
+
     def run_query(self) -> float:
         payload = '{"database_id": 1, "runAsync": true, "sql": "SELECT * FROM superset.logs;"}'
         command = f"""

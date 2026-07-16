@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+* Deduplicated HTTP security headers between nginx and Flask-Talisman: nginx now hides Talisman's upstream
+  copies via `proxy_hide_header` and is the sole source of `Strict-Transport-Security`, `X-Frame-Options`,
+  `X-XSS-Protection`, `X-Content-Type-Options`, and `Referrer-Policy`, applied with `always` so they persist
+  on error responses too. Corrected `Referrer-Policy` to `strict-origin-when-cross-origin`.
 * Redacted MySQL password from `superset` entrypoint's `test_db` output and disabled `-x` tracing around it,
   preventing plaintext password exposure in `docker logs`/`docker service logs`.
 * Upload `.py` source instead of `.pyc` bytecode to decouple host Python version. (#38, #41)
