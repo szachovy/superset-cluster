@@ -14,7 +14,7 @@ if superset test_db "$DB_URI" --connect-args {} 2>&1 \
   --firstname "superset" \
   --lastname "superset" \
   --email "superset@cluster.com" \
-  --password "cluster"
+  --password "$(< /run/secrets/superset_admin_password)"
 
   superset db upgrade
   superset init

@@ -181,8 +181,16 @@ class Superset(container.ContainerConnection, metaclass=decorators.Overlay):
     @decorators.Overlay.single_sign_on
     def login_to_superset_api(self) -> str:
         self.load_ssl_server_certificate()
+        with open(
+            file="/opt/superset-cluster/superset/superset_admin_password",
+            mode="r",
+            encoding="utf-8"
+        ) as admin_password_file:
+            admin_password = admin_password_file.read().strip()
         headers = "Content-Type: application/json"
-        payload = '{"username": "superset", "password": "cluster", "provider": "db", "refresh": true}'
+        payload = '{{"username": "superset", "password": "{}", "provider": "db", "refresh": true}}'.format(
+            admin_password
+        )
         command = f"""
             curl \
                 --cacert /app/server_certificate.pem \
