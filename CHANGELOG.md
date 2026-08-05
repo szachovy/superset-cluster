@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SQL Lab query row limits, timeout caps, and validation timeout. (#81)
 * Superset metastore and explore form data caching via Redis. (#79)
 
+### Fixed
+
+* Anchor hostname regex and use repr() for all string-interpolated remote exec values. (#86)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
