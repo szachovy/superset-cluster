@@ -172,11 +172,13 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             )
             node.upload_file(
                 content=self.mysql_root_password,
-                remote_file_path="/opt/superset-cluster/mysql-server/mysql_root_password"
+                remote_file_path="/opt/superset-cluster/mysql-server/mysql_root_password",
+                mode=0o600
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(self.ca_key),
-                remote_file_path="/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem")
+                remote_file_path="/opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem",
+                mode=0o600)
             node.upload_file(
                 content="".join(self.cert_manager.deserialization(node.certificate) for node in self.mysql_nodes)
                 + self.cert_manager.deserialization(self.ca_certificate),
@@ -184,7 +186,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(node.key),
-                remote_file_path="/opt/superset-cluster/mysql-server/mysql_server_key.pem"
+                remote_file_path="/opt/superset-cluster/mysql-server/mysql_server_key.pem",
+                mode=0o600
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(node.certificate),
@@ -203,18 +206,18 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         )
         node.upload_file(
             content=self.mysql_superset_password,
-            remote_file_path="/opt/superset-cluster/mysql-mgmt/mysql_superset_password"
+            remote_file_path="/opt/superset-cluster/mysql-mgmt/mysql_superset_password",
+            mode=0o600
         )
         node.upload_file(
             content=self.get_mylogin_cnf(self.mysql_nodes[0]),
-            remote_file_path="/opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
-        )
-        node.change_permissions_to_root(
-            "/opt/superset-cluster/mysql-mgmt/.mylogin.cnf"
+            remote_file_path="/opt/superset-cluster/mysql-mgmt/.mylogin.cnf",
+            mode=0o600
         )
         node.upload_file(
             content=self.cert_manager.deserialization(self.ca_key),
-            remote_file_path="/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem"
+            remote_file_path="/opt/superset-cluster/mysql-mgmt/superset_cluster_ca_key.pem",
+            mode=0o600
         )
         node.upload_file(
             content="".join(self.cert_manager.deserialization(node.certificate) for node in self.mysql_nodes)
@@ -223,7 +226,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         )
         node.upload_file(
             content=self.cert_manager.deserialization(node.key),
-            remote_file_path="/opt/superset-cluster/mysql-mgmt/mysql_router_key.pem"
+            remote_file_path="/opt/superset-cluster/mysql-mgmt/mysql_router_key.pem",
+            mode=0o600
         )
         node.upload_file(
             content=self.cert_manager.deserialization(node.certificate),
@@ -259,7 +263,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(self.ca_key),
-                remote_file_path="/opt/superset-cluster/superset/superset_cluster_ca_key.pem"
+                remote_file_path="/opt/superset-cluster/superset/superset_cluster_ca_key.pem",
+                mode=0o600
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(self.ca_certificate),
@@ -267,7 +272,8 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(node.superset_key),
-                remote_file_path="/opt/superset-cluster/superset/superset_cluster_key.pem"
+                remote_file_path="/opt/superset-cluster/superset/superset_cluster_key.pem",
+                mode=0o600
             )
             node.upload_file(
                 content=self.cert_manager.deserialization(node.superset_certificate),
