@@ -59,12 +59,27 @@ import base64
 import functools
 import ipaddress
 import itertools
+import logging
+import os
 import re
 import socket
 
 import crypto
 import decorators
 import remote
+
+
+def configure_logging() -> None:
+    level = logging.DEBUG if os.environ.get('SUPERSET_CLUSTER_DEBUG') else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s [%(levelname)s] [%(name)s] %(message)s'
+    )
+    logging.getLogger('paramiko').setLevel(logging.WARNING)
+    logging.getLogger('urllib3').setLevel(logging.WARNING)
+
+
+logger = logging.getLogger(__name__)
 
 
 @decorators.Overlay.run_all_methods  # type: ignore[arg-type]
@@ -299,6 +314,7 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
 
 if __name__ == "__main__":
     if len(sys.argv) != 6:
-        print("Invalid form of arguments provided")
+        logger.error("Invalid form of arguments provided")
         sys.exit(1)
+    configure_logging()
     Controller().start_cluster()
