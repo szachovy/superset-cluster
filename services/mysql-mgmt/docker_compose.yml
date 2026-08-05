@@ -13,9 +13,17 @@ services:
       - |
         set -euo pipefail
         export MYSQL_SUPERSET_PASSWORD=$(</run/secrets/mysql_superset_password)
-        if ! mysqlsh \
-               --login-path="${PRIMARY_MYSQL_NODE}" \
-               --execute="dba.getCluster();"; then
+        CLUSTER_NODE=""
+        for attempt in 1 2 3; do
+          for node in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
+            if mysqlsh --login-path="$${node}" --execute="dba.getCluster('superset');" 2>/dev/null; then
+              CLUSTER_NODE="$${node}"
+              break 2
+            fi
+          done
+          [ "$${attempt}" -lt 3 ] && sleep 5 || true
+        done
+        if [ -z "$${CLUSTER_NODE}" ]; then
           mysqlsh \
             --login-path="${PRIMARY_MYSQL_NODE}" \
             --execute="dba.configureInstance('${PRIMARY_MYSQL_NODE}')"
@@ -46,18 +54,32 @@ services:
             --login-path="${PRIMARY_MYSQL_NODE}" \
             --sql \
             --file="/opt/superset_user.sql"
+          CLUSTER_NODE="${PRIMARY_MYSQL_NODE}"
+        else
+          CLUSTER_STATUS=$(mysqlsh --login-path="$${CLUSTER_NODE}" \
+            --execute="print(dba.getCluster('superset').status())" 2>/dev/null)
+          for node in "${PRIMARY_MYSQL_NODE}" "${SECONDARY_FIRST_MYSQL_NODE}" "${SECONDARY_SECOND_MYSQL_NODE}"; do
+            if ! echo "$${CLUSTER_STATUS}" | grep -q "\"address\": \"$${node}:3306\""; then
+              mysqlsh --login-path="$${node}" \
+                --execute="dba.configureInstance('$${node}')"
+              mysqlsh --login-path="$${node}" --sql \
+                --execute="RESET MASTER;"
+              mysqlsh --login-path="$${CLUSTER_NODE}" \
+                --execute="dba.getCluster('superset').addInstance('$${node}',{recoveryMethod:'incremental'});"
+            fi
+          done
         fi
         export NODE_IP_ADDRESS=$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")
         /opt/envsubst-Linux-x86_64 < "/opt/superset_user.sql.tpl" > "/opt/superset_user.sql"
         mysqlsh \
-          --login-path="${PRIMARY_MYSQL_NODE}" \
+          --login-path="$${CLUSTER_NODE}" \
           --sql \
           --file="/opt/superset_user.sql"
         mysqlrouter \
           --user \
             "superset" \
           --bootstrap \
-            "superset:$(cat /run/secrets/mysql_superset_password)@${PRIMARY_MYSQL_NODE}:3306" \
+            "superset:$(cat /run/secrets/mysql_superset_password)@$${CLUSTER_NODE}:3306" \
           --directory \
             "/opt/default/mysql_router" \
           --conf-use-sockets \
@@ -72,7 +94,7 @@ services:
           --client-ssl-key \
             "/opt/default/mysql_router_key.pem"
         mysqlsh \
-          --login-path="${PRIMARY_MYSQL_NODE}" --sql \
+          --login-path="$${CLUSTER_NODE}" --sql \
           --execute="DROP USER 'superset'@'$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")';"
         ifmetric ${VIRTUAL_NETWORK_INTERFACE} 2
         /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/default/keepalived.conf";

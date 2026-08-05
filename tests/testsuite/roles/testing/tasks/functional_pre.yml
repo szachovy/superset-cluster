@@ -1,0 +1,72 @@
+---
+- name: "Find superset container name"
+  community.docker.docker_container_exec:
+    container: "{{ node_prefix }}-0"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'echo $(docker ps --filter "name=superset" --format "{{.Names}}")'
+      {% endraw %}
+  register: "superset_container_name"
+
+- name: "Run pre-disaster functional tests"
+  block:
+    - name: "Run functional tests on superset"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_superset;
+          superset_functional = functional_superset.Superset(
+            superset_container=\"{{ superset_container_name.stdout.strip() }}\",
+            virtual_ip_address=\"{{ virtual_ip_address }}\"
+          );
+          query_dttm = superset_functional.run_query();
+          superset_functional.get_query_results(query_dttm)'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_superset"
+
+    - name: "Run functional tests on mgmt"
+      community.docker.docker_container_exec:
+        container: "{{ node_prefix }}-0"
+        command: "python3 -c
+          'import functional_mgmt;
+          mgmt_functional = functional_mgmt.Mgmt(
+            virtual_ip_address=\"{{ virtual_ip_address }}\",
+            node_prefix=\"{{ node_prefix }}\",
+            after_disaster=False
+          );'
+          "
+        chdir: "/opt/superset-testing"
+      register: "functional_mgmt"
+
+  always:
+    - name: "Superset functional test results (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_superset.rc }}"
+      when: "functional_superset is defined"
+
+    - name: "Superset functional test failure details (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_superset.stdout }}"
+          - "stderr: {{ functional_superset.stderr }}"
+      when:
+        - "functional_superset is defined"
+        - "functional_superset.rc != 0"
+
+    - name: "Management functional test results (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "rc: {{ functional_mgmt.rc }}"
+      when: "functional_mgmt is defined"
+
+    - name: "Management functional test failure details (pre-disaster)"
+      ansible.builtin.debug:
+        msg:
+          - "stdout: {{ functional_mgmt.stdout }}"
+          - "stderr: {{ functional_mgmt.stderr }}"
+      when:
+        - "functional_mgmt is defined"
+        - "functional_mgmt.rc != 0"

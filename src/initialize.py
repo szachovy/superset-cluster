@@ -62,6 +62,8 @@ import itertools
 import re
 import socket
 
+import cryptography.hazmat.primitives.asymmetric.rsa
+
 import crypto
 import decorators
 import remote
@@ -123,13 +125,69 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
         ]  # type: ignore[assignment]
         self.cert_manager = crypto.OpenSSL()
 
+    def _recover_existing_credentials(self) -> bool:
+        for node in self.mysql_nodes:
+            try:
+                _, stdout, _ = node.ssh_client.exec_command(
+                    "cat /opt/superset-cluster/mysql-server/mysql_root_password"
+                )
+                password = stdout.read().decode().strip()
+                if not password:
+                    continue
+                _, stdout, _ = node.ssh_client.exec_command(
+                    "cat /opt/superset-cluster/mysql-server/superset_cluster_ca_key.pem"
+                )
+                ca_key_pem = stdout.read().decode().strip()
+                _, stdout, _ = node.ssh_client.exec_command(
+                    "cat /opt/superset-cluster/mysql-server/superset_cluster_ca_certificate.pem"
+                )
+                ca_bundle = stdout.read().decode().strip()
+                if not (ca_key_pem and ca_bundle):
+                    continue
+                certs = ca_bundle.split('-----END CERTIFICATE-----')
+                ca_cert_pem = [c for c in certs if '-----BEGIN CERTIFICATE-----' in c][-1]
+                ca_cert_pem = ca_cert_pem.strip() + '\n-----END CERTIFICATE-----\n'
+                deserialized_key = self.cert_manager.serialization(ca_key_pem)
+                assert isinstance(deserialized_key, cryptography.hazmat.primitives.asymmetric.rsa.RSAPrivateKey)
+                self.ca_key = deserialized_key
+                self.ca_certificate = self.cert_manager.serialization(ca_cert_pem)
+                self.mysql_root_password = password
+                break
+            except (OSError, IndexError, ValueError):
+                continue
+        else:
+            return False
+        for node in self.mgmt_nodes:
+            try:
+                _, stdout, _ = node.ssh_client.exec_command(
+                    "cat /opt/superset-cluster/mysql-mgmt/mysql_superset_password"
+                )
+                superset_pw = stdout.read().decode().strip()
+                if not superset_pw:
+                    continue
+                _, stdout, _ = node.ssh_client.exec_command(
+                    "docker exec $(docker ps --filter name=superset"
+                    " --format '{{.ID}}' | head -1)"
+                    " cat /run/secrets/superset_secret_key 2>/dev/null"
+                )
+                secret_key = stdout.read().decode().strip()
+                if not secret_key:
+                    continue
+                self.mysql_superset_password = superset_pw
+                self.superset_secret_key = secret_key
+                return True
+            except OSError:
+                continue
+        return False
+
     @decorators.Overlay.run_selected_methods_once
     def credentials(self) -> None:
-        self.ca_key = self.cert_manager.generate_private_key()
-        self.ca_certificate = self.cert_manager.generate_certificate('Superset-Cluster', self.ca_key)
-        self.mysql_root_password = self.cert_manager.generate_mysql_root_password()
-        self.mysql_superset_password = self.cert_manager.generate_mysql_superset_password()
-        self.superset_secret_key = self.cert_manager.generate_superset_secret_key()
+        if not self._recover_existing_credentials():
+            self.ca_key = self.cert_manager.generate_private_key()
+            self.ca_certificate = self.cert_manager.generate_certificate('Superset-Cluster', self.ca_key)
+            self.mysql_root_password = self.cert_manager.generate_mysql_root_password()
+            self.mysql_superset_password = self.cert_manager.generate_mysql_superset_password()
+            self.superset_secret_key = self.cert_manager.generate_superset_secret_key()
         for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
             node.key = self.cert_manager.generate_private_key()
             node.csr = self.cert_manager.generate_csr(f'Superset-Cluster-{node.node}', node.key)
@@ -166,6 +224,13 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
 
     def start_mysql_servers(self) -> None:
         for node in self.mysql_nodes:
+            _, stdout, _ = node.ssh_client.exec_command(
+                "docker inspect --format='{{.State.Health.Status}}'"
+                " mysql 2>/dev/null"
+            )
+            if stdout.read().decode().strip() == "healthy":
+                continue
+            node.ssh_client.exec_command("docker rm -f mysql 2>/dev/null")
             node.upload_directory(
                 local_directory_path="./services/mysql-server",
                 remote_directory_path="/opt/superset-cluster/mysql-server"
@@ -197,6 +262,16 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
             )
 
     def start_mysql_mgmt(self, node: remote.RemoteConnection, state: str, priority: int) -> None:
+        _, stdout, _ = node.ssh_client.exec_command(
+            "docker inspect --format='{{.State.Health.Status}}'"
+            " mysql-mgmt 2>/dev/null"
+        )
+        if stdout.read().decode().strip() == "healthy":
+            return
+        node.ssh_client.exec_command(
+            "docker rm -f mysql-mgmt mysql-mgmt-initcontainer 2>/dev/null;"
+            " docker volume rm mysql-mgmt_default_generated 2>/dev/null"
+        )
         node.upload_directory(
             local_directory_path="./services/mysql-mgmt",
             remote_directory_path="/opt/superset-cluster/mysql-mgmt"
@@ -253,6 +328,25 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
 
     def start_superset(self) -> None:
         for node in self.mgmt_nodes:
+            _, redis_out, _ = node.ssh_client.exec_command(
+                "docker inspect --format='{{.State.Health.Status}}'"
+                " redis 2>/dev/null"
+            )
+            _, svc_out, _ = node.ssh_client.exec_command(
+                "docker service ps superset"
+                " --format='{{.CurrentState}}'"
+                " --filter desired-state=running 2>/dev/null"
+            )
+            redis_healthy = redis_out.read().decode().strip() == "healthy"
+            superset_running = "Running" in svc_out.read().decode()
+            if redis_healthy and superset_running:
+                continue
+            node.ssh_client.exec_command(
+                "docker service rm superset 2>/dev/null;"
+                " docker rm -f redis 2>/dev/null;"
+                " docker swarm leave --force 2>/dev/null;"
+                " docker network rm superset-network docker_gwbridge 2>/dev/null"
+            )
             node.upload_directory(
                 local_directory_path="./services/superset",
                 remote_directory_path='/opt/superset-cluster/superset'
@@ -285,6 +379,41 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                           mysql_superset_password=self.mysql_superset_password)
             )
 
+    def teardown_node(self, node: remote.RemoteConnection, is_mgmt: bool = False) -> None:
+        commands = [
+            "if docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null"
+            " | grep -qvx inactive; then docker swarm leave --force; fi",
+            "docker ps -aq | xargs -r docker rm -f",
+            "docker volume ls -q | xargs -r docker volume rm",
+            "docker network ls --filter name=superset-network -q"
+            " | xargs -r docker network rm",
+            "docker network ls --filter name=docker_gwbridge -q"
+            " | xargs -r docker network rm",
+            "if [ -d /opt/superset-cluster ]; then"
+            " rm -rf /opt/superset-cluster; fi",
+        ]
+        if is_mgmt:
+            commands.extend([
+                "if ip addr show dev {iface} 2>/dev/null"
+                " | grep -q '{vip}/'; then"
+                " ip addr del {vip}/{mask} dev {iface}; fi".format(
+                    iface=self.virtual_network_interface,
+                    vip=self.virtual_ip_address,
+                    mask=self.virtual_network_mask),
+                "if ip route show | grep -q '{vip} '; then"
+                " ip route del {vip}; fi".format(
+                    vip=self.virtual_ip_address),
+            ])
+        _, stdout, stderr = node.ssh_client.exec_command(
+            "rc=0; " + "; ".join(f"{{ {cmd}; }} || rc=$?" for cmd in commands) + "; exit $rc"
+        )
+        exit_status = stdout.channel.recv_exit_status()
+        if exit_status != 0:
+            raise RuntimeError(
+                f"Teardown failed on {node.node} (exit {exit_status}): "
+                f"{stderr.read().decode().strip()}"
+            )
+
     def start_cluster(self) -> None:
         try:
             self.start_mysql_servers()
@@ -296,9 +425,33 @@ class Controller(ArgumentParser, metaclass=decorators.Overlay):
                 node.ssh_client.close()
                 node.sftp_client.close()
 
+    def cleanup(self) -> None:
+        try:
+            for node in self.mgmt_nodes:
+                try:
+                    self.teardown_node(node, is_mgmt=True)
+                except (OSError, RuntimeError):
+                    pass
+            for node in self.mysql_nodes:
+                try:
+                    self.teardown_node(node, is_mgmt=False)
+                except (OSError, RuntimeError):
+                    pass
+        finally:
+            for node in list(itertools.chain(self.mysql_nodes, self.mgmt_nodes)):
+                node.ssh_client.close()
+                node.sftp_client.close()
+
 
 if __name__ == "__main__":
-    if len(sys.argv) != 6:
+    if len(sys.argv) < 6:
         print("Invalid form of arguments provided")
         sys.exit(1)
-    Controller().start_cluster()
+
+    action = sys.argv[6] if len(sys.argv) > 6 else "deploy"
+    controller = Controller()
+
+    if action == "cleanup":
+        controller.cleanup()
+    else:
+        controller.start_cluster()

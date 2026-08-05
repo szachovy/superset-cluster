@@ -15,10 +15,58 @@
     - name: "Run system tasks from testing role"
       ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
 
-- name: "Functional testing"
+- name: "Pre-disaster functional testing"
   connection: "local"
   hosts: "testing"
   any_errors_fatal: true
   tasks:
-    - name: "Run functional tasks from testing role"
-      ansible.builtin.include_role: {name: "testing", tasks_from: "functional"}
+    - name: "Run pre-disaster functional tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_pre"}
+
+- name: "Disaster simulation"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run disaster tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "disaster"}
+
+- name: "Post-disaster functional testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run post-disaster functional tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_disaster"}
+
+- name: "Node recovery"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run recovery tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "recover"}
+
+- name: "Redeploy testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run system tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "system"}
+
+- name: "Post-redeploy functional testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run post-disaster functional tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "functional_post"}
+
+- name: "Cleanup testing"
+  connection: "local"
+  hosts: "testing"
+  any_errors_fatal: true
+  tasks:
+    - name: "Run cleanup tasks from testing role"
+      ansible.builtin.include_role: {name: "testing", tasks_from: "cleanup"}

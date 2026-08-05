@@ -1,0 +1,34 @@
+---
+- name: "Stop mgmt primary node"
+  community.docker.docker_container:
+    name: "{{ node_prefix }}-0"
+    state: "stopped"
+
+- name: "Stop mysql primary node"
+  community.docker.docker_container:
+    name: "{{ node_prefix }}-2"
+    state: "stopped"
+
+- name: "Collect container health after disaster"
+  community.docker.docker_container_exec:
+    container: "{{ item }}"
+    command: |
+      {% raw %}
+      /bin/bash -c
+      'docker ps -a
+      --format "table {{.Names}}\t{{.Status}}\t{{.Image}}"'
+      {% endraw %}
+  loop:
+    - "{{ node_prefix }}-1"
+    - "{{ node_prefix }}-3"
+    - "{{ node_prefix }}-4"
+  register: "post_disaster_health"
+  changed_when: false
+  failed_when: false
+
+- name: "Container health status after disaster"
+  ansible.builtin.debug:
+    msg: "{{ item.stdout_lines }}"
+  loop: "{{ post_disaster_health.results }}"
+  loop_control:
+    label: "{{ item.item }}"

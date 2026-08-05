@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Dependabot updates for `github-actions` and `terraform` ecosystems. (#29)
 * CI workflow to build and push service images to GitHub Container Registry on master merge. (#97)
 * Pull-first with local build fallback for container images during deployment. (#97)
+* `--cleanup` CLI flag with idempotent deploy and cleanup actions. (#49)
+* Credential recovery for partial redeploy from existing healthy nodes. (#49)
+* PEM serialization support in `crypto.py` for credential recovery. (#49)
+* InnoDB Cluster auto-join for fresh MySQL nodes added to an existing cluster. (#49)
+* Disaster recovery test flow with node replacement and partial redeploy verification. (#49)
 * Swarm overlay network encryption via IPsec and explicit data path port. (#92)
 * MySQL slow query log for queries exceeding 10 seconds or not using indexes. (#76)
 * Strengthen MySQL superset password: secrets module, expanded charset, 24 chars. (#89)
@@ -26,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
 * Migrated CI from self-hosted to GitHub-hosted runners with Docker-in-Docker test infrastructure. (#94)
 * Test workflow always builds service images locally for reproducibility. (#97)
+* Restructured test suite into 7-stage flow: sanity, deploy, functional, disaster,
+  recovery, redeploy, post-redeploy functional. (#49)
+* InnoDB Cluster initcontainer scans all MySQL nodes to find existing cluster and adds missing
+  members instead of only checking the primary node. (#49)
+* Made Terraform test infrastructure idempotent: removed `always_run` triggers, node recovery
+  reruns `terraform apply` which only recreates missing containers. (#49)
 * Enabled parallel replication applier threads on secondary MySQL nodes. (#75)
 * Clean up temporary `.pyc` files on remote nodes after execution. (#51)
 * Set `innodb_flush_method=O_DIRECT` to eliminate double caching in containers. (#74)
