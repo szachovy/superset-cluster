@@ -76,6 +76,8 @@ services:
           --execute="DROP USER 'superset'@'$(mysqlsh --python --execute "exec(open('/opt/interfaces.py').read())")';"
         ifmetric ${VIRTUAL_NETWORK_INTERFACE} 2
         /opt/envsubst-Linux-x86_64 < "/opt/keepalived.conf.tpl" > "/opt/default/keepalived.conf";
+        cp "/opt/healthcheck.sh" "/opt/default/healthcheck.sh";
+        chmod 755 "/opt/default/healthcheck.sh";
         chown --recursive superset:superset "/opt/default"
     cap_add:
       - "NET_ADMIN"
