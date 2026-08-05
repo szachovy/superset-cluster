@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SQL Lab query row limits, timeout caps, and validation timeout. (#81)
 * Superset metastore and explore form data caching via Redis. (#79)
 
+### Added
+
+* Health gate between deployment stages in `start_cluster()`. (#61)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
