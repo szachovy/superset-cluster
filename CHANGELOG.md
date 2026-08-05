@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * SQL Lab query row limits, timeout caps, and validation timeout. (#81)
 * Superset metastore and explore form data caching via Redis. (#79)
 
+### Fixed
+
+* Command injection in change_permissions_to_root via SFTP chmod instead of shell exec. (#85)
+
 ### Changed
 
 * Completed [ARCHITECTURE.md](./docs/ARCHITECTURE.md) (#93)
